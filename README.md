@@ -188,6 +188,26 @@ A股风格       8   +1.26%  +0.13%  -31.17% -0.04   +30.38%
 - 旧多因子 4 因子（涨幅20/60/120 + 风险调整60，权重 0.25/0.35/0.25/0.15）：累计 +5.03%、回撤 -65.62%、夏普 0.14（**回归锚点：该配置下 JS 与 Python 逐日净值精确一致**）；
 - 低波变体（涨幅60 + 波动率60低波，权重 0.6/0.4）：累计 +81.34%、回撤 -62.91%、夏普 0.30 —— 展示波动率因子（低波加分）的独立贡献。
 
+## GitHub Actions 每周自动更新（免费数据源）
+
+**数据源现状**：系统行情默认来自万得（Wind Alice，豆包 cron 每周六 14:00 增量更新）。豆包云环境网络对东方财富（eastmoney.com）不可达，因此免费数据源无法在豆包 cron 内运行。
+
+**免费替代链路（AKShare 东财源）**：
+- `update_data.py`：用 AKShare（东方财富免费接口，无 token）拉取全标的后复权日K，规范化成 `data/*.csv`，自动重建网页。需能访问 eastmoney.com 的环境（本机电脑 / GitHub Actions 均可，豆包云环境不行）。
+- 用法：`python3 update_data.py [起始日期]`（默认 2017-01-01），`pip install akshare pandas`。
+
+**GitHub Actions 自动部署（推荐，免费、定时、脱离豆包与万得）**：
+- `.github/workflows/weekly.yml`：每周六 06:00 UTC（北京 14:00）拉数 → 重建网页 → 部署到 GitHub Pages（免费 https 链接）；也支持在仓库 Actions 页手动触发。
+- 首次运行含"东财可达性探针"，若 GitHub runner 无法访问 eastmoney.com 会明确报错。
+
+**落地步骤**：
+1. 注册 GitHub（免费）并新建一个仓库（Public/Private 均可；私有仓库 Actions 有每月 2000 分钟免费额度，周跑一次足够）；
+2. 把本目录（含 `.git/`、`.github/`、`.gitignore`、`config.json`、`*.py`）推送到该仓库（`git remote add origin <你的仓库URL>` + `git push -u origin main`）；
+3. 仓库 Settings → Pages → Source 选 **GitHub Actions**；
+4. Actions 页 Run workflow 手动触发一次，或在下次周六自动触发；成功后访问 `https://<你的用户名>.github.io/<仓库名>/ETF动量轮动回测系统.html`。
+
+> 注意：AKShare（东财）后复权口径与万得 aftype=1 不完全一致，首次切换后历史净值与成交额类因子数值会变，属正常现象；回测收益率结论方向通常一致。
+
 ## 免责声明
 
 本系统仅用于策略研究与参数探索，不构成投资建议。历史回测不代表未来收益，参数敏感性高时尤需谨慎。
