@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF量化回测系统</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E7490'/%3E%3Ctext x='16' y='23' font-size='17' text-anchor='middle' fill='%23fff' font-family='serif'%3E福%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#0F172A; --card:#111827; --line:#1E293B;
+  --ink:#E2E8F0; --mut:#94A3B8; --acc:#38BDF8; --acc2:#22D3EE;
+  --up:#F87171; --down:#34D399; --purple:#A78BFA; --gray:#64748B;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+header{background:linear-gradient(135deg,#0F172A 0%,#0E7490 130%);color:#fff;padding:18px 24px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;letter-spacing:.5px}
+header h1 .fu{color:var(--acc2)}
+header .sub{font-size:12px;color:#BFDBFE;opacity:.9}
+header .tag{margin-left:auto;font-size:11px;color:#A5F3FC;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;max-width:1680px;margin:0 auto}
+#step1{max-width:860px;margin:0 auto;padding:24px 16px}
+.s1card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.s1card h2{font-size:16px;margin-bottom:14px;color:var(--ink)}
+.s1bar{margin-top:16px;text-align:right}
+#nextBtn{background:linear-gradient(135deg,#0E7490,#06B6D4);color:#fff;border:none;border-radius:8px;padding:10px 26px;font-size:14px;font-weight:600;cursor:pointer}
+#nextBtn:disabled{opacity:.6;cursor:wait}
+#nextBtn:hover:not(:disabled){opacity:.92}
+.s2top{display:flex;align-items:center;gap:12px;padding:10px 16px;max-width:1680px;margin:0 auto}
+#backBtn{font-size:12.5px;color:var(--acc);background:#111827;border:1px solid var(--line);border-radius:6px;padding:5px 14px;cursor:pointer}
+#backBtn:hover{background:#1E293B}
+.s2tip{font-size:12px;color:var(--mut)}
+@media (max-width:760px){#step1{padding:14px 10px}.s1card{padding:14px}}
+
+.trades td.fc, .trades th.fc{max-width:240px;white-space:normal;word-break:break-all;line-height:1.4}
+.trades td.fc span,.trades th.fc span{display:inline-block;margin-right:2px}
+/* ---------- 参数面板 ---------- */
+aside{width:400px;flex-shrink:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+aside .phead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:#1E293B}
+aside .phead b{font-size:14px}
+aside .phead button{font-size:11px;color:var(--acc);background:none;border:none;cursor:pointer;padding:2px 4px}
+aside .phead button:hover{text-decoration:underline}
+.psec{padding:12px 14px;border-bottom:1px solid var(--line)}
+.psec:last-child{border-bottom:none}
+.psec h3{font-size:12px;color:var(--mut);font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.psec h3 .v{color:var(--acc);font-weight:700;font-variant-numeric:tabular-nums}
+label.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:7px;color:var(--ink)}
+input[type=number]{min-width:0;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#111827;cursor:pointer;color:var(--ink);transition:all .15s}
+.chips button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chips button:hover{border-color:var(--acc)}
+select{width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:#111827;color:var(--ink)}
+.grp{font-size:13px;margin:2px 0 6px;padding:5px 8px;background:#1E293B;border:1px solid var(--line);border-radius:7px}
+.grp .ghead{display:flex;align-items:center;gap:6px;margin-bottom:2px;font-weight:500}
+.grp .ghead span:first-child{min-width:16px}
+.grp .itm{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#CBD5E1;padding:1.5px 0}
+.grp .itm:hover{color:var(--acc)}
+.grp .itm .pick{cursor:pointer}
+.grp .itm .rot{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;color:#94A3B8;white-space:nowrap;font-weight:400;cursor:pointer}
+.grp .itm .rot:hover{color:var(--acc)}
+.grp .itm input{accent-color:var(--acc)}
+.grp .itm .rot input{accent-color:#F59E0B;margin:0}
+.runbar{padding:12px 14px;background:#1E293B;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.runbar button{flex:1;background:var(--acc);border:none;color:#fff;font-size:14px;font-weight:700;padding:9px 0;border-radius:8px;cursor:pointer;transition:filter .15s}
+.runbar button:hover{filter:brightness(1.1)}
+.runbar .st{font-size:11px;color:var(--mut);white-space:nowrap}
+.notice{font-size:11px;color:#FBBF24;background:#3A2A12;border-radius:6px;padding:4px 8px;margin-top:6px;display:none}
+/* ---------- 结果区 ---------- */
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.kpi .t{font-size:11px;color:var(--mut);margin-bottom:3px}
+.kpi .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11px;color:var(--mut);margin-top:2px}
+.up{color:var(--up)} .down{color:var(--down)}
+.cards{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.card h2{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card h2 .n{font-size:11px;color:var(--mut);font-weight:400}
+.chart{width:100%;height:340px}
+.chart.tall{height:400px}
+.chart.short{height:240px}
+table.trades{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px}
+table.trades th,table.trades td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;white-space:normal;word-break:break-word;font-variant-numeric:tabular-nums;line-height:1.35}
+table.trades th{background:#1E293B;color:var(--mut);font-weight:500;position:sticky;top:0}
+table.trades td.wk{color:#FBBF24} table.trades td.nm{color:var(--acc)}
+.tblwrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:8px}
+footer{color:var(--mut);font-size:11px;padding:14px 16px;text-align:center;line-height:1.7}
+footer b{color:#94A3B8}
+.nav{display:flex;gap:8px;padding:10px 16px 0;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box}
+.nav button{font-size:13px;padding:7px 18px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer}
+.nav button.on{background:var(--acc);color:#fff;font-weight:600}
+.slist{display:flex;flex-direction:column;gap:8px}
+.srow{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.srow:hover{border-color:var(--acc)}
+.srow .nm{font-weight:700;font-size:14px;color:#F1F5F9;margin-bottom:4px}
+.srow .meta{font-size:12px;color:var(--mut);display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:4px}
+.srow .pos{font-size:12.5px;color:#CBD5E1}
+.srow .pos b{color:var(--acc)}
+.srow .pos .sell{color:var(--down)}
+.srow .pos .buy{color:var(--up)}
+.sdetail{display:none}
+.sdetail .back{font-size:12px;color:var(--acc);cursor:pointer;border:none;background:none;padding:0;margin:0 0 10px;text-align:left}
+.skpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:14px}
+.skpis .kpi .v{font-size:15px}
+.syear{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.syear th,.syear td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+.syear th:first-child,.syear td:first-child{text-align:left}
+.syear th{background:#1E293B;color:var(--mut);font-weight:500}
+.syear td.up{color:var(--up)} .syear td.down{color:var(--down)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:4px;margin-top:8px}
+.mcell{font-size:11px;padding:6px 4px;border-radius:6px;text-align:center;color:#F1F5F9;font-variant-numeric:tabular-nums}
+.mcell .y{color:#64748B;font-size:10px;margin-bottom:2px}
+@media (max-width:1023px){
+  .wrap{flex-direction:column;padding:10px}
+  aside{width:100%}
+  aside.closed .pbody{display:none}
+  .chart{height:300px}
+  .chart.tall{height:340px}
+}
+@media (min-width:1024px){
+  aside{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>ETF量化<span class="fu">回测系统</span></h1>
+  <span class="sub">多因子动量口径 · 因子截面z-score加权合成 · 收盘决策次日开盘换仓（无前视）</span>
+  <span class="tag">Wind Alice 后复权日K · 2017~2026</span>
+</header>
+<div class="nav">
+  <button type="button" id="tabBacktest" class="on">回测</button>
+  <button type="button" id="tabStrategies">已保存策略</button>
+</div>
+<div id="pageErr" style="display:none;background:#3F1D1D;color:#FECACA;font-size:13px;padding:10px 16px;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box"></div>
+<div id="viewBacktest">
+<div id="step1">
+  <div class="s1card">
+    <h2>第一步：选择回测方式与标的</h2>
+    <div class="psec">
+      <h3>策略模式</h3>
+      <select id="modeSel" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+        <option value="rotation">动量轮动（按因子排序持有排名区间）</option>
+        <option value="rebalance">固定比例再平衡（勾选标的按比例持有）</option>
+      </select>
+      <div style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">再平衡模式：勾选标的并填写各标的持有比例（%），调仓日按比例再平衡；不走动量筛选/择时；比例合计不足 100% 的部分自动买入货币ETF（511990）</div>
+    </div>
+    <div class="psec" id="psecRebW" style="display:none">
+      <h3>目标权重来源</h3>
+      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+        <option value="fixed">固定比例（按标的池比例输入）</option>
+        <option value="inv_vol">逆波动率（近20日，低波多配）</option>
+        <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
+      </select>
+      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">固定比例：调仓日按标的池填写的比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，标的池比例输入不生效</div>
+    </div>
+    <div class="psec" id="psecPool">
+      <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
+      <div id="poolBox"></div>
+      <div class="notice" id="survivorTip" style="display:none"></div>
+    </div>
+    <div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div>
+  </div>
+</div>
+<div id="step2" style="display:none">
+<div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div>
+<div class="wrap">
+  <aside id="panel">
+    <div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div>
+    <div class="pbody">
+      <div class="psec" id="psecFactor">
+        <h3>因子管理</h3>
+        <div id="mfBox" style="margin-top:2px">
+          <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">创建因子并选择归属：<b>排名</b> → 放入「排名条件」参与轮动打分；<b>筛选</b> → 放入「筛选条件」作为过滤条件（全部满足才进入候选池，先筛选后排序）。可添加基础因子，或用公式四则运算组合自定义因子（最少2个成分）。</div>
+          <div id="mfLibList"></div>
+          <div class="row" style="display:flex;align-items:center;margin-top:6px;gap:6px">
+            <select id="mfCat" style="width:92px">
+              <option value="all">全部因子</option>
+              <option value="price">行情因子</option>
+              <option value="tech">技术因子</option>
+              <option value="custom">自定义因子</option>
+            </select>
+            <select id="mfAddKind" style="flex:1;min-width:0"></select>
+            <select id="mfAddUsage" style="width:52px">
+              <option value="filter" selected>筛选</option>
+              <option value="rank">排名</option>
+            </select>
+            <button type="button" id="mfAddBtn" style="margin-left:2px">添加</button>
+          </div>
+          <div class="row" style="display:flex;align-items:center;margin-top:6px;gap:6px">
+            <input id="cfName" type="text" placeholder="自定义因子名，如：动量增强"
+                   style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+            <button type="button" id="cfToggleBtn">自定义公式因子</button>
+          </div>
+          <div id="cfEditor" style="display:none;margin-top:6px;padding:8px;border:1px dashed #334155;border-radius:6px">
+            <div style="font-size:12px;color:#64748B;margin-bottom:4px">用公式组合现有因子（最少2个成分）：成分间用 + − × ÷ 连接，每项 系数×因子值；确认后按下拉选择放入排名或筛选。</div>
+            <select id="cfUsage" style="font-size:12px;margin-bottom:4px;width:120px;padding:2px;border:1px solid #334155;border-radius:4px">
+              <option value="filter">放入筛选条件</option>
+              <option value="rank">放入排名条件</option>
+            </select>
+            <div id="cfParts"></div>
+            <button type="button" id="cfAddPart" style="margin-top:4px;font-size:12px">+ 添加成分</button>
+            <div id="cfFormula" style="font-size:12px;color:#CBD5E1;margin:6px 0;word-break:break-all"></div>
+            <div style="display:flex;gap:6px">
+              <button type="button" id="cfOk" style="font-size:12px">确认添加</button>
+              <button type="button" id="cfCancel" style="font-size:12px">取消</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="psec" id="psecFilter">
+        <h3>筛选条件</h3>
+        <div id="fltBox" style="margin-top:2px">
+          <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">筛选因子（全部满足才进入候选池；如 R²阈值、涨幅≥X、波动率≤Y）——在「因子管理」创建并归属为筛选，或在此直接调整阈值</div>
+          <div id="fltList"></div>
+        </div>
+      </div>
+      <div class="psec" id="psecRank">
+        <h3>排名条件（轮动因子）</h3>
+        <div id="mfBox2" style="margin-top:2px">
+          <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">排名因子（截面z-score加权合成得分排序；权重合计 <b id="mfSum">0.00</b>，建议=1）——在「因子管理」创建并归属为排名，或在此直接调整权重/方向</div>
+          <div class="row" style="display:flex;align-items:center;margin:2px 0 6px;gap:6px">
+            <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">因子标准化</span>
+            <select id="stdSel" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+              <option value="robust" selected>Winsorize+Median/MAD（稳健）</option>
+              <option value="zscore">标准z（均值/标准差）</option>
+              <option value="rank">百分位Rank（截面名次0~1）</option>
+              <option value="none">关闭（按原始值排序，仅单因子）</option>
+            </select>
+          </div>
+          <div id="mfList"></div>
+        </div>
+      </div>
+      <div class="psec" id="psecBuyAdd">
+        <h3>买入附加条件 <span class="v" id="buyAddCount">0 个</span></h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">排名完成后，标的还需满足全部买入附加条件才买入（不配置则按排名区间直接买入）</div>
+        <div id="buyAddList"></div>
+        <div class="row" style="display:flex;align-items:center;margin-top:4px;gap:6px">
+          <select id="buyAddKind" style="flex:1;min-width:0">
+            <option value="rank">排名名次 ≤ N</option>
+            <option value="rank_gte">排名名次 ≥ N</option>
+            <option value="cooldown">距上次卖出 ≥ N 天</option>
+            <option value="factor">因子判断</option>
+          </select>
+          <input id="buyAddVal" type="number" step="1" value="1" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <button type="button" id="buyAddBtn">添加</button>
+        </div>
+      </div>
+      <div class="psec" id="psecSell">
+        <h3>卖出条件 <span class="v" id="sellCount">0 个</span></h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">标的本来未满足轮动卖出（未跌出排名区间），但满足任意卖出条件时卖出。<b>至少选择 1 个才能回测</b></div>
+        <div id="sellList"></div>
+        <div class="row" style="display:flex;align-items:center;margin-top:4px;gap:6px">
+          <select id="sellKind" style="flex:1;min-width:0">
+            <option value="rank_gte">排名名次 ≥ N</option>
+            <option value="hold_days">持有天数 ≥ N</option>
+            <option value="buy_gain">买入后涨幅 ≥ N%（获利了结）</option>
+            <option value="buy_loss">买入后跌幅 ≥ N%（止损）</option>
+            <option value="high_dd">买入后最高点回撤 ≥ N%</option>
+            <option value="factor">因子判断</option>
+          </select>
+          <input id="sellVal" type="number" step="1" value="10" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <button type="button" id="sellBtn">添加</button>
+        </div>
+      </div>
+      <div class="psec" id="psecHold">
+        <h3>不卖条件 <span class="v" id="holdCount">0 个</span></h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">标的本来满足轮动卖出条件，但满足任意不卖条件时不卖出（不配置则按轮动卖出）</div>
+        <div id="holdList"></div>
+        <div class="row" style="display:flex;align-items:center;margin-top:4px;gap:6px">
+          <select id="holdKind" style="flex:1;min-width:0">
+            <option value="hold_days">持有天数 ≤ N</option>
+            <option value="factor">因子判断</option>
+          </select>
+          <input id="holdVal" type="number" step="1" value="5" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <button type="button" id="holdBtn">添加</button>
+        </div>
+      </div>
+      <div class="psec">
+        <div id="topnRow">
+        <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
+          第 <input id="rankNIn" type="number" min="1" max="60" step="1" value="1"
+               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          名 至 第 <input id="rankMIn" type="number" min="1" max="60" step="1" value="3"
+               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          名
+        </div>
+        </div>
+        <h3 style="margin-top:10px">调仓周期 <span class="v" id="rebUnit"></span></h3>
+        <div class="chips" id="rebChips"></div>
+        <div class="chips" id="rebAnchorChips" style="margin-top:3px"></div>
+        <div class="row" style="margin-top:4px;font-size:12px;color:#64748B">每
+          <input id="rebIn" type="number" min="1" max="60" step="1" value="1"
+                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          个单位
+        </div>
+        <h3 style="margin-top:10px">空闲资金配置
+          <select id="idleSel" style="width:45%;max-width:200px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+            <option value="cash" selected>空仓（不持有）</option>
+            <option value="gold">黄金ETF（518880）</option>
+            <option value="bond">国债ETF（511010）</option>
+            <option value="money">货币ETF（511990）</option>
+          </select>
+        </h3>
+      </div>
+      <div class="psec">
+        <h3>交易成本</h3>
+        <label class="row">佣金(单边,万分之) <span class="v" id="cmV" style="display:none">2.5</span>
+          <input id="cmIn" type="number" min="0" max="50" step="0.5" value="2.5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">滑点(单边,bp) <span class="v" id="slV" style="display:none">5</span>
+          <input id="slIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row" style="margin-top:4px"><span>成本分档（按流动性调整滑点<span class="tip">开启后按标的近20日平均成交额分档：≥10亿→3bp / ≥1亿→5bp / ≥5000万→8bp / ≥1000万→15bp / 其余→30bp；关闭则用上方统一滑点</span>）</span><input id="tierSw" type="checkbox"></label>
+      </div>
+      <div class="psec" id="psecRegime">
+        <h3>走弱期机制</h3>
+        <label class="row"><span>启用走弱期判断</span><input id="regSw" type="checkbox"></label>
+        <label class="row">走弱期均线(MA窗口,日) <span class="v" id="maV" style="display:none">10</span>
+          <input id="maIn" type="number" min="5" max="60" step="1" value="10" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">走弱期指数（跌破 MA 判定用，可多选）</div>
+        <div class="chips" id="regIdxChips"></div>
+        <label class="row"><span>走弱期轮动范围</span>
+          <select id="weakMode" style="flex:1;min-width:0;max-width:250px">
+            <option value="overseas_pool">海外避险池</option>
+            <option value="cash">空仓避险</option>
+            <option value="full_pool">全池轮动</option>
+          </select>
+        </label>
+        <label class="row"><span>走弱期叠加均线过滤</span><input id="weakMa" type="checkbox"></label>
+      </div>
+      <div class="psec" id="psecTiming">
+        <h3>大盘择时</h3>
+        <label class="row"><span>启用指数均线择时</span><input id="tmSw" type="checkbox"></label>
+        <label class="row">均线窗口(MA,日) <span class="v" id="tmV" style="display:none">200</span>
+          <input id="tmNIn" type="number" min="20" max="400" step="5" value="200" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时指数（全部站上 MA 才开仓，可多选）</div>
+        <div class="chips" id="tmIdxChips"></div>
+      </div>
+      <div class="psec">
+        <h3>回测区间</h3>
+        <label class="row">起始日期
+          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+        </label>
+      </div>
+      <div class="psec">
+        <h3>策略管理 <span class="v" id="stCount">0 个</span></h3>
+        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
+          <input id="stName" type="text" placeholder="策略名，如：6因子月度"
+                 style="flex:2;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
+          <input id="stInvIn" type="number" min="1000" step="10000" value="1000000" title="保存策略时记录的投资额：卖出/买入金额与买入份额按此口径计算"
+                 style="flex:1;min-width:80px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
+          <button type="button" id="saveSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">保存</button>
+          <button type="button" id="exportSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出</button>
+          <button type="button" id="exportAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出全部</button>
+          <button type="button" id="importSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入</button>
+          <button type="button" id="importAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入全部</button>
+          <input id="impFile" type="file" accept=".json,application/json" style="display:none">
+          <input id="impAllFile" type="file" accept=".json,application/json" style="display:none">
+        </div>
+        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
+          <select id="stList" style="flex:2;min-width:120px;font-size:12px;padding:3px 4px;border:1px solid #334155;border-radius:4px"></select>
+          <button type="button" id="loadSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">加载</button>
+          <button type="button" id="renSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">重命名</button>
+          <button type="button" id="delSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">删除</button>
+        </div>
+      </div>
+      <div class="runbar">
+        <button id="runBtn" type="button">运行回测</button>
+        <span class="st" id="runState">就绪</span>
+      </div>
+      <div class="notice" id="notice"></div>
+    </div>
+  </aside>
+  <main>
+    <div class="kpis" id="kpis"></div>
+    <div class="segwrap" id="segBox" style="display:none;margin:8px 0 0;font-size:12px;color:#CBD5E1;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:8px 12px;line-height:1.7">
+      <div style="font-weight:600;margin-bottom:4px">样本内外分割 <span style="font-weight:400;color:#64748B" id="segTip"></span></div>
+      <div id="segGrid" style="display:grid;grid-template-columns:76px 1fr 1fr;gap:4px 12px;align-items:baseline"></div>
+    </div>
+    <div class="robwrap" id="robwrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0">
+      <button id="robBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#111827;color:#CBD5E1;cursor:pointer">参数稳健性检查（窗口±5日）</button>
+      <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
+    </div>
+    <div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#CBD5E1;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
+    <div class="cards">
+      <div class="card"><h2>净值曲线 <span class="n">策略 / 沪深300 / 等权池（选中标的）</span></h2><div class="chart" id="cNav"></div></div>
+      <div class="card"><h2>回撤 <span class="n">策略与基准的最大回撤路径</span></h2><div class="chart short" id="cDD"></div></div>
+      <div class="card"><h2>年度收益 <span class="n">策略 vs 沪深300</span></h2><div class="chart short" id="cYear"></div></div>
+      <div class="card"><h2>月度收益热力图 <span class="n">绿色为正、红色为负（%）</span></h2><div class="chart short" id="cMonth"></div></div>
+      <div class="card"><h2>调仓记录 <span class="n" id="tradeCount"></span><span class="n">（卖出/买入金额按策略管理区填写的投资额口径；买入份额按执行日未复权开盘价）</span></h2><div class="tblwrap"><table class="trades" id="tradeTable"><thead></thead><tbody></tbody></table></div></div>
+      <div style="font-size:11px;color:#CBD5E1;text-align:center;padding:4px">构建 v3.2 · 2026-10-03（诊断版：页面异常会在顶部显示红条）</div>
+    </div>
+    <footer>数据：Wind Alice 万得金融数据（后复权日K，2017-01~2026-09）。策略口径：多因子动量（涨幅/斜率动量/波动率/风险调整动量，逐因子截面z-score加权），筛选条件（R²阈值/涨幅/波动率等）由筛选面板配置、走弱期MA迟滞、海外池轮动、成本=佣金+滑点。<br><b>本系统仅用于策略研究与参数探索，历史回测不代表未来收益，不构成投资建议。</b></footer>
+  </main>
+</div>
+</div>
+</div>
+<div id="viewStrategies" style="display:none">
+  <div style="max-width:1280px;margin:0 auto;padding:14px 16px 40px;box-sizing:border-box">
+    <div class="card">
+      <h2>已保存策略 <span class="n" id="stTotal"></span></h2>
+      <div style="font-size:12px;color:#FBBF24;background:#3A2A12;border:1px dashed #F59E0B;border-radius:8px;padding:8px 10px;margin:0 0 10px;line-height:1.7">
+        <b>本地存储提示</b>：策略保存在<b>当前链接的存储域</b>（<span id="stOrigin"></span>）。发布链接每次打开可能落在不同 CDN 节点，导致已保存策略看不到——在<b>旧链接点「导出全部」</b>，在<b>本页点下方「导入全部」</b>即可一键恢复。
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" id="stImportAll" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入全部（迁移恢复）</button>
+          <button type="button" id="stRefresh" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">刷新列表</button>
+          <input id="stImpAllFile" type="file" accept=".json,application/json" style="display:none">
+        </div>
+      </div>
+      <div class="slist" id="stListV"></div>
+    </div>
+    <div class="card sdetail" id="stDetail">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <button type="button" class="back" id="stBack">收起详情</button>
+        <button type="button" id="stApply" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">应用此策略参数到回测</button>
+      </div>
+      <h2 id="stName2"></h2>
+      <div style="display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap">
+        <label style="font-size:12.5px;color:#64748B">起始投资额（元）
+          <input type="number" id="stInvIn2" min="1000" step="10000" value="1000000" style="width:120px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label style="font-size:12.5px;color:#64748B">投资起始日期
+          <input type="date" id="stStartIn" value="2017-01-01" style="width:140px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <span class="n" style="font-size:12.5px;color:#CBD5E1">最新投资额 <b id="stLatestCap">—</b> 元</span>
+        <span class="n" style="font-size:11.5px;color:#94A3B8">最新投资额按策略净值自起始日起的变化计算；修改后自动更新该策略</span>
+      </div>
+      <div class="card" style="border:none;padding:0;margin-bottom:14px"><h2>当前持仓 · 买入份额</h2><div id="stPosBuy"></div></div>
+      <div class="skpis" id="stKpis"></div>
+      <div class="card" style="border:none;padding:0"><h2>收益曲线 <span class="n">策略 vs 沪深300</span></h2><div class="chart" id="stChart"></div></div>
+      <div class="card" style="border:none;padding:0;margin-top:14px"><h2>按年度收益 <span class="n">策略 / 沪深300 / 超额</span></h2>
+        <div class="tblwrap" style="max-height:300px"><table class="syear" id="stYearly"></table></div>
+      </div>
+      <div class="card" style="border:none;padding:0;margin-top:14px"><h2>月度收益热力图 <span class="n">绿色为正、红色为负（%）</span></h2><div id="stMonthly"></div></div>
+    </div>
+  </div>
+</div>
+<script>/*__ECHARTS__*/</script>
+<script>window.echarts || document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"><\/script>');</script>
+<script>var WUFU_POOL = /*__POOL__*/;</script>
+<script>var WUFU_FIRSTDATE = /*__FIRSTDATE__*/;</script>
+<script id="wufuDataGz" type="text/plain">/*__DATA_GZ_B64__*/</script>
+<script>/*__ENGINE__*/</script>
+<script>/*__UI__*/</script>
+</body>
+</html>

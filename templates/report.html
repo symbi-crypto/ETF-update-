@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ETF动量轮动回测系统报告</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317213A'/%3E%3Cpath d='M6 22 L13 14 L18 18 L26 8' stroke='%230E7490' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F3F5F9; --surface:#FFFFFF; --ink:#17213A; --muted:#5D6B82;
+  --line:#E3E8F0; --teal:#0E7490; --amber:#B45309; --red:#DC2626; --green:#059669; --slate:#94A3B8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;font-size:14px;line-height:1.6}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+/* ---- 头部 ---- */
+.masthead{background:var(--ink);color:#F8FAFC;border-radius:16px;padding:30px 32px 26px;margin-bottom:22px}
+.masthead h1{font-size:26px;font-weight:800;letter-spacing:.5px}
+.masthead .sub{color:#A9B4C6;font-size:13px;margin-top:6px}
+.masthead .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:12px;color:#C6D0DE}
+.masthead .meta b{color:#F8FAFC;font-weight:600}
+.headnums{display:flex;flex-wrap:wrap;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12)}
+.headnums .hn .v{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.headnums .hn .l{font-size:11px;color:#A9B4C6;margin-top:2px}
+.up{color:#34D399}.down{color:#F87171}
+/* ---- 卡片与栅格 ---- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+.card h2{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.grid2 .card{margin-bottom:0}
+.chart{width:100%;height:400px}
+.chart-note{font-size:12px;color:var(--muted);margin-top:6px}
+/* ---- KPI ---- */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:22px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:11px;color:var(--muted);margin-top:2px}
+/* ---- 表格 ---- */
+.tbl-wrap{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+thead th{position:sticky;top:0;background:#F0F4F9;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+tbody td{padding:7px 10px;border-bottom:1px solid #EEF1F6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+tbody tr:hover{background:#F7FAFD}
+.badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.normal{background:#E0F2FE;color:#0369A1}
+.badge.weak{background:#FEF3C7;color:#92400E}
+.pos{color:var(--green)}.neg{color:var(--red)}
+/* ---- 控件 ---- */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer}
+.btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:hover{opacity:.85}
+.note-err{display:none;background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+/* ---- 页脚 ---- */
+footer{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.8}
+footer b{color:var(--ink)}
+@media (max-width:960px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.kpis{grid-template-columns:1fr}.masthead{padding:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <h1>ETF动量轮动回测系统报告</h1>
+  <div class="sub">斜率动量口径轮动 · 标的池与动量参数可调整（config.json）</div>
+  <div class="meta">
+    <span>回测区间 <b>$RANGE</b></span>
+    <span>交易日 <b>$NDAYS</b></span>
+    <span>数据 <b>Wind Alice 后复权日K</b></span>
+    <span>调仓 <b>$REBAL</b></span>
+    <span>因子 <b>$MWIN</b></span>
+    <span>筛选 <b>$R2</b></span>
+    <span>持有 <b>Top $TOPN</b></span>
+  </div>
+  <div class="headnums">
+    <div class="hn"><div class="v $STR_CLS">$STR_TOTAL</div><div class="l">策略累计收益</div></div>
+    <div class="hn"><div class="v $STR_CLS">$STR_CAGR</div><div class="l">年化收益</div></div>
+    <div class="hn"><div class="v down">$STR_DD</div><div class="l">最大回撤</div></div>
+    <div class="hn"><div class="v">$STR_SHARPE</div><div class="l">夏普比率</div></div>
+    <div class="hn"><div class="v">$STR_CALMAR</div><div class="l">卡玛比率</div></div>
+    <div class="hn"><div class="v">$BENCH_TOTAL</div><div class="l">沪深300累计</div></div>
+    <div class="hn"><div class="v">$EW_TOTAL</div><div class="l">等权池累计</div></div>
+  </div>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="l">年化波动率</div><div class="v">$STR_VOL</div><div class="d">策略</div></div>
+  <div class="kpi"><div class="l">日胜率</div><div class="v">$STR_WIN</div><div class="d">策略</div></div>
+  <div class="kpi"><div class="l">盈亏比</div><div class="v">$STR_PF</div><div class="d">盈利日均值/亏损日均值</div></div>
+  <div class="kpi"><div class="l">仓位暴露</div><div class="v">$STR_EXP</div><div class="d">有持仓天数占比</div></div>
+  <div class="kpi"><div class="l">调仓次数</div><div class="v">$STR_TRADES</div><div class="d">决策并换仓次数</div></div>
+  <div class="kpi"><div class="l">累计交易成本</div><div class="v">$STR_COST</div><div class="d">佣金+滑点按换手计提</div></div>
+  <div class="kpi"><div class="l">基准最大回撤</div><div class="v down">$BENCH_DD</div><div class="d">沪深300</div></div>
+  <div class="kpi"><div class="l">超额收益</div><div class="v $EXC_CLS">$EXCESS</div><div class="d">相对沪深300</div></div>
+</div>
+
+<div class="note-err" id="chartErr">ECharts 加载失败（需联网），下方数据表格仍可正常查看。</div>
+
+<div class="card">
+  <div class="toolbar">
+    <h2 style="margin:0">净值曲线</h2>
+    <button class="btn" id="btnLog" onclick="toggleLog()">切换对数坐标</button>
+  </div>
+  <div id="chartNav" class="chart"></div>
+  <div class="chart-note">灰色竖带为“走弱期”（4大盘指数至少3个跌破10日线，策略仅从海外避险池轮动）。</div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h2>回撤对比</h2><div id="chartDD" class="chart"></div><div class="chart-note">策略最大回撤 $STR_DD vs 沪深300 $BENCH_DD。</div></div>
+  <div class="card"><h2>持仓轮动时间线</h2><div id="chartHold" class="chart"></div><div class="chart-note">横轴为每次调仓决策日，色块=当期持有标的及权重，灰色=空仓。</div></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h2>月度收益热力图</h2><div id="chartMonth" class="chart"></div><div class="chart-note">单元格=该月策略收益率（%），红跌绿涨。</div></div>
+  <div class="card"><h2>动量得分轨迹</h2><div id="chartMom" class="chart"></div><div class="chart-note">上：每次调仓Top3动量得分；下：Top1得分的R²（筛选条件 $R2）。</div></div>
+</div>
+
+<div class="card"><h2>年度收益对比</h2><div id="chartYear" class="chart" style="height:360px"></div></div>
+
+<div class="card">
+  <h2>调仓记录（共 $NTRADES 笔）</h2>
+  <div class="tbl-wrap"><table>
+    <colgroup><col style="width:11%"><col style="width:11%"><col style="width:8%"><col style="width:17%"><col style="width:17%"><col style="width:9%"><col style="width:9%"><col style="width:18%"></colgroup>
+    <thead><tr><th>决策日</th><th>执行日</th><th>状态</th><th>调入</th><th>调出</th><th>换手</th><th>成本%</th><th>Top1动量得分(R²)</th></tr></thead>
+    <tbody id="tblTrades"></tbody>
+  </table></div>
+</div>
+
+<div class="card">
+  <h2>参数敏感性（因子窗口缩放 × 持有数 × 调仓周期）</h2>
+  <div class="tbl-wrap"><table>
+    <colgroup><col style="width:14%"><col style="width:12%"><col style="width:14%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+    <thead><tr><th>窗口缩放</th><th>持有数</th><th>调仓周期</th><th>累计收益</th><th>年化</th><th>最大回撤</th><th>夏普</th></tr></thead>
+    <tbody id="tblSens"></tbody>
+  </table></div>
+  <div class="chart-note">当前参数组合以深色行标出；敏感性为全参数重跑结果，含完整成本与走弱期逻辑。</div>
+</div>
+
+<footer>
+  <b>数据口径：</b>Wind Alice 万得金融数据 · ETF后复权日K（2017-01起，2019-01前用于动量/均线预热）<br>
+  <b>策略口径：</b>多因子动量 —— 排名=勾选标的经筛选条件（$R2）过滤后，按排名因子截面z-score加权得分降序取TopN等权；次日开盘换仓；成本=(佣金万2.5+滑点5bp)×单边换手。<br>
+  <b>免责声明：</b>本报告仅用于策略研究与参数探索，不构成投资建议。历史回测不代表未来收益。
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+window.addEventListener('load', function(){
+  if (typeof echarts === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js';
+    s.onload = initCharts; s.onerror = function(){ document.getElementById('chartErr').style.display = 'block'; };
+    document.head.appendChild(s);
+  } else { initCharts(); }
+});
+var DATA = /*__DATA__*/;
+var PALETTE = DATA.assetColors;
+var navChart = null, navLog = false;
+
+function tooltipAxis(){
+  return {trigger:'axis', triggerOn:'mousemove|click', renderMode:'richText', confine:true};
+}
+function safeInit(elId, builder){
+  try {
+    var c = echarts.init(document.getElementById(elId));
+    builder(c);
+    return c;
+  } catch (e) {
+    var el = document.getElementById(elId);
+    var note = document.createElement('div');
+    note.className = 'chart-note';
+    note.style.color = '#DC2626';
+    note.textContent = '该图表初始化失败：' + ((e && e.message) ? e.message : String(e));
+    el.parentNode.appendChild(note);
+    return null;
+  }
+}
+function renderTables(){
+  var tt = document.getElementById('tblTrades');
+  var rows = '';
+  DATA.trades.forEach(function(t){
+    var top1 = t.top_scores.length ? t.top_scores[0].name + ' ' + t.top_scores[0].score.toFixed(2) + '(' + t.top_scores[0].r2.toFixed(2) + ')' : '—';
+    rows += '<tr><td>' + t.decision + '</td><td>' + t.exec + '</td><td><span class="badge ' + t.regime + '">' + (t.regime==='weak'?'走弱':'正常') + '</span></td><td>' + t.to + '</td><td>' + (t.from||'—') + '</td><td>' + t.turnover + '</td><td>' + (t.cost*100).toFixed(2) + '</td><td>' + top1 + '</td></tr>';
+  });
+  tt.innerHTML = rows;
+  var ts = document.getElementById('tblSens');
+  var srows = '';
+  DATA.sens.forEach(function(r){
+    var cls = r.isBase ? ' style="background:#EEF3FA;font-weight:600"' : '';
+    srows += '<tr' + cls + '><td>' + r.wscale + '×</td><td>' + r.topn + '</td><td>' + r.reb + '</td><td class="' + (r.total>=0?'pos':'neg') + '">' + (r.total*100).toFixed(1) + '%</td><td>' + (r.cagr*100).toFixed(2) + '%</td><td class="neg">' + (r.dd*100).toFixed(1) + '%</td><td>' + r.sharpe.toFixed(2) + '</td></tr>';
+  });
+  ts.innerHTML = srows;
+}
+function toggleLog(){
+  if (!navChart) return;
+  navLog = !navLog;
+  document.getElementById('btnLog').textContent = navLog ? '切换普通坐标' : '切换对数坐标';
+  navChart.setOption(navOption());
+}
+function navOption(){
+  return {
+    color:['#0E7490','#94A3B8','#B45309'],
+    tooltip: tooltipAxis(),
+    legend:{data:['策略','沪深300','等权池'], top:0, textStyle:{fontSize:12}},
+    grid:{left:56, right:16, top:32, bottom:56, containLabel:true},
+    xAxis:{type:'time', axisLabel:{fontSize:11, formatter:function(v){ return String(new Date(v).getFullYear()); }}},
+    yAxis:{type: navLog?'log':'value', name:'净值', nameTextStyle:{fontSize:11},
+           axisLabel:{fontSize:11, formatter:function(v){ return v>=100?(v/100).toFixed(0)+'x':v.toFixed(2)+''; }}},
+    dataZoom:[{type:'inside', start:0, end:100},{type:'slider', height:18, bottom:8, start:0, end:100}],
+    series:[
+      {name:'策略', type:'line', showSymbol:false, lineStyle:{width:2.5}, data:DATA.nav.strategy},
+      {name:'沪深300', type:'line', showSymbol:false, lineStyle:{width:1.5, type:'dashed'}, data:DATA.nav.bench},
+      {name:'等权池', type:'line', showSymbol:false, lineStyle:{width:1.5}, data:DATA.nav.ew},
+      {name:'走弱期', type:'line', data:[], markArea:{
+        silent:true, itemStyle:{color:'rgba(100,116,139,0.10)'},
+        data: DATA.weak.map(function(w){ return [{xAxis:w[0]},{xAxis:w[1]}]; }) }}
+    ]
+  };
+}
+function initCharts(){
+  renderTables();
+  // ===== 净值曲线 =====
+  safeInit('chartNav', function(c){ navChart = c; c.setOption(navOption()); });
+  // ===== 回撤 =====
+  safeInit('chartDD', function(c){
+    c.setOption({
+      color:['#0E7490','#94A3B8'],
+      tooltip: tooltipAxis(),
+      legend:{data:['策略回撤','沪深300回撤'], top:0, textStyle:{fontSize:12}},
+      grid:{left:52, right:16, top:32, bottom:36, containLabel:true},
+      xAxis:{type:'time', axisLabel:{fontSize:11}},
+      yAxis:{type:'value', max:0, axisLabel:{fontSize:11, formatter:function(v){ return (v*100).toFixed(0)+'%'; }}},
+      series:[
+        {name:'策略回撤', type:'line', showSymbol:false, lineStyle:{width:1.5}, areaStyle:{opacity:.25}, data:DATA.dd.strategy},
+        {name:'沪深300回撤', type:'line', showSymbol:false, lineStyle:{width:1.5, type:'dashed'}, areaStyle:{opacity:.10}, data:DATA.dd.bench}
+      ]
+    });
+  });
+  // ===== 持仓时间线（堆叠柱）=====
+  safeInit('chartHold', function(c){
+    var hSeries = DATA.hold.assets.map(function(a, i){
+      return {name:a, type:'bar', stack:'h', barWidth:'72%', itemStyle:{color:PALETTE[i]},
+              data: DATA.hold.weights.map(function(w){ return w[i]; })};
+    });
+    hSeries.push({name:'空仓', type:'bar', stack:'h', barWidth:'72%', itemStyle:{color:'#E5E9F0'}, data: DATA.hold.cash});
+    c.setOption({
+      tooltip: Object.assign(tooltipAxis(), {formatter:function(ps){
+        if(!ps || !ps.length) return '';
+        var lines = [DATA.hold.dates[ps[0].dataIndex]];
+        ps.forEach(function(p){ if(p.value > 0.005){ lines.push(p.seriesName + '  ' + (p.value*100).toFixed(0) + '%'); } });
+        return lines.join(String.fromCharCode(10));
+      }}),
+      legend:{type:'scroll', top:0, textStyle:{fontSize:10}, data:DATA.hold.assets.concat(['空仓'])},
+      grid:{left:8, right:16, top:44, bottom:44, containLabel:true},
+      xAxis:{type:'category', data:DATA.hold.dates, axisLabel:{fontSize:9, interval:Math.max(0, Math.floor(DATA.hold.dates.length/18)-1)}},
+      yAxis:{type:'value', max:1, axisLabel:{fontSize:10, formatter:function(v){ return (v*100).toFixed(0)+'%'; }}},
+      dataZoom:[{type:'inside', start:0, end:100}],
+      series: hSeries
+    });
+  });
+  // ===== 月度热力图 =====
+  safeInit('chartMonth', function(c){
+    c.setOption({
+      tooltip: Object.assign(tooltipAxis(), {formatter:function(p){
+        if(!p || !p.length) return '';
+        return p[0].name + '月 · ' + (p[0].value[2]*100).toFixed(1) + '%';
+      }}),
+      grid:{left:44, right:16, top:16, bottom:36, containLabel:true},
+      xAxis:{type:'category', data:DATA.month.years, splitArea:{show:true}, axisLabel:{fontSize:11}},
+      yAxis:{type:'category', data:DATA.month.months, splitArea:{show:true}, axisLabel:{fontSize:11}},
+      visualMap:{min:-DATA.month.absMax, max:DATA.month.absMax, calculable:false, orient:'horizontal',
+                 left:'center', bottom:0, itemHeight:60, itemWidth:10,
+                 inRange:{color:['#B91C1C','#FEE2E2','#FFFFFF','#D1FAE5','#047857']},
+                 textStyle:{fontSize:10}},
+      series:[{type:'heatmap', data:DATA.month.cells,
+               label:{show:true, fontSize:9, formatter:function(p){ return (p.value[2]*100).toFixed(0)+''; }},
+               emphasis:{itemStyle:{borderColor:'#17213A', borderWidth:1}}}]
+    });
+  });
+  // ===== 动量得分 =====
+  safeInit('chartMom', function(c){
+    c.setOption({
+      color:['#0E7490','#F59E0B','#94A3B8'],
+      tooltip: tooltipAxis(),
+      legend:{data:['Top1得分','Top2得分','Top3得分'], top:0, textStyle:{fontSize:12}},
+      grid:[{left:56, right:16, top:34, height:'38%'},
+            {left:56, right:16, top:'62%', height:'28%'}],
+      xAxis:[
+        {type:'category', data:DATA.mom.dates, gridIndex:0, axisLabel:{show:false}},
+        {type:'category', data:DATA.mom.dates, gridIndex:1, axisLabel:{fontSize:10, interval:Math.max(0, Math.floor(DATA.mom.dates.length/18)-1)}}
+      ],
+      yAxis:[
+        {gridIndex:0, type:'value', name:'得分', nameTextStyle:{fontSize:11}, axisLabel:{fontSize:11}},
+        {gridIndex:1, type:'value', name:'R²', nameTextStyle:{fontSize:11}, min:0, max:1, axisLabel:{fontSize:11}}
+      ],
+      series:[
+        {name:'Top1得分', type:'line', showSymbol:false, lineStyle:{width:2}, data:DATA.mom.s1},
+        {name:'Top2得分', type:'line', showSymbol:false, lineStyle:{width:1.5, type:'dashed'}, data:DATA.mom.s2},
+        {name:'Top3得分', type:'line', showSymbol:false, lineStyle:{width:1.5, type:'dotted'}, data:DATA.mom.s3},
+        {name:'Top1 R²', type:'line', xAxisIndex:1, yAxisIndex:1, showSymbol:false, lineStyle:{width:1.5}, data:DATA.mom.r2,
+         markLine:{silent:true, symbol:'none', lineStyle:{color:'#B45309', type:'dashed'}, data:[{yAxis:DATA.config.r2}]}}
+      ]
+    });
+  });
+  // ===== 年度收益 =====
+  safeInit('chartYear', function(c){
+    c.setOption({
+      color:['#0E7490','#94A3B8'],
+      tooltip: tooltipAxis(),
+      legend:{data:['策略','沪深300'], top:0, textStyle:{fontSize:12}},
+      grid:{left:52, right:16, top:34, bottom:36, containLabel:true},
+      xAxis:{type:'category', data:DATA.year.labels, axisLabel:{fontSize:11}},
+      yAxis:{type:'value', axisLabel:{fontSize:11, formatter:function(v){ return (v*100).toFixed(0)+'%'; }}},
+      series:[
+        {name:'策略', type:'bar', barGap:'20%', data:DATA.year.strategy,
+         itemStyle:{color:function(p){ return p.value>=0?'#0E7490':'#DC2626'; }},
+         label:{show:true, position:'top', fontSize:10, formatter:function(p){ return (p.value*100).toFixed(0)+'%'; }}},
+        {name:'沪深300', type:'bar', data:DATA.year.bench, itemStyle:{color:'#B6C2D2'},
+         label:{show:true, position:'top', fontSize:10, formatter:function(p){ return (p.value*100).toFixed(0)+'%'; }}}
+      ]
+    });
+  });
+}
+</script>
+</body>
+</html>

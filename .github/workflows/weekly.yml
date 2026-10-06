@@ -1,0 +1,59 @@
+# ETF量化回测系统 — 每周自动更新
+# 每周六 06:00 UTC（北京时间 14:00）用 AKShare（东方财富免费源）拉取全标的后复权日K，
+# 重建单文件网页，并部署到 GitHub Pages（免费 https 链接）。
+# 触发方式：schedule 定时 / workflow_dispatch 手动 / push 到 main 后手动点 Run。
+
+name: ETF数据每周更新
+
+on:
+  schedule:
+    - cron: '0 6 * * 6'        # 每周六 06:00 UTC = 北京 14:00
+  workflow_dispatch: {}        # 仓库 Actions 页可手动触发
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install akshare pandas
+
+      - name: 探针·检查东方财富可达性
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 20 \
+            'https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.510300&klt=101&fqt=2&beg=20260101&end=20261006&fields1=f1&fields2=f51&ut=7eea3edcaed734bea9cbfc24409ed989' \
+            || echo 000)
+          echo "东财探针 HTTP=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::东方财富接口不可达(HTTP=$code)。GitHub runner 无法访问 eastmoney.com，免费源不可用。"
+            exit 1
+          fi
+
+      - name: 拉取行情并重建网页
+        run: python update_data.py
+
+      - name: 部署到 GitHub Pages
+        uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+      - id: deployment
+        uses: actions/deploy-pages@v4

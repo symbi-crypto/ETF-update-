@@ -1,0 +1,15 @@
+# 生成物（workflow 每次重建，无需入库）
+data/raw/
+data/*.csv
+data/nav/
+data/unadj/
+data/raw_unadj/
+output/
+
+# Python / 临时
+__pycache__/
+*.pyc
+_test/
+diag_*.js
+verify_*.py
+normalize_*.py

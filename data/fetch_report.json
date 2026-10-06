@@ -1,0 +1,882 @@
+{
+  "generated_at": "2026-09-30",
+  "total": 109,
+  "status_ok": 100,
+  "status_warn": 7,
+  "status_failed": 1,
+  "status_discarded": 1,
+  "items": [
+    {
+      "code": "159338.SZ",
+      "status": "ok",
+      "first_date": "2024-10-15",
+      "last_date": "2026-09-30",
+      "rows": 480,
+      "note": ""
+    },
+    {
+      "code": "159516.SZ",
+      "status": "ok",
+      "first_date": "2023-07-10",
+      "last_date": "2026-09-30",
+      "rows": 776,
+      "note": ""
+    },
+    {
+      "code": "159601.SZ",
+      "status": "ok",
+      "first_date": "2021-11-08",
+      "last_date": "2026-09-30",
+      "rows": 1189,
+      "note": ""
+    },
+    {
+      "code": "159611.SZ",
+      "status": "ok",
+      "first_date": "2022-01-07",
+      "last_date": "2026-09-30",
+      "rows": 1146,
+      "note": ""
+    },
+    {
+      "code": "159629.SZ",
+      "status": "discarded",
+      "first_date": "2022-08-03",
+      "last_date": "2026-09-30",
+      "rows": 1009,
+      "note": "代码与名称冲突待确认:用户标注为中证A50ETF(华夏),但Wind档案返回该代码为富国中证1000ETF(成立2022-07-27/上市2022-08-03,跟踪中证1000);全市场检索无华夏中证A50ETF(华夏A50为159601.SZ MSCI中国A50互联互通ETF,已在本轮动池)。数据按代码如实拉取(2022-08-03~2026-09-30,1009行,期间连续无大段缺失,数值校验通过),是否以该代码入池请确认;若确需中证A50ETF,可改拉563350.SH(华泰柏瑞)/563080.SH(易方达)/159591.SZ(富国)等2024-03上市产品；【2026-09-30用户决策】核实为富国中证1000ETF且与池内512100.SH中证1000重复,已决定弃用,不参与轮动池;原raw/csv保留备查,由563350.SH替代"
+    },
+    {
+      "code": "159755.SZ",
+      "status": "ok",
+      "first_date": "2021-06-24",
+      "last_date": "2026-09-30",
+      "rows": 1280,
+      "note": ""
+    },
+    {
+      "code": "159766.SZ",
+      "status": "ok",
+      "first_date": "2021-07-23",
+      "last_date": "2026-09-30",
+      "rows": 1258,
+      "note": ""
+    },
+    {
+      "code": "159790.SZ",
+      "status": "ok",
+      "first_date": "2021-08-06",
+      "last_date": "2026-09-30",
+      "rows": 1248,
+      "note": ""
+    },
+    {
+      "code": "159819.SZ",
+      "status": "ok",
+      "first_date": "2020-09-23",
+      "last_date": "2026-09-30",
+      "rows": 1458,
+      "note": ""
+    },
+    {
+      "code": "159825.SZ",
+      "status": "warn",
+      "first_date": "2020-11-23",
+      "last_date": "2026-09-30",
+      "rows": 1406,
+      "note": " 缺失段1处 最长25天(2020-12-29)（Wind原始返回即无该段行=无成交日不产出行，位于上市初期/2020疫情期，非取数错误）"
+    },
+    {
+      "code": "159837.SZ",
+      "status": "ok",
+      "first_date": "2020-12-28",
+      "last_date": "2026-09-30",
+      "rows": 1385,
+      "note": ""
+    },
+    {
+      "code": "159865.SZ",
+      "status": "ok",
+      "first_date": "2021-02-23",
+      "last_date": "2026-09-30",
+      "rows": 1353,
+      "note": ""
+    },
+    {
+      "code": "159866.SZ",
+      "status": "warn",
+      "first_date": "2021-03-01",
+      "last_date": "2026-09-30",
+      "rows": 1344,
+      "note": " 缺失段1处 最长21天(2021-04-08)（Wind原始返回即无该段行=无成交日不产出行，位于上市初期/2020疫情期，非取数错误）"
+    },
+    {
+      "code": "159867.SZ",
+      "status": "ok",
+      "first_date": "2021-02-18",
+      "last_date": "2026-09-30",
+      "rows": 1356,
+      "note": ""
+    },
+    {
+      "code": "159869.SZ",
+      "status": "ok",
+      "first_date": "2021-02-19",
+      "last_date": "2026-09-30",
+      "rows": 1354,
+      "note": ""
+    },
+    {
+      "code": "159883.SZ",
+      "status": "ok",
+      "first_date": "2021-04-30",
+      "last_date": "2026-09-30",
+      "rows": 1315,
+      "note": ""
+    },
+    {
+      "code": "159901.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "159902.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "159905.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2510,
+      "note": ""
+    },
+    {
+      "code": "159915.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2510,
+      "note": ""
+    },
+    {
+      "code": "159920.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "159928.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "159938.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2510,
+      "note": "替代原512300.SH(医药ETF华宝,已清盘)。Wind档案确认=广发中证医药卫生ETF(广发医药ETF),跟踪中证医药卫生指数,满区间2016-06-01~2026-09-30,无缺失段,数值校验通过"
+    },
+    {
+      "code": "159949.SZ",
+      "status": "ok",
+      "first_date": "2016-07-22",
+      "last_date": "2026-09-30",
+      "rows": 2475,
+      "note": ""
+    },
+    {
+      "code": "159951.SZ",
+      "status": "warn",
+      "first_date": "2017-07-10",
+      "last_date": "2022-08-23",
+      "rows": 1248,
+      "note": "末行 2022-08-23 != 2026-09-30（可能已退市/清盘）"
+    },
+    {
+      "code": "159980.SZ",
+      "status": "ok",
+      "first_date": "2019-12-24",
+      "last_date": "2026-09-30",
+      "rows": 1642,
+      "note": ""
+    },
+    {
+      "code": "159985.SZ",
+      "status": "ok",
+      "first_date": "2019-12-05",
+      "last_date": "2026-09-30",
+      "rows": 1654,
+      "note": ""
+    },
+    {
+      "code": "159992.SZ",
+      "status": "warn",
+      "first_date": "2020-03-02",
+      "last_date": "2026-09-30",
+      "rows": 1581,
+      "note": " 缺失段1处 最长28天(2020-04-10)（Wind原始返回即无该段行=无成交日不产出行，位于上市初期/2020疫情期，非取数错误）"
+    },
+    {
+      "code": "159995.SZ",
+      "status": "warn",
+      "first_date": "2019-12-24",
+      "last_date": "2026-09-30",
+      "rows": 1630,
+      "note": " 缺失段1处 最长27天(2020-02-10)（Wind原始返回即无该段行=无成交日不产出行，位于上市初期/2020疫情期，非取数错误）"
+    },
+    {
+      "code": "159996.SZ",
+      "status": "warn",
+      "first_date": "2020-02-10",
+      "last_date": "2026-09-30",
+      "rows": 1600,
+      "note": " 缺失段1处 最长24天(2020-03-16)（Wind原始返回即无该段行=无成交日不产出行，位于上市初期/2020疫情期，非取数错误）"
+    },
+    {
+      "code": "159997.SZ",
+      "status": "warn",
+      "first_date": "2020-02-10",
+      "last_date": "2026-09-30",
+      "rows": 1594,
+      "note": " 缺失段1处 最长29天(2020-03-20)（Wind原始返回即无该段行=无成交日不产出行，位于上市初期/2020疫情期，非取数错误）"
+    },
+    {
+      "code": "161226.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2510,
+      "note": ""
+    },
+    {
+      "code": "510050.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "510180.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "510300.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "510500.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "510880.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "511010.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "511030.SH",
+      "status": "ok",
+      "first_date": "2019-03-22",
+      "last_date": "2026-09-30",
+      "rows": 1828,
+      "note": ""
+    },
+    {
+      "code": "511380.SH",
+      "status": "ok",
+      "first_date": "2020-04-07",
+      "last_date": "2026-09-30",
+      "rows": 1575,
+      "note": ""
+    },
+    {
+      "code": "511990.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "512000.SH",
+      "status": "ok",
+      "first_date": "2016-09-14",
+      "last_date": "2026-09-30",
+      "rows": 2438,
+      "note": ""
+    },
+    {
+      "code": "512010.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "512070.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "512100.SH",
+      "status": "ok",
+      "first_date": "2016-11-04",
+      "last_date": "2026-09-30",
+      "rows": 2408,
+      "note": ""
+    },
+    {
+      "code": "512170.SH",
+      "status": "ok",
+      "first_date": "2019-06-17",
+      "last_date": "2026-09-30",
+      "rows": 1772,
+      "note": ""
+    },
+    {
+      "code": "512200.SH",
+      "status": "ok",
+      "first_date": "2017-09-25",
+      "last_date": "2026-09-30",
+      "rows": 2188,
+      "note": ""
+    },
+    {
+      "code": "512290.SH",
+      "status": "ok",
+      "first_date": "2019-05-20",
+      "last_date": "2026-09-30",
+      "rows": 1791,
+      "note": ""
+    },
+    {
+      "code": "512300.SH",
+      "status": "failed",
+      "first_date": "2016-06-01",
+      "last_date": "2020-12-23",
+      "rows": 1121,
+      "note": "Wind 返回缺 VOLUME/TURNOVER 列，行情止于 2020-12-23（该基金已无场内撮合/清盘），重试一致；需从轮动池剔除或换数据源"
+    },
+    {
+      "code": "512330.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "512380.SH",
+      "status": "ok",
+      "first_date": "2019-04-30",
+      "last_date": "2026-09-30",
+      "rows": 1802,
+      "note": ""
+    },
+    {
+      "code": "512400.SH",
+      "status": "ok",
+      "first_date": "2017-09-01",
+      "last_date": "2026-09-30",
+      "rows": 2204,
+      "note": ""
+    },
+    {
+      "code": "512480.SH",
+      "status": "ok",
+      "first_date": "2019-06-12",
+      "last_date": "2026-09-30",
+      "rows": 1775,
+      "note": ""
+    },
+    {
+      "code": "512550.SH",
+      "status": "ok",
+      "first_date": "2017-08-07",
+      "last_date": "2026-09-30",
+      "rows": 2223,
+      "note": ""
+    },
+    {
+      "code": "512580.SH",
+      "status": "ok",
+      "first_date": "2017-02-28",
+      "last_date": "2026-09-30",
+      "rows": 2332,
+      "note": ""
+    },
+    {
+      "code": "512660.SH",
+      "status": "ok",
+      "first_date": "2016-08-08",
+      "last_date": "2026-09-30",
+      "rows": 2465,
+      "note": ""
+    },
+    {
+      "code": "512670.SH",
+      "status": "ok",
+      "first_date": "2019-08-01",
+      "last_date": "2026-09-30",
+      "rows": 1739,
+      "note": ""
+    },
+    {
+      "code": "512680.SH",
+      "status": "ok",
+      "first_date": "2016-10-14",
+      "last_date": "2026-09-30",
+      "rows": 2423,
+      "note": ""
+    },
+    {
+      "code": "512690.SH",
+      "status": "ok",
+      "first_date": "2019-05-06",
+      "last_date": "2026-09-30",
+      "rows": 1801,
+      "note": ""
+    },
+    {
+      "code": "512720.SH",
+      "status": "ok",
+      "first_date": "2019-08-16",
+      "last_date": "2026-09-30",
+      "rows": 1728,
+      "note": ""
+    },
+    {
+      "code": "512760.SH",
+      "status": "ok",
+      "first_date": "2019-06-12",
+      "last_date": "2026-09-30",
+      "rows": 1775,
+      "note": ""
+    },
+    {
+      "code": "512800.SH",
+      "status": "ok",
+      "first_date": "2017-08-03",
+      "last_date": "2026-09-30",
+      "rows": 2225,
+      "note": ""
+    },
+    {
+      "code": "512880.SH",
+      "status": "ok",
+      "first_date": "2016-08-08",
+      "last_date": "2026-09-30",
+      "rows": 2465,
+      "note": ""
+    },
+    {
+      "code": "512890.SH",
+      "status": "ok",
+      "first_date": "2019-01-18",
+      "last_date": "2026-09-30",
+      "rows": 1868,
+      "note": ""
+    },
+    {
+      "code": "512900.SH",
+      "status": "ok",
+      "first_date": "2017-03-31",
+      "last_date": "2026-09-30",
+      "rows": 2309,
+      "note": ""
+    },
+    {
+      "code": "512980.SH",
+      "status": "ok",
+      "first_date": "2018-01-19",
+      "last_date": "2026-09-30",
+      "rows": 2110,
+      "note": ""
+    },
+    {
+      "code": "513000.SH",
+      "status": "ok",
+      "first_date": "2019-06-25",
+      "last_date": "2026-09-30",
+      "rows": 1766,
+      "note": ""
+    },
+    {
+      "code": "513030.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "513050.SH",
+      "status": "ok",
+      "first_date": "2017-01-18",
+      "last_date": "2026-09-30",
+      "rows": 2356,
+      "note": ""
+    },
+    {
+      "code": "513090.SH",
+      "status": "ok",
+      "first_date": "2020-03-26",
+      "last_date": "2026-09-30",
+      "rows": 1582,
+      "note": ""
+    },
+    {
+      "code": "513100.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "513180.SH",
+      "status": "ok",
+      "first_date": "2021-05-25",
+      "last_date": "2026-09-30",
+      "rows": 1301,
+      "note": ""
+    },
+    {
+      "code": "513330.SH",
+      "status": "ok",
+      "first_date": "2021-02-08",
+      "last_date": "2026-09-30",
+      "rows": 1368,
+      "note": ""
+    },
+    {
+      "code": "513500.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "513520.SH",
+      "status": "ok",
+      "first_date": "2019-06-25",
+      "last_date": "2026-09-30",
+      "rows": 1766,
+      "note": ""
+    },
+    {
+      "code": "515000.SH",
+      "status": "ok",
+      "first_date": "2019-08-16",
+      "last_date": "2026-09-30",
+      "rows": 1728,
+      "note": ""
+    },
+    {
+      "code": "515020.SH",
+      "status": "ok",
+      "first_date": "2019-12-03",
+      "last_date": "2026-09-30",
+      "rows": 1657,
+      "note": ""
+    },
+    {
+      "code": "515030.SH",
+      "status": "ok",
+      "first_date": "2020-03-04",
+      "last_date": "2026-09-30",
+      "rows": 1598,
+      "note": ""
+    },
+    {
+      "code": "515050.SH",
+      "status": "ok",
+      "first_date": "2019-10-16",
+      "last_date": "2026-09-30",
+      "rows": 1691,
+      "note": ""
+    },
+    {
+      "code": "515080.SH",
+      "status": "ok",
+      "first_date": "2019-12-27",
+      "last_date": "2026-09-30",
+      "rows": 1639,
+      "note": ""
+    },
+    {
+      "code": "515110.SH",
+      "status": "ok",
+      "first_date": "2020-01-15",
+      "last_date": "2026-09-30",
+      "rows": 1627,
+      "note": ""
+    },
+    {
+      "code": "515170.SH",
+      "status": "ok",
+      "first_date": "2021-01-13",
+      "last_date": "2026-09-30",
+      "rows": 1386,
+      "note": ""
+    },
+    {
+      "code": "515180.SH",
+      "status": "ok",
+      "first_date": "2019-12-20",
+      "last_date": "2026-09-30",
+      "rows": 1644,
+      "note": ""
+    },
+    {
+      "code": "515210.SH",
+      "status": "ok",
+      "first_date": "2020-03-02",
+      "last_date": "2026-09-30",
+      "rows": 1600,
+      "note": ""
+    },
+    {
+      "code": "515220.SH",
+      "status": "ok",
+      "first_date": "2020-03-02",
+      "last_date": "2026-09-30",
+      "rows": 1600,
+      "note": ""
+    },
+    {
+      "code": "515290.SH",
+      "status": "ok",
+      "first_date": "2020-12-28",
+      "last_date": "2026-09-30",
+      "rows": 1397,
+      "note": ""
+    },
+    {
+      "code": "515450.SH",
+      "status": "ok",
+      "first_date": "2020-02-26",
+      "last_date": "2026-09-30",
+      "rows": 1603,
+      "note": ""
+    },
+    {
+      "code": "515750.SH",
+      "status": "ok",
+      "first_date": "2019-12-06",
+      "last_date": "2026-09-30",
+      "rows": 1654,
+      "note": ""
+    },
+    {
+      "code": "515790.SH",
+      "status": "ok",
+      "first_date": "2020-12-18",
+      "last_date": "2026-09-30",
+      "rows": 1403,
+      "note": ""
+    },
+    {
+      "code": "515880.SH",
+      "status": "ok",
+      "first_date": "2019-09-06",
+      "last_date": "2026-09-30",
+      "rows": 1713,
+      "note": ""
+    },
+    {
+      "code": "515900.SH",
+      "status": "ok",
+      "first_date": "2019-12-18",
+      "last_date": "2026-09-30",
+      "rows": 1646,
+      "note": ""
+    },
+    {
+      "code": "515910.SH",
+      "status": "ok",
+      "first_date": "2021-02-26",
+      "last_date": "2026-09-30",
+      "rows": 1359,
+      "note": ""
+    },
+    {
+      "code": "515980.SH",
+      "status": "ok",
+      "first_date": "2020-02-10",
+      "last_date": "2026-09-30",
+      "rows": 1615,
+      "note": ""
+    },
+    {
+      "code": "516110.SH",
+      "status": "ok",
+      "first_date": "2021-05-07",
+      "last_date": "2026-09-30",
+      "rows": 1313,
+      "note": ""
+    },
+    {
+      "code": "516150.SH",
+      "status": "ok",
+      "first_date": "2021-03-17",
+      "last_date": "2026-09-30",
+      "rows": 1346,
+      "note": ""
+    },
+    {
+      "code": "516160.SH",
+      "status": "ok",
+      "first_date": "2021-02-04",
+      "last_date": "2026-09-30",
+      "rows": 1370,
+      "note": ""
+    },
+    {
+      "code": "516510.SH",
+      "status": "ok",
+      "first_date": "2021-04-07",
+      "last_date": "2026-09-30",
+      "rows": 1332,
+      "note": ""
+    },
+    {
+      "code": "518880.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "562500.SH",
+      "status": "ok",
+      "first_date": "2021-12-29",
+      "last_date": "2026-09-30",
+      "rows": 1153,
+      "note": ""
+    },
+    {
+      "code": "563300.SH",
+      "status": "ok",
+      "first_date": "2023-09-14",
+      "last_date": "2026-09-30",
+      "rows": 737,
+      "note": ""
+    },
+    {
+      "code": "563350.SH",
+      "status": "ok",
+      "first_date": "2024-03-18",
+      "last_date": "2026-09-30",
+      "rows": 618,
+      "note": "替代被弃用的159629.SZ。get_fund_info核对通过:华泰柏瑞中证A50ETF(成立2024-03-06/上市2024-03-18,跟踪中证A50,管理人华泰柏瑞),身份信息存data/raw/563350.SH.meta.json;数据自上市日2024-03-18~2026-09-30,期间连续无缺失,数值校验通过"
+    },
+    {
+      "code": "588000.SH",
+      "status": "ok",
+      "first_date": "2020-11-16",
+      "last_date": "2026-09-30",
+      "rows": 1427,
+      "note": ""
+    },
+    {
+      "code": "588190.SH",
+      "status": "ok",
+      "first_date": "2023-09-15",
+      "last_date": "2026-09-30",
+      "rows": 736,
+      "note": ""
+    },
+    {
+      "code": "588200.SH",
+      "status": "ok",
+      "first_date": "2022-10-26",
+      "last_date": "2026-09-30",
+      "rows": 956,
+      "note": ""
+    },
+    {
+      "code": "588330.SH",
+      "status": "ok",
+      "first_date": "2021-07-06",
+      "last_date": "2026-09-30",
+      "rows": 1272,
+      "note": ""
+    },
+    {
+      "code": "index_000300.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "index_000510.SH",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "index_399006.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    },
+    {
+      "code": "index_399101.SZ",
+      "status": "ok",
+      "first_date": "2016-06-01",
+      "last_date": "2026-09-30",
+      "rows": 2511,
+      "note": ""
+    }
+  ]
+}
