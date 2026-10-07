@@ -232,7 +232,7 @@ def run_backtest(cfg: dict, quiet: bool = False) -> dict:
         navs[code] = [float(nv[dt]) if nv and dt in nv and nv[dt] is not None else None for dt in full_cal] if nv else None
 
     # 3) 预构建每个标的在全日历上的价格序列（未上市前为 NaN）
-    closes, opens, volumes, amts, highs, lows = {}, {}, {}, {}, {}, {}
+    closes, opens, volumes, amts, highs, lows, turnovers = {}, {}, {}, {}, {}, {}, {}
     for code in pool:
         c = np.full(n_all, np.nan)
         o = np.full(n_all, np.nan)
@@ -240,6 +240,7 @@ def run_backtest(cfg: dict, quiet: bool = False) -> dict:
         a = np.full(n_all, np.nan)
         h = np.full(n_all, np.nan)
         l = np.full(n_all, np.nan)
+        t = np.full(n_all, np.nan)
         for i, d in enumerate(full_cal):
             rec = data[code].get(d)
             if rec and rec["close"] is not None:
@@ -252,12 +253,14 @@ def run_backtest(cfg: dict, quiet: bool = False) -> dict:
                     h[i] = rec["high"]
                 if rec["low"] is not None:
                     l[i] = rec["low"]
+                t[i] = rec["turnover"] if rec.get("turnover") is not None else np.nan
         closes[code] = c
         opens[code] = o
         volumes[code] = v
         amts[code] = a
         highs[code] = h
         lows[code] = l
+        turnovers[code] = t
 
     idx_close = {}
     for ic in cfg["regime_indices"]:
@@ -472,6 +475,22 @@ def run_backtest(cfg: dict, quiet: bool = False) -> dict:
             return _sum_at(amts[code], i, w1) / w1
         if kind == "volume":
             return _sum_at(volumes[code], i, w1) / w1
+        if kind == "turnover":
+            # N日平均换手率（%）
+            seg = turnovers[code][max(0, i - w1 + 1):i + 1]
+            if seg.size == 0 or np.isnan(seg).any():
+                return np.nan
+            return float(np.nanmean(seg))
+        if kind == "vol_ratio":
+            # 放量比 = 近N日均量 / M日前M日均量（w1=N，w2=M）
+            m1 = _sum_at(volumes[code], i, w1) / w1
+            lo = i - w2 - w2 + 1
+            if lo < 0:
+                return np.nan
+            m2 = _sum_at(volumes[code], i - w2, w2) / w2
+            if m2 <= 0 or np.isnan(m2):
+                return np.nan
+            return float(m1 / m2)
         if kind == "rsrs":
             lo = i - w1 + 1
             if lo < 0 or np.isnan(highs[code][lo:i + 1]).any() or np.isnan(lows[code][lo:i + 1]).any():

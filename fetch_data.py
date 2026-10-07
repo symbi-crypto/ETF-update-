@@ -44,7 +44,7 @@ def normalize(raw_path: str, out_path: str) -> int:
         print(f"  [跳过] {os.path.basename(raw_path)}: 无数据行")
         return 0
     idx = {name: i for i, name in enumerate(columns)}
-    lines = ["date,open,high,low,close,volume,amount"]
+    lines = ["date,open,high,low,close,volume,amount,turnover"]
     n = 0
     for r in rows:
         date = parse_time(str(r[idx["TIME"]])) if "TIME" in idx else ""
@@ -55,6 +55,7 @@ def normalize(raw_path: str, out_path: str) -> int:
             close = r[idx["MATCH"]] if "MATCH" in idx else None
             volume = r[idx["VOLUME"]] if "VOLUME" in idx else None
             amount = r[idx["TURNOVER"]] if "TURNOVER" in idx else None
+            turnover = r[idx["CHANGEHANDRATE"]] if "CHANGEHANDRATE" in idx else None
         except IndexError:
             continue
         if close is None or str(close).strip() == "" or str(close) == "null":
@@ -62,6 +63,7 @@ def normalize(raw_path: str, out_path: str) -> int:
         lines.append(",".join([
             date,
             _f(open_), _f(high), _f(low), _f(close), _f(volume), _f(amount),
+            _f(turnover),
         ]))
         n += 1
     with open(out_path, "w", encoding="utf-8") as f:

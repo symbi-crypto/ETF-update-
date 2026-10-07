@@ -51,7 +51,7 @@
   }
   function applyModeUI() {
     var isReb = stMode === "rebalance";
-    ["psecFactor", "psecFilter", "psecRank", "topnRow", "psecBuyAdd", "psecSell", "psecHold", "psecRegime", "psecTiming", "psecRebW"].forEach(function (id) {
+    ["psecFactor", "psecFilter", "psecRank", "topnRow", "psecBuyAdd", "psecSell", "psecHold", "psecRegime", "psecTiming", "psecRebW", "psecTune"].forEach(function (id) {
       var el = $(id); if (el) el.style.display = isReb ? (id === "psecRebW" ? "" : "none") : (id === "psecRebW" ? "none" : "");
     });
     // 参数稳健性检查仅对排名因子有意义：再平衡模式隐藏
@@ -67,26 +67,38 @@
   var poolBox = $("poolBox");
   function renderPool() {
   poolBox.innerHTML = "";
+  var kw = ($("poolSearch").value || "").trim().toLowerCase();
   var groups = [], frag = document.createDocumentFragment();
   POOL.forEach(function (p) {
     if (groups.indexOf(p.group) < 0) groups.push(p.group);
   });
 
   groups.forEach(function (g) {
-    var items = POOL.filter(function (p) { return p.group === g; });
-    var box = document.createElement("div");
-    box.className = "grp";
+    var allItems = POOL.filter(function (p) { return p.group === g; });
+    var items = allItems.filter(function (p) {
+      if (!kw) return true;
+      return p.name.toLowerCase().indexOf(kw) >= 0 || p.code.toLowerCase().indexOf(kw) >= 0;
+    });
+    if (!items.length) return;
     var head = document.createElement("div");
-    head.className = "ghead";
-    head.innerHTML = '<input type="checkbox">' + "<span>" + g + " (" + items.length + ")</span>";
-    var list = document.createElement("div");
-    list.className = "list";
+    head.className = "corr-grp";
+    head.innerHTML = '<input type="checkbox" style="margin:0;accent-color:var(--acc);cursor:pointer">' + g + " (" + items.length + "只)";
+    head.querySelector("input").addEventListener("change", function () {
+      var on = this.checked;
+      allItems.forEach(function (p) { poolChecked[p.code] = on; });
+      updatePoolCount();
+      if (stMode === "rebalance") { updateWSum(); }
+      if (D) scheduleRun();
+    });
+    frag.appendChild(head);
     items.forEach(function (p) {
       var l = document.createElement("div");
-      l.className = "itm";
-      l.innerHTML = '<input type="checkbox" class="pick"><span>' + p.name + " <span style='color:#94A3B8'>" + p.code + "</span></span>" +
+      l.className = "corr-item";
+      l.style.flexWrap = "wrap";
+      l.innerHTML = '<input type="checkbox" class="pick" data-c="' + p.code + '">' +
+        '<span class="corr-nm">' + p.name + "</span><span class='corr-cd'>" + p.code + "</span>" +
         "<label class='rot'><input type='checkbox' class='rotc'>仅轮动</label>" +
-        "<label class='wlab' style='display:none;margin-left:auto;align-items:center;gap:3px;white-space:nowrap'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;text-align:right'>%</label>";
+        "<label class='wlab'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;text-align:right'>%</label>";
       if (poolChecked[p.code]) l.querySelector(".pick").checked = true;
       if (onlyRot[p.code]) l.querySelector(".rotc").checked = true;
       var wv0 = rebW[p.code];
@@ -106,24 +118,26 @@
         rebW[p.code] = v; this.value = v; updateWSum();
         if (D) scheduleRun();
       });
-      list.appendChild(l);
+      frag.appendChild(l);
     });
-    head.querySelector("input").addEventListener("change", function () {
-      var on = this.checked;
-      list.querySelectorAll(".pick").forEach(function (inp) { inp.checked = on; });
-      items.forEach(function (p) {
-        poolChecked[p.code] = on;
-      });
-      updatePoolCount();
-      if (stMode === "rebalance") { updateWSum(); }
-      if (D) scheduleRun();
-    });
-    box.appendChild(head);
-    box.appendChild(list);
-    frag.appendChild(box);
   });
   poolBox.appendChild(frag);
   if (stMode === "rebalance") { syncWIn(); updateWSum(); }
+  }
+  if ($("poolSearch")) {
+    $("poolSearch").addEventListener("input", function () { renderPool(); });
+    $("poolAll").addEventListener("click", function () {
+      POOL.forEach(function (p) { poolChecked[p.code] = true; });
+      renderPool(); updatePoolCount();
+      if (stMode === "rebalance") { updateWSum(); }
+      if (D) scheduleRun();
+    });
+    $("poolNone").addEventListener("click", function () {
+      POOL.forEach(function (p) { poolChecked[p.code] = false; });
+      renderPool(); updatePoolCount();
+      if (stMode === "rebalance") { updateWSum(); }
+      if (D) scheduleRun();
+    });
   }
 
   function updatePoolCount() {
@@ -145,7 +159,7 @@
     { label: "年", mode: "yearly", unit: "年", def: 1, min: 1, max: 5,
       anchors: [{ label: "年初", value: "first" }, { label: "年末", value: "last" }], anchorDef: "first" }
   ];
-  var rebSel = REB[1], rebInterval = 1, rebAnchor = "mon", startDate = "2017-01-01";
+  var rebSel = REB[1], rebInterval = 1, rebAnchor = "mon", startDate = "2017-01-01", endDate = "2026-09-30";
   // ---------- 因子列表（可增删；kind: roc/slope_r2/vol/risk_adj/amount/volume/rsrs/c_vs_ma/c_vs_ma_lag/ma_vs_ma/ma_vs_ma_lag） ----------
   // nwin=窗口数；多窗口时窗口2/3 用 wMin2/wMax2/wStep2/def2、wMin3/...（窗口A/B/C 语义见 title）
   // cat=因子分类：price=行情因子 / tech=技术因子 / custom=自定义因子
@@ -154,10 +168,10 @@
     r2:        { label: "R²阈值",      wMin: 20,  wMax: 120, wStep: 5,  def: 25,  nwin: 1, title: "对数收盘价线性回归的R²（0~1）", cat: "tech" },
     slope_r2:  { label: "斜率动量",    wMin: 20,  wMax: 120, wStep: 5,  def: 25,  nwin: 1, cat: "tech" },
     wslope_r2: { label: "加权斜率动量", wMin: 20,  wMax: 120, wStep: 5,  def: 25,  nwin: 1, cat: "tech" },
-    vol:       { label: "波动率(低波加分)", wMin: 20, wMax: 120, wStep: 5, def: 60, nwin: 1, cat: "tech" },
+    vol:       { label: "波动率", wMin: 20, wMax: 120, wStep: 5, def: 60, nwin: 1, cat: "tech" },
     risk_adj:  { label: "风险调整动量", wMin: 20,  wMax: 120, wStep: 5,  def: 60,  nwin: 1, cat: "tech" },
-    amount:    { label: "N日成交额",   wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "N日平均成交额（万元）", cat: "price" },
-    volume:    { label: "N日成交量",   wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "N日平均成交量（万手）", cat: "price" },
+    amount:    { label: "成交额",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "N日平均成交额（万元）", cat: "price" },
+    volume:    { label: "成交量",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "N日平均成交量（万手）", cat: "price" },
     rsrs:      { label: "N日RSRS",     wMin: 5,   wMax: 120, wStep: 5,  def: 20,  nwin: 1, title: "N日RSRS：N日最高价对最低价OLS回归斜率", cat: "tech" },
     c_vs_ma:   { label: "收盘vs均线",  wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "后复权收盘价相对近N日均线的涨幅", cat: "tech" },
     c_vs_ma_lag: { label: "收盘vs前均线", wMin: 1,  wMax: 120, wStep: 1, def: 5,  nwin: 2,
@@ -180,12 +194,16 @@
                  winTitles: ["平移N日（回看N日前）", "M日均线窗口"], cat: "tech" },
     amplitude: { label: "日内振幅",    wMin: 5,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "(最高-最低)/最低", cat: "tech" },
     position:  { label: "日内位置",    wMin: 5,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "(收盘-最低)/(最高-最低)", cat: "tech" },
-    rsi:       { label: "RSI(14)",     wMin: 5,   wMax: 60,  wStep: 1,  def: 14,  nwin: 1, title: "14日相对强弱指标 RSI=100×均涨/(均涨+均跌)", cat: "tech" }
+    rsi:       { label: "RSI(14)",     wMin: 5,   wMax: 60,  wStep: 1,  def: 14,  nwin: 1, title: "14日相对强弱指标 RSI=100×均涨/(均涨+均跌)", cat: "tech" },
+    turnover:  { label: "换手率",      wMin: 1,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "N日平均换手率（%）——流动性/关注度，数据来自原始CHANGEHANDRATE", cat: "price" },
+    vol_ratio: { label: "放量比",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 2,
+                 wMin2: 5, wMax2: 250, wStep2: 5, def2: 60,
+                 winTitles: ["近N日均量窗口", "M日前M日均量窗口"], title: "近N日均量 ÷ M日前M日均量（量能放大程度）", cat: "tech" }
   };
   var KIND_CAT = {
     all: null,
-    price: ["roc", "amount", "volume", "close", "open", "high", "low"],
-    tech: ["slope_r2", "wslope_r2", "vol", "risk_adj", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "r2"],
+    price: ["close", "open", "high", "low", "amount", "volume", "turnover", "roc"],
+    tech: ["slope_r2", "wslope_r2", "vol", "risk_adj", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "r2", "vol_ratio"],
     custom: ["custom"]
   };
   function fillMfKind(cat) {
@@ -285,7 +303,7 @@ function renderMfLib() {
     lab.title = (f.kind === "custom") ? (f.name + " = " + ftxt) : ((KIND_INFO[f.kind] || {}).title || "");
     if (f.kind === "custom" && ftxt) { lab.textContent = lab.textContent + "  " + ftxt; }
     var uSel = document.createElement("select");
-    uSel.style.cssText = "flex:0 0 52px;font-size:11.5px;padding:2px 1px;border:1px solid #334155;border-radius:4px;color:#CBD5E1;background:#111827";
+    uSel.style.cssText = "flex:0 0 66px;font-size:11.5px;padding:2px 4px;border:1px solid #334155;border-radius:4px;color:#CBD5E1;background:#111827;appearance:none;-webkit-appearance:none;text-align:center";
     uSel.innerHTML = '<option value="filter">筛选</option><option value="rank">排名</option>';
     uSel.value = f.usage || "rank";
     uSel.title = "归属面板：排名=轮动打分；筛选=过滤条件";
@@ -323,7 +341,11 @@ $("mfAddBtn").addEventListener("click", function () {
   renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
 });
 if ($("mfCat")) {
-  $("mfCat").addEventListener("change", function () { fillMfKind(this.value); });
+  $("mfCat").addEventListener("change", function () {
+    fillMfKind(this.value);
+    var nr = $("cfNameRow");
+    if (nr) nr.style.display = (this.value === "custom") ? "flex" : "none";
+  });
   fillMfKind($("mfCat").value);
 }
 
@@ -528,22 +550,6 @@ function openCfEditor(f, usage) {
   }
   renderCf();
 }
-$("cfToggleBtn").addEventListener("click", function () {
-  var ed = $("cfEditor");
-  if (ed.style.display === "none") {
-    ed.style.display = "block";
-    cfEditIdx = -1;
-    $("cfName").value = "";
-    $("cfUsage").value = "filter";
-    if (!cfParts.length) {
-      cfParts = [
-        { kind: "roc", window: 20, coef: 1.0, op: "+" },
-        { kind: "vol", window: 60, coef: 0.5, op: "+" }
-      ];
-    }
-    renderCf();
-  } else ed.style.display = "none";
-});
 $("cfAddPart").addEventListener("click", function () {
   cfParts.push({ kind: "roc", window: 20, coef: 1.0, op: "+" });
   renderCf();
@@ -691,7 +697,16 @@ function buildChips() {
   }
   $("tmSw").addEventListener("change", function () { tmUse = this.checked; scheduleRun(); });
   $("tmNIn").addEventListener("input", function () { tmN = +this.value || 200; $("tmV").textContent = tmN; scheduleRun(); });
-  $("startSel").addEventListener("change", function () { startDate = this.value; updateSurvivorTip(); scheduleRun(); });
+  $("startSel").addEventListener("change", function () {
+    startDate = this.value;
+    if (startDate > endDate) { endDate = startDate; if ($("endSel")) $("endSel").value = endDate; }
+    updateSurvivorTip(); scheduleRun();
+  });
+  if ($("endSel")) $("endSel").addEventListener("change", function () {
+    endDate = this.value;
+    if (endDate < startDate) { showNotice("结束日期不能早于起始日期，已回退为起始日期"); endDate = startDate; this.value = endDate; }
+    scheduleRun();
+  });
   if ($("hwSel")) $("hwSel").addEventListener("change", scheduleRun);
   if ($("tierSw")) $("tierSw").addEventListener("change", scheduleRun);
   if ($("rebWeightMode")) $("rebWeightMode").addEventListener("change", function () { applyModeUI(); scheduleRun(); });
@@ -706,6 +721,8 @@ function buildChips() {
     });
   }
   if (sdEl) sdEl.value = startDate;
+  var edEl = $("endSel");
+  if (edEl) edEl.value = endDate;
 
   $("collapseBtn").addEventListener("click", function () {
     var p = $("panel");
@@ -902,7 +919,7 @@ function buildChips() {
       tiered_slippage: $("tierSw") ? $("tierSw").checked : false,
       holding_weight: $("hwSel") ? $("hwSel").value : "equal",
       start_date: startDate,
-      end_date: "2026-09-30",
+      end_date: endDate,
       initial_capital: Math.max(1000, +$("stInvIn").value || 1000000),
       risk_free_rate: 0.02,
       overseas_codes: D ? D.overseas : []
@@ -1029,6 +1046,9 @@ function buildChips() {
       startDate = p.start_date; $("startSel").value = p.start_date;
       if (p.initial_capital) $("stInvIn").value = p.initial_capital;
     }
+    if (p.end_date && $("endSel") && $("endSel").value !== p.end_date) {
+      endDate = p.end_date; $("endSel").value = p.end_date;
+    }
     scheduleRun();   // 参数恢复后自动重跑回测
   }
   $("saveSt").addEventListener("click", function () {
@@ -1081,28 +1101,45 @@ function buildChips() {
     var m = loadStored(); delete m[name]; storeAll(m); refreshStList(); renderStrategyList();
     showNotice("已删除策略：" + name);
   });
+  function _saveFile(name, content) {
+    // iOS Safari / 部分内嵌 webview 不支持 <a download> 自动下载，直接走复制通道
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent || "")) return false;
+    try {
+      var blob = new Blob([content], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name; a.style.display = "none";
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+      return true;
+    } catch (e) { return false; }
+  }
+  function _copyText(t) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t); return true; } } catch (e) {}
+    try {
+      var ta = document.createElement("textarea"); ta.value = t;
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); return true;
+    } catch (e2) {}
+    return false;
+  }
+  // 导出：能自动下载则直接保存文件；浏览器不支持时复制到剪贴板（免手动另存）
   $("exportSt").addEventListener("click", function () {
     var p = getParams();
     var name = $("stName").value.trim() || ("策略_" + new Date().toISOString().slice(0, 10));
-    var blob = new Blob([JSON.stringify({ name: name, saved_at: new Date().toISOString(), params: p }, null, 2)],
-                        { type: "application/json" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = name + ".json";
-    document.body.appendChild(a); a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    showNotice("已导出策略 JSON：" + name);
+    var json = JSON.stringify({ name: name, saved_at: new Date().toISOString(), params: p }, null, 2);
+    if (_saveFile(name + ".json", json)) showNotice("已导出策略 JSON 并直接保存：" + name);
+    else if (_copyText(json)) showNotice("当前浏览器不能自动下载，JSON 已复制到剪贴板，粘贴即可保存为 " + name + ".json");
+    else showNotice("导出失败，请手动复制代码保存");
   });
   $("exportAllSt").addEventListener("click", function () {
     var m = loadStored();
     var keys = Object.keys(m);
     if (!keys.length) { showNotice("暂无可导出的策略"); return; }
-    var blob = new Blob([JSON.stringify({ version: 1, strategies: m }, null, 2)], { type: "application/json" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "wufu_strategies_all.json";
-    document.body.appendChild(a); a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    showNotice("已导出全部 " + keys.length + " 个策略（跨链接/设备迁移用）");
+    var json = JSON.stringify({ version: 1, strategies: m }, null, 2);
+    if (_saveFile("wufu_strategies_all.json", json)) showNotice("已导出全部 " + keys.length + " 个策略并直接保存（跨链接/设备迁移用）");
+    else if (_copyText(json)) showNotice("当前浏览器不能自动下载，JSON 已复制到剪贴板，粘贴即可保存为 wufu_strategies_all.json");
+    else showNotice("导出失败");
   });
   $("importAllSt").addEventListener("click", function () { $("impAllFile").click(); });
   $("impAllFile").addEventListener("change", function () {
@@ -1289,7 +1326,7 @@ function buildChips() {
       tooltip: baseChart().tooltip,
       legend: { data: ["策略", "沪深300", "等权池"], top: 4, textStyle: { fontSize: 12 } },
       grid: { left: 56, right: 20, top: 36, bottom: 40, containLabel: true },
-      xAxis: { type: "time", axisLabel: { fontSize: 11 } },
+      xAxis: { type: "time", minInterval: 365 * 24 * 3600 * 1000, axisLabel: { fontSize: 11, hideOverlap: false, formatter: function (v) { return "" + new Date(v).getFullYear(); } } },
       yAxis: { type: "value", scale: true, axisLabel: { fontSize: 11, formatter: function (v) { return v.toFixed(1); } } },
       dataZoom: [{ type: "inside", start: 0, end: 100 }, { type: "slider", start: 0, end: 100, height: 16, bottom: 6 }],
       series: [
@@ -1306,7 +1343,7 @@ function buildChips() {
       tooltip: baseChart().tooltip,
       legend: { data: ["策略回撤", "沪深300回撤"], top: 4, textStyle: { fontSize: 12 } },
       grid: { left: 56, right: 20, top: 34, bottom: 24, containLabel: true },
-      xAxis: { type: "time", axisLabel: { fontSize: 11 } },
+      xAxis: { type: "time", minInterval: 365 * 24 * 3600 * 1000, axisLabel: { fontSize: 11, hideOverlap: false, formatter: function (v) { return "" + new Date(v).getFullYear(); } } },
       yAxis: { type: "value", max: 0, axisLabel: { fontSize: 11, formatter: function (v) { return (v * 100).toFixed(0) + "%"; } } },
       series: [
         { name: "策略回撤", type: "line", showSymbol: false, lineStyle: { width: 2, color: COLOR.dd }, itemStyle: { color: COLOR.dd }, areaStyle: { color: "rgba(239,68,68,0.10)" }, data: dates.map(function (t, i) { return [t, +r.drawdown[i].toFixed(5)]; }) },
@@ -1326,8 +1363,8 @@ function buildChips() {
     initChart("cYear").setOption({
       tooltip: baseChart().tooltip,
       legend: { data: ["策略", "沪深300"], top: 4, textStyle: { fontSize: 12 } },
-      grid: { left: 56, right: 20, top: 34, bottom: 24, containLabel: true },
-      xAxis: { type: "category", data: labels, axisLabel: { fontSize: 11 } },
+      grid: { left: 56, right: 20, top: 34, bottom: 44, containLabel: true },
+      xAxis: { type: "category", data: labels, axisLabel: { fontSize: 10, interval: 0, rotate: 30, margin: 8 } },
       yAxis: { type: "value", axisLabel: { fontSize: 11, formatter: function (v) { return v + "%"; } } },
       series: [
         { name: "策略", type: "bar", barWidth: 16, itemStyle: { color: COLOR.str, borderRadius: [3, 3, 0, 0] }, label: { show: true, position: "top", fontSize: 10, formatter: function (p) { return p.value + "%"; } }, data: s },
@@ -1354,8 +1391,8 @@ function buildChips() {
     initChart("cMonth").setOption({
       tooltip: { trigger: "item", triggerOn: "click", renderMode: "richText", confine: true,
         formatter: function (p) { return p.value[0] >= 0 ? years[p.value[0]] + "-" + monthIdx[p.value[1]] + "：" + p.value[2] + "%" : ""; } },
-      grid: { left: 10, right: 10, top: 8, bottom: 30, containLabel: true },
-      xAxis: { type: "category", data: years, splitArea: { show: true }, axisLabel: { fontSize: 11 } },
+      grid: { left: 10, right: 10, top: 8, bottom: 44, containLabel: true },
+      xAxis: { type: "category", data: years, splitArea: { show: true }, axisLabel: { fontSize: 10, interval: 0, rotate: 30, margin: 8 } },
       yAxis: { type: "category", data: monthIdx, splitArea: { show: true }, axisLabel: { fontSize: 10 } },
       visualMap: { min: -absMax, max: absMax, calculable: true, orient: "horizontal", left: "center", bottom: 0,
         textStyle: { fontSize: 10 }, inRange: { color: ["#FCA5A5", "#FEF2F2", "#CCFBF1", "#14B8A6"] } },
@@ -1782,6 +1819,8 @@ function buildChips() {
       ensureData(function () {
         $("step1").style.display = "none";
         $("step2").style.display = "";
+        renderSelSummary();
+        window.scrollTo(0, 0);
         boot();
       });
       nb.disabled = false; nb.textContent = "下一步 · 开始回测";
@@ -1797,21 +1836,302 @@ function buildChips() {
     updatePoolCount();
   });
 
+  function renderSelSummary() {
+    var el = $("selSummary");
+    if (!el) return;
+    var list = checkedCodes();
+    if (!list.length) { el.style.display = "none"; el.innerHTML = ""; return; }
+    el.style.display = "block";
+    var parts = list.map(function (p) { return "<span class='seltag'>" + p.name + " <i>" + p.code + "</i></span>"; });
+    el.innerHTML = "<span class='sellab'>已选标的（" + list.length + "）：</span>" + parts.join("");
+  }
+
   // ---------- 第二步：解析行情数据后初始化完整界面并回测 ----------
-  // ---------- 双视图导航（回测 / 已保存策略） ----------
+  // ---------- 四视图导航（回测 / 已保存策略 / 相关性 / 策略组合） ----------
   function showView(v) {
     $("viewBacktest").style.display = v === "backtest" ? "" : "none";
     $("viewStrategies").style.display = v === "strategies" ? "" : "none";
+    $("viewCorr").style.display = v === "correlation" ? "" : "none";
+    $("viewCombo").style.display = v === "combo" ? "" : "none";
+    $("viewIc").style.display = v === "ic" ? "" : "none";
     $("tabBacktest").className = v === "backtest" ? "on" : "";
     $("tabStrategies").className = v === "strategies" ? "on" : "";
+    $("tabCorr").className = v === "correlation" ? "on" : "";
+    $("tabCombo").className = v === "combo" ? "on" : "";
+    $("tabIc").className = v === "ic" ? "on" : "";
     if (v === "strategies") renderStrategyList();
+    if (v === "correlation" && window.CorrView) CorrView.render();
+    if (v === "combo") renderComboSetup();
+    if (v === "ic" && window.ICView) ICView.render();
   }
   function hashView() {
-    return (location.hash || "").indexOf("strategies") >= 0 ? "strategies" : "backtest";
+    var h = location.hash || "";
+    if (h.indexOf("strategies") >= 0) return "strategies";
+    if (h.indexOf("correlation") >= 0 || h.indexOf("corr") >= 0) return "correlation";
+    if (h.indexOf("combo") >= 0) return "combo";
+    if (h.indexOf("ic") >= 0 || h.indexOf("factor") >= 0) return "ic";
+    return "backtest";
   }
   $("tabBacktest").addEventListener("click", function () { location.hash = "#/backtest"; });
   $("tabStrategies").addEventListener("click", function () { location.hash = "#/strategies"; });
+  $("tabCorr").addEventListener("click", function () { location.hash = "#/correlation"; });
+  $("tabCombo").addEventListener("click", function () { location.hash = "#/combo"; });
+  $("tabIc").addEventListener("click", function () { location.hash = "#/ic"; });
   window.addEventListener("hashchange", function () { showView(hashView()); });
+
+  // ---------- 因子 IC 视图交互绑定 ----------
+  (function () {
+    var ss = document.getElementById("icPoolSearch");
+    if (ss) ss.addEventListener("input", function () { if (window.ICView) ICView.render(); });
+    var all = document.getElementById("icPoolAll"), none = document.getElementById("icPoolNone");
+    if (all) all.addEventListener("click", function () { var c = document.querySelectorAll("#icPool input"); for (var i = 0; i < c.length; i++) c[i].checked = true; });
+    if (none) none.addEventListener("click", function () { var c = document.querySelectorAll("#icPool input"); for (var i = 0; i < c.length; i++) c[i].checked = false; });
+    var facAll = document.getElementById("icFacAll"), facNone = document.getElementById("icFacNone");
+    if (facAll) facAll.addEventListener("click", function () { var c = document.querySelectorAll("#icFactors input"); for (var i = 0; i < c.length; i++) c[i].checked = true; });
+    if (facNone) facNone.addEventListener("click", function () { var c = document.querySelectorAll("#icFactors input"); for (var i = 0; i < c.length; i++) c[i].checked = false; });
+    var run = document.getElementById("icRun");
+    if (run) run.addEventListener("click", function () { if (window.ICView) ICView.run(); });
+  })();
+
+  // ---------- 多策略组合视图 ----------
+  var _comboCharts = {};
+  function _disposeCombo(id) { if (_comboCharts[id]) { try { _comboCharts[id].dispose(); } catch (e) {} delete _comboCharts[id]; } }
+  function renderComboSetup() {
+    var box = $("comboStratList"); if (!box) return;
+    var m = loadStored();
+    var keys = Object.keys(m);
+    box.innerHTML = "";
+    if (!keys.length) {
+      box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:10px 2px">暂无已保存策略。<br>请先在「回测」页调好参数并保存，再到此页组合多个策略。</div>';
+      return;
+    }
+    var ds = $("comboStart"), de = $("comboEnd");
+    if (D && D.calendar && D.calendar.length) { ds.value = D.calendar[0]; de.value = D.calendar[D.calendar.length - 1]; }
+    keys.forEach(function (nm) {
+      var row = document.createElement("label");
+      row.style.cssText = "display:flex;align-items:center;gap:6px;font-size:12px;color:#E2E8F0;padding:4px 6px;cursor:pointer;background:#111827;border:1px solid #1E293B;border-radius:5px";
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "comboCk"; cb.checked = true;
+      cb.style.cssText = "flex:0 0 auto";
+      var nmEl = document.createElement("span");
+      nmEl.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      nmEl.textContent = nm;
+      nmEl.title = nm + ((m[nm].mode === "rebalance") ? "（再平衡策略）" : "（动量策略）");
+      var wt = document.createElement("input");
+      wt.type = "number"; wt.min = 0; wt.max = 100; wt.step = 1; wt.className = "comboWt";
+      wt.style.cssText = "flex:0 0 52px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0";
+      var wlab = document.createElement("span"); wlab.textContent = "%"; wlab.style.cssText = "color:#64748B;font-size:11px";
+      cb.addEventListener("change", function () { balanceComboWeights(); });
+      row.appendChild(cb); row.appendChild(nmEl); row.appendChild(wt); row.appendChild(wlab);
+      box.appendChild(row);
+    });
+    balanceComboWeights();
+    $("comboResult").style.display = "none";
+  }
+  function balanceComboWeights() {
+    var cks = document.querySelectorAll(".comboCk"), wts = document.querySelectorAll(".comboWt");
+    var n = 0, i; for (i = 0; i < cks.length; i++) if (cks[i].checked) n++;
+    var each = n ? Math.round(100 / n * 10) / 10 : 0;
+    for (var j = 0; j < wts.length; j++) wts[j].value = (cks[j].checked ? each : 0);
+  }
+  function runCombo() {
+    var m = loadStored();
+    var names = [], weights = [];
+    var cks = document.querySelectorAll(".comboCk"), wts = document.querySelectorAll(".comboWt");
+    for (var i = 0; i < cks.length; i++) {
+      if (cks[i].checked) {
+        names.push(cks[i].nextElementSibling.textContent);
+        weights.push(parseFloat(wts[i].value) || 0);
+      }
+    }
+    var warn = $("comboWarn");
+    if (!names.length) { warn.style.display = ""; warn.textContent = "请至少勾选一个策略"; return; }
+    var wsum = 0; weights.forEach(function (x) { wsum += x; });
+    if (wsum <= 0) { warn.style.display = ""; warn.textContent = "权重之和需大于 0（请输入各策略权重百分比）"; return; }
+    warn.style.display = "none";
+    var w = weights.map(function (x) { return x / wsum; });
+    var start = $("comboStart").value, end = $("comboEnd").value;
+    var rebKey = $("comboReb").value, rebInt = parseInt($("comboRebInt").value || "1", 10) || 1;
+    var base = { none: 0, daily: 1, weekly: 5, monthly: 21, quarterly: 63, yearly: 252 }[rebKey] || 0;
+    var intervalDays = base * rebInt;
+    if (names.length < 2) showNotice("相关性需至少 2 个策略；组合净值仍可显示");
+    showNotice("正在回测 " + names.length + " 个策略并合成组合，请稍候…");
+    ensureData(function () {
+      var paramsList = [], resList = [];
+      names.forEach(function (nm) {
+        var p = JSON.parse(JSON.stringify(m[nm]));
+        if (start) p.start_date = start;
+        if (end) p.end_date = end;
+        paramsList.push(p);
+        resList.push(engine.backtest(D, p));
+      });
+      var comboRes = buildCombo(resList, w, intervalDays);
+      renderComboResult(names, resList, comboRes, w);
+    });
+  }
+  function buildCombo(resList, w, intervalDays) {
+    var L = resList[0].nav.length;
+    var navs = resList.map(function (r) { return r.nav; });
+    var ww = w.slice();
+    var combo = new Array(L); combo[0] = 1;
+    for (var t = 1; t < L; t++) {
+      var ri = navs.map(function (nav) { var p0 = nav[t - 1]; return (p0 > 0) ? (nav[t] / p0 - 1) : 0; });
+      var cr = 0; for (var k = 0; k < navs.length; k++) cr += ww[k] * ri[k];
+      combo[t] = combo[t - 1] * (1 + cr);
+      var denom = 1 + cr;
+      if (denom > 0) { ww = ww.map(function (x, k) { return x * (1 + ri[k]) / denom; }); }
+      if (intervalDays > 0 && (t % intervalDays === 0)) ww = w.slice();
+    }
+    return { combo: combo };
+  }
+  function calcMetricsFromNav(nav) {
+    var L = nav.length;
+    var total = nav[L - 1] / nav[0] - 1;
+    var years = (L - 1) / 252;
+    var cagr = (years > 0) ? (Math.pow(nav[L - 1] / nav[0], 1 / years) - 1) : 0;
+    var peak = nav[0], mdd = 0;
+    for (var i = 1; i < L; i++) { if (nav[i] > peak) peak = nav[i]; var dd = nav[i] / peak - 1; if (dd < mdd) mdd = dd; }
+    var s = 0, i2; for (i2 = 1; i2 < L; i2++) s += (nav[i2] / nav[i2 - 1] - 1);
+    var mean = s / (L - 1), vr = 0;
+    for (var j = 1; j < L; j++) { var d = nav[j] / nav[j - 1] - 1 - mean; vr += d * d; }
+    var sd = Math.sqrt(vr / (L - 1)) * Math.sqrt(252);
+    var sharpe = (sd > 0) ? (mean * 252 - 0.02) / sd : 0;
+    return { total: total, cagr: cagr, mdd: mdd, sharpe: sharpe };
+  }
+  function pearsonArr(a, b) {
+    var n = a.length; if (n < 2) return 0;
+    var ma = 0, mb = 0, i; for (i = 0; i < n; i++) { ma += a[i]; mb += b[i]; } ma /= n; mb /= n;
+    var num = 0, da = 0, db = 0;
+    for (var j = 0; j < n; j++) { var x = a[j] - ma, y = b[j] - mb; num += x * y; da += x * x; db += y * y; }
+    var den = Math.sqrt(da * db); return den > 0 ? num / den : 0;
+  }
+  function _pct(x) { return (x * 100).toFixed(2) + "%"; }
+  function renderComboResult(names, resList, comboRes, w) {
+    $("comboResult").style.display = "";
+    var cal = resList[0].calendar;
+    var combo = comboRes.combo;
+    var met = calcMetricsFromNav(combo);
+    var kpi = $("comboKpis"); kpi.innerHTML = "";
+    var kpiData = [["组合累计收益", _pct(met.total)], ["组合年化", _pct(met.cagr)], ["最大回撤", _pct(met.mdd)], ["组合夏普", met.sharpe.toFixed(2)]];
+    kpiData.forEach(function (kv) {
+      var c = document.createElement("div");
+      c.style.cssText = "background:#111827;border:1px solid #1E293B;border-radius:8px;padding:10px 12px;text-align:center";
+      c.innerHTML = '<div style="font-size:11px;color:#64748B">' + kv[0] + '</div><div style="font-size:17px;color:#38BDF8;font-weight:600;margin-top:2px">' + kv[1] + '</div>';
+      kpi.appendChild(c);
+    });
+    // 净值曲线
+    _disposeCombo("comboChart");
+    var palette = ["#38BDF8", "#F59E0B", "#34D399", "#A78BFA", "#F472B6", "#FBBF24", "#60A5FA", "#4ADE80"];
+    var series = [{ name: "组合", type: "line", showSymbol: false, lineStyle: { width: 3, color: "#38BDF8" }, itemStyle: { color: "#38BDF8" }, data: cal.map(function (t, i) { return [t, +(combo[i]).toFixed(5)]; }) }];
+    resList.forEach(function (r, idx) {
+      var col = palette[(idx + 1) % palette.length];
+      series.push({ name: names[idx], type: "line", showSymbol: false, lineStyle: { width: 1.5, color: col }, itemStyle: { color: col }, data: r.nav.map(function (v, i) { return [cal[i], +v.toFixed(5)]; }) });
+    });
+    var ch = echarts.init($("comboChart"));
+    _comboCharts["comboChart"] = ch;
+    ch.setOption({
+      backgroundColor: "transparent", tooltip: { trigger: "axis" },
+      legend: { textStyle: { color: "#CBD5E1" }, top: 0 },
+      grid: { left: 45, right: 20, top: 34, bottom: 24, containLabel: true },
+      xAxis: { type: "category", data: cal, axisLabel: { color: "#94A3B8", hideOverlap: true } },
+      yAxis: { type: "value", scale: true, axisLabel: { color: "#94A3B8", formatter: function (v) { return v.toFixed(2); } }, splitLine: { lineStyle: { color: "#1E293B" } } },
+      series: series
+    });
+    // 相关矩阵（日收益率相关）
+    var rets = resList.map(function (r) {
+      var nav = r.nav, out = [];
+      for (var q = 1; q < nav.length; q++) if (nav[q - 1] > 0) out.push(nav[q] / nav[q - 1] - 1);
+      return out;
+    });
+    var cells = [];
+    for (var a = 0; a < names.length; a++) for (var b = 0; b < names.length; b++) cells.push([b, a, +pearsonArr(rets[a], rets[b]).toFixed(3)]);
+    _disposeCombo("comboHeatmap");
+    var hm = echarts.init($("comboHeatmap"));
+    _comboCharts["comboHeatmap"] = hm;
+    hm.setOption({
+      backgroundColor: "transparent", tooltip: { position: "top", formatter: function (p) { return names[p.value[0]] + " ↔ " + names[p.value[1]] + "<br>相关系数 " + p.value[2]; } },
+      grid: { left: 120, right: 30, top: 30, bottom: 80 },
+      xAxis: { type: "category", data: names, axisLabel: { color: "#CBD5E1", rotate: 40 } },
+      yAxis: { type: "category", data: names, axisLabel: { color: "#CBD5E1" } },
+      visualMap: { min: -1, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 6, textStyle: { color: "#94A3B8" }, inRange: { color: ["#7F1D1D", "#1E293B", "#14532D"] } },
+      series: [{ type: "heatmap", data: cells, label: { show: true, color: "#E2E8F0", fontSize: 11 }, itemStyle: { borderColor: "#0F172A", borderWidth: 1 } }]
+    });
+    // 目标权重
+    _disposeCombo("comboWeight");
+    var pie = echarts.init($("comboWeight"));
+    // 目标权重：策略名列表放上方，饼图放下方，错开展示
+    var lg = $("comboWeightLegend"); lg.innerHTML = "";
+    names.forEach(function (nm, i) {
+      var it = document.createElement("span");
+      it.style.cssText = "display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#E2E8F0";
+      it.innerHTML = '<span style="width:10px;height:10px;border-radius:2px;background:' + palette[i % palette.length] + ';flex:0 0 auto"></span>' + nm + ' <span style="color:#94A3B8">' + (w[i] * 100).toFixed(2) + '%</span>';
+      lg.appendChild(it);
+    });
+    _disposeCombo("comboWeight");
+    var pie = echarts.init($("comboWeight"));
+    _comboCharts["comboWeight"] = pie;
+    pie.setOption({
+      backgroundColor: "transparent", tooltip: { trigger: "item", formatter: function (p) { return p.name + "<br>权重 " + p.percent + "%"; } },
+      series: [{ type: "pie", radius: ["42%", "64%"], center: ["50%", "50%"], avoidLabelOverlap: true, label: { color: "#E2E8F0", formatter: "{d}%", fontSize: 11 }, data: names.map(function (nm, i) { return { name: nm, value: +(w[i] * 100).toFixed(2), itemStyle: { color: palette[i % palette.length] } }; }) }]
+    });
+  }
+  $("comboRun").addEventListener("click", function () { runCombo(); });
+
+  // ---------- 回测参数面板分区折叠（核心默认展开，其余折叠，状态记忆） ----------
+  (function () {
+    var grps = ["fac", "core", "exe", "mgmt"];
+    var H = localStorage.getItem("sf_grp");
+    if (H === null) H = "fac"; // 默认只展开因子与选股
+    var tog = document.getElementById("sfToggle");
+    function setTogText() {
+      if (!tog) return;
+      var allOpen = grps.every(function (g) { return H.indexOf(g) >= 0; });
+      tog.textContent = allOpen ? "收起全部" : "展开全部";
+    }
+    function apply() {
+      grps.forEach(function (g) {
+        var b = document.getElementById("sfg-" + g);
+        if (!b) return;
+        var open = H.indexOf(g) >= 0;
+        if (open) b.classList.remove("hide"); else b.classList.add("hide");
+        var a = document.querySelector('.sfold-h[data-g="' + g + '"] .sf-a');
+        if (a) a.textContent = open ? "收起" : "点击展开";
+      });
+      setTogText();
+    }
+    apply();
+    var hs = document.querySelectorAll(".sfold-h");
+    for (var i = 0; i < hs.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          var g = btn.getAttribute("data-g");
+          var arr = H ? H.split(",") : [];
+          var open = arr.indexOf(g) >= 0;
+          if (open) arr = arr.filter(function (x) { return x !== g; }); else arr.push(g);
+          H = arr.join(",");
+          localStorage.setItem("sf_grp", H);
+          apply();
+        });
+      })(hs[i]);
+    }
+    if (tog) tog.addEventListener("click", function () {
+      var allOpen = grps.every(function (g) { return H.indexOf(g) >= 0; });
+      H = allOpen ? "" : grps.join(",");
+      localStorage.setItem("sf_grp", H);
+      apply();
+    });
+    // 再平衡模式参数少、无需折叠：隐藏折叠标题、全部展开（还原平铺效果）
+    var msEl = document.getElementById("modeSel");
+    function setFoldByMode() {
+      var reb = msEl && msEl.value === "rebalance";
+      var hsEls = document.querySelectorAll(".sfold-h");
+      for (var a = 0; a < hsEls.length; a++) hsEls[a].style.display = reb ? "none" : "";
+      if (tog) tog.style.display = reb ? "none" : "";
+      var bs = document.querySelectorAll(".sfold-b");
+      for (var c = 0; c < bs.length; c++) bs[c].classList.remove("hide");
+      if (!reb) apply();
+    }
+    if (msEl) { msEl.addEventListener("change", setFoldByMode); setFoldByMode(); }
+  })();
   // 行情数据懒加载：未进入第二步时（D=null）也可按需解析（策略详情/应用等）
   // 数据块为 gzip(base64) 内联（体积约减 63%），首屏不解析、不执行，进入第二步才解压
   var _dataWait = [], _dataLoading = false;
@@ -1937,4 +2257,15 @@ function buildChips() {
     $("runBtn").addEventListener("click", run);
     setTimeout(run, 60);          // 显示后执行默认回测
   }
+
+  // 暴露给参数调优模块（js_tune.js）的只读/复用接口
+  window.WufuUI = {
+    getParams: getParams,
+    applyParams: applyParams,
+    run: run,
+    scheduleRun: scheduleRun,
+    getData: function () { return D; },
+    ensureData: ensureData,
+    renderKpis: renderKpis
+  };
 })();

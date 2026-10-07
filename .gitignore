@@ -13,3 +13,4 @@ _test/
 diag_*.js
 verify_*.py
 normalize_*.py
+_shots/

@@ -92,7 +92,7 @@ def main():
         d = load_ohlc(p["code"])
         uo = load_unadj(p["code"])
         nv = load_nav(p["code"])
-        opens, closes, highs, lows, vols, amts = [], [], [], [], [], []
+        opens, closes, highs, lows, vols, amts, tvs = [], [], [], [], [], [], []
         r_op, r_cl, navs = [], [], []
         for dt in calendar:
             rec = d.get(dt)
@@ -102,6 +102,7 @@ def main():
             lows.append(round(rec["low"], 3) if rec and rec["low"] is not None else None)
             vols.append(round(rec["volume"] / 1e4) if rec and rec["volume"] is not None else None)   # 万手（整数）
             amts.append(round(rec["amount"] / 1e4) if rec and rec["amount"] is not None else None)     # 万元（整数）
+            tvs.append(round(rec["turnover"], 4) if rec and rec.get("turnover") is not None else None)  # 换手率（%）
             r_op.append(round(uo[dt]["open"], 4) if uo and dt in uo and uo[dt].get("open") is not None else None)
             r_cl.append(round(uo[dt]["close"], 4) if uo and dt in uo and uo[dt].get("close") is not None else None)
         _navs_seq = interp_nav(nv, calendar) if nv else [None] * len(calendar)
@@ -114,6 +115,7 @@ def main():
             "low": [v if v is not None else -1 for v in lows],
             "volume": [v if v is not None else -1 for v in vols],
             "amount": [v if v is not None else -1 for v in amts],
+            "turnover": [v if v is not None else -1 for v in tvs],
             "raw_open": [v if v is not None else -1 for v in r_op],
             "raw_close": [v if v is not None else -1 for v in r_cl],
         }
@@ -121,7 +123,7 @@ def main():
     for p in cfg.get("extra_series", []):
         d = load_ohlc(p["code"])
         uo = load_unadj(p["code"])
-        opens, closes, highs, lows, vols, amts = [], [], [], [], [], []
+        opens, closes, highs, lows, vols, amts, tvs = [], [], [], [], [], [], []
         r_op, r_cl = [], []
         for dt in calendar:
             rec = d.get(dt)
@@ -131,6 +133,7 @@ def main():
             lows.append(round(rec["low"], 3) if rec and rec["low"] is not None else None)
             vols.append(round(rec["volume"] / 1e4) if rec and rec["volume"] is not None else None)
             amts.append(round(rec["amount"] / 1e4) if rec and rec["amount"] is not None else None)
+            tvs.append(round(rec["turnover"], 4) if rec and rec.get("turnover") is not None else None)
             r_op.append(round(uo[dt]["open"], 4) if uo and dt in uo and uo[dt].get("open") is not None else None)
             r_cl.append(round(uo[dt]["close"], 4) if uo and dt in uo and uo[dt].get("close") is not None else None)
         series[p["code"]] = {
@@ -140,6 +143,7 @@ def main():
             "low": [v if v is not None else -1 for v in lows],
             "volume": [v if v is not None else -1 for v in vols],
             "amount": [v if v is not None else -1 for v in amts],
+            "turnover": [v if v is not None else -1 for v in tvs],
             "raw_open": [v if v is not None else -1 for v in r_op],
             "raw_close": [v if v is not None else -1 for v in r_cl],
         }

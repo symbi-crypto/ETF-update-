@@ -77,6 +77,12 @@ const EXTRA = {            // 按模式追加的非因子参数
     { kind: "ma_vs_ma", window: 20, window2: 60, weight: 0.15 },
     { kind: "ma_vs_ma_lag", window: 20, window2: 5, window3: 20, weight: 0.10 }
   ] },
+  newFactor: { factors: [
+    { kind: "turnover", window: 20, weight: 0.25 },
+    { kind: "vol_ratio", window: 20, window2: 60, weight: 0.25 },
+    { kind: "roc", window: 20, weight: 0.25 },
+    { kind: "vol", window: 60, weight: 0.25 }
+  ] },
   reb: { mode: "rebalance",
     codes: ["513100.SH", "518880.SH", "511010.SH", "511990.SH"],
     reb_weights: { "513100.SH": 0.25, "518880.SH": 0.25, "511010.SH": 0.25, "511990.SH": 0.25 } },

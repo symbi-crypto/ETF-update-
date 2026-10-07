@@ -1,647 +1,652 @@
 {
-  "_说明": "ETF动量轮动系统配置。所有参数均可调整：标的池(pool)、动量参数(strategy)、交易成本(costs)、回测区间(backtest)。修改后运行 python3 run.py 重新回测并生成报告。",
-  "strategy": {
-    "name": "ETF动量轮动",
-    "factors": [
-      {
-        "kind": "roc",
-        "window": 20,
-        "weight": 0.2
-      },
-      {
-        "kind": "roc",
-        "window": 60,
-        "weight": 0.25
-      },
-      {
-        "kind": "roc",
-        "window": 120,
-        "weight": 0.15
-      },
-      {
-        "kind": "vol",
-        "window": 60,
-        "weight": 0.15
-      },
-      {
-        "kind": "risk_adj",
-        "window": 60,
-        "weight": 0.15
-      },
-      {
-        "kind": "slope_r2",
-        "window": 25,
-        "weight": 0.1
-      }
-    ],
-    "top_n": 3,
-    "annualize_factor": 252,
-    "score_floor": 0.0,
-    "r2_filter_mode": "normal_only",
-    "use_volume_ratio_filter": false,
-    "volume_ratio_window": 5,
-    "volume_ratio_base_window": 20,
-    "volume_ratio_threshold": 1.0,
-    "use_ma_filter": false,
-    "ma_filter_window": 10,
-    "use_regime_filter": true,
-    "regime_ma_window": 10,
-    "regime_require_below": 3,
-    "regime_require_above": 3,
-    "weak_period_mode": "overseas_pool",
-    "weak_period_use_ma_filter": false,
-    "fallback_when_no_signal": "cash",
-    "rebalance_mode": "weekly",
-    "rebalance_interval": 1,
-    "rebalance_anchor": "mon",
-    "filters": [],
-    "cooldown_days": 0,
-    "only_rotation_codes": [],
-    "regime_indices": [
-      "index_000300.SH",
-      "index_399101.SZ",
-      "index_399006.SZ",
-      "index_000510.SH"
-    ],
-    "use_timing": false,
-    "timing_ma_window": 200,
-    "timing_indices": [
-      "index_000300.SH"
-    ]
-  },
-  "costs": {
-    "commission_rate": 0.00025,
-    "slippage_rate": 0.0005,
-    "min_commission": 5.0
-  },
-  "backtest": {
-    "start_date": "2017-01-01",
-    "end_date": "2026-09-30",
-    "initial_capital": 1000000.0,
-    "risk_free_rate": 0.02,
-    "rebalance_mode": "weekly",
-    "rebalance_anchor": "mon"
-  },
-  "benchmark": {
-    "index": "index_000300.SH",
-    "name": "沪深300指数"
-  },
-  "pool": [
-    {
-      "code": "510300.SH",
-      "name": "沪深300ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "510050.SH",
-      "name": "上证50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "510500.SH",
-      "name": "中证500ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "512100.SH",
-      "name": "中证1000ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "159915.SZ",
-      "name": "创业板ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "588000.SH",
-      "name": "科创50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "588190.SH",
-      "name": "科创100ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "563300.SH",
-      "name": "中证2000ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "159901.SZ",
-      "name": "深证100ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "510180.SH",
-      "name": "上证180ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "159338.SZ",
-      "name": "中证A500ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "512550.SH",
-      "name": "富时A50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "159601.SZ",
-      "name": "A50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "159949.SZ",
-      "name": "创业板50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "159902.SZ",
-      "name": "中小100ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "512380.SH",
-      "name": "MSCI中国A50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "588330.SH",
-      "name": "双创50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "563350.SH",
-      "name": "中证A50ETF",
-      "group": "A股宽基"
-    },
-    {
-      "code": "510880.SH",
-      "name": "红利ETF",
-      "group": "A股风格"
-    },
-    {
-      "code": "512890.SH",
-      "name": "红利低波ETF",
-      "group": "A股风格"
-    },
-    {
-      "code": "515450.SH",
-      "name": "红利低波100ETF",
-      "group": "A股风格"
-    },
-    {
-      "code": "159905.SZ",
-      "name": "深红利ETF",
-      "group": "A股风格"
-    },
-    {
-      "code": "515080.SH",
-      "name": "红利ETF易方达",
-      "group": "A股风格"
-    },
-    {
-      "code": "515180.SH",
-      "name": "红利ETF华泰柏瑞",
-      "group": "A股风格"
-    },
-    {
-      "code": "515910.SH",
-      "name": "质量ETF",
-      "group": "A股风格"
-    },
-    {
-      "code": "515110.SH",
-      "name": "国企红利ETF",
-      "group": "A股风格"
-    },
-    {
-      "code": "512690.SH",
-      "name": "酒ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515170.SH",
-      "name": "食品饮料ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159928.SZ",
-      "name": "消费ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515030.SH",
-      "name": "新能源车ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159755.SZ",
-      "name": "电池ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159790.SZ",
-      "name": "碳中和ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "516160.SH",
-      "name": "新能源ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515790.SH",
-      "name": "光伏ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512480.SH",
-      "name": "半导体ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159995.SZ",
-      "name": "芯片ETF华夏",
-      "group": "行业主题"
-    },
-    {
-      "code": "512760.SH",
-      "name": "芯片ETF国泰",
-      "group": "行业主题"
-    },
-    {
-      "code": "159516.SZ",
-      "name": "半导体设备ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "588200.SH",
-      "name": "科创芯片ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515020.SH",
-      "name": "芯片ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512660.SH",
-      "name": "军工ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512670.SH",
-      "name": "国防军工ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512680.SH",
-      "name": "军工龙头ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512170.SH",
-      "name": "医疗ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512010.SH",
-      "name": "医药ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512290.SH",
-      "name": "生物医药ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159837.SZ",
-      "name": "生物医药ETF易方达",
-      "group": "行业主题"
-    },
-    {
-      "code": "159992.SZ",
-      "name": "创新药ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159883.SZ",
-      "name": "医疗器械ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512880.SH",
-      "name": "证券ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512000.SH",
-      "name": "证券ETF国泰",
-      "group": "行业主题"
-    },
-    {
-      "code": "512900.SH",
-      "name": "证券ETF南方",
-      "group": "行业主题"
-    },
-    {
-      "code": "512800.SH",
-      "name": "银行ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515290.SH",
-      "name": "银行ETF天弘",
-      "group": "行业主题"
-    },
-    {
-      "code": "512070.SH",
-      "name": "非银金融ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512400.SH",
-      "name": "有色金属ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515220.SH",
-      "name": "煤炭ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515210.SH",
-      "name": "钢铁ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "516150.SH",
-      "name": "稀土ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "562500.SH",
-      "name": "机器人ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159996.SZ",
-      "name": "家电ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "516110.SH",
-      "name": "汽车ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159611.SZ",
-      "name": "电力ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159825.SZ",
-      "name": "农业ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159867.SZ",
-      "name": "畜牧ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159865.SZ",
-      "name": "养殖ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512200.SH",
-      "name": "房地产ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159766.SZ",
-      "name": "旅游ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512580.SH",
-      "name": "环保ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515900.SH",
-      "name": "央企改革ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159819.SZ",
-      "name": "人工智能ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515980.SH",
-      "name": "人工智能ETF华富",
-      "group": "行业主题"
-    },
-    {
-      "code": "512720.SH",
-      "name": "计算机ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "516510.SH",
-      "name": "云计算ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512330.SH",
-      "name": "信息技术ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515880.SH",
-      "name": "通信ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515050.SH",
-      "name": "5GETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "512980.SH",
-      "name": "传媒ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159869.SZ",
-      "name": "游戏ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159997.SZ",
-      "name": "电子ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515000.SH",
-      "name": "科技50ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "515750.SH",
-      "name": "科技龙头ETF",
-      "group": "行业主题"
-    },
-    {
-      "code": "159938.SZ",
-      "name": "医药ETF广发",
-      "group": "行业主题"
-    },
-    {
-      "code": "513100.SH",
-      "name": "纳指ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513500.SH",
-      "name": "标普500ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "159920.SZ",
-      "name": "恒生ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513000.SH",
-      "name": "恒指ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513180.SH",
-      "name": "恒生科技ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513330.SH",
-      "name": "恒生互联网ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513050.SH",
-      "name": "中概互联网ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513520.SH",
-      "name": "日经ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513030.SH",
-      "name": "德国ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "159866.SZ",
-      "name": "东南亚科技ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "513090.SH",
-      "name": "香港证券ETF",
-      "group": "海外避险"
-    },
-    {
-      "code": "518880.SH",
-      "name": "黄金ETF",
-      "group": "商品债券"
-    },
-    {
-      "code": "161226.SZ",
-      "name": "白银基金",
-      "group": "商品债券"
-    },
-    {
-      "code": "159985.SZ",
-      "name": "豆粕ETF",
-      "group": "商品债券"
-    },
-    {
-      "code": "159980.SZ",
-      "name": "有色期货ETF",
-      "group": "商品债券"
-    },
-    {
-      "code": "511010.SH",
-      "name": "国债ETF",
-      "group": "商品债券"
-    },
-    {
-      "code": "511380.SH",
-      "name": "可转债ETF",
-      "group": "商品债券"
-    },
-    {
-      "code": "511030.SH",
-      "name": "公司债ETF",
-      "group": "商品债券"
-    },
-    {
-      "code": "511990.SH",
-      "name": "货币ETF",
-      "group": "商品债券"
-    }
+ "_说明": "ETF动量轮动系统配置。所有参数均可调整：标的池(pool)、动量参数(strategy)、交易成本(costs)、回测区间(backtest)。修改后运行 python3 run.py 重新回测并生成报告。",
+ "strategy": {
+  "name": "ETF动量轮动",
+  "factors": [
+   {
+    "kind": "roc",
+    "window": 20,
+    "weight": 0.2
+   },
+   {
+    "kind": "roc",
+    "window": 60,
+    "weight": 0.25
+   },
+   {
+    "kind": "roc",
+    "window": 120,
+    "weight": 0.15
+   },
+   {
+    "kind": "vol",
+    "window": 60,
+    "weight": 0.15
+   },
+   {
+    "kind": "risk_adj",
+    "window": 60,
+    "weight": 0.15
+   },
+   {
+    "kind": "slope_r2",
+    "window": 25,
+    "weight": 0.1
+   }
   ],
-  "overseas_pool": [
-    "513100.SH",
-    "513500.SH",
-    "159920.SZ",
-    "513000.SH",
-    "513180.SH",
-    "513330.SH",
-    "513050.SH",
-    "513520.SH",
-    "513030.SH",
-    "159866.SZ",
-    "513090.SH",
-    "518880.SH",
-    "161226.SZ",
-    "159985.SZ",
-    "159980.SZ",
-    "511010.SH",
-    "511380.SH",
-    "511030.SH",
-    "511990.SH"
+  "top_n": 3,
+  "annualize_factor": 252,
+  "score_floor": 0.0,
+  "r2_filter_mode": "normal_only",
+  "use_volume_ratio_filter": false,
+  "volume_ratio_window": 5,
+  "volume_ratio_base_window": 20,
+  "volume_ratio_threshold": 1.0,
+  "use_ma_filter": false,
+  "ma_filter_window": 10,
+  "use_regime_filter": true,
+  "regime_ma_window": 10,
+  "regime_require_below": 3,
+  "regime_require_above": 3,
+  "weak_period_mode": "overseas_pool",
+  "weak_period_use_ma_filter": false,
+  "fallback_when_no_signal": "cash",
+  "rebalance_mode": "weekly",
+  "rebalance_interval": 1,
+  "rebalance_anchor": "mon",
+  "filters": [],
+  "cooldown_days": 0,
+  "only_rotation_codes": [],
+  "regime_indices": [
+   "index_000300.SH",
+   "index_399101.SZ",
+   "index_399006.SZ",
+   "index_000510.SH"
   ],
-  "regime_indices": {
-    "index_000300.SH": "沪深300",
-    "index_399101.SZ": "中小综指",
-    "index_399006.SZ": "创业板指",
-    "index_000510.SH": "中证A500"
+  "use_timing": false,
+  "timing_ma_window": 200,
+  "timing_indices": [
+   "index_000300.SH"
+  ]
+ },
+ "costs": {
+  "commission_rate": 0.00025,
+  "slippage_rate": 0.0005,
+  "min_commission": 5.0
+ },
+ "backtest": {
+  "start_date": "2017-01-01",
+  "end_date": "2026-09-30",
+  "initial_capital": 1000000.0,
+  "risk_free_rate": 0.02,
+  "rebalance_mode": "weekly",
+  "rebalance_anchor": "mon"
+ },
+ "benchmark": {
+  "index": "index_000300.SH",
+  "name": "沪深300指数"
+ },
+ "pool": [
+  {
+   "code": "510300.SH",
+   "name": "沪深300ETF",
+   "group": "A股宽基"
   },
-  "sensitivity": {
-    "enabled": true,
-    "window_scale": [
-      0.5,
-      1.0,
-      1.5
-    ],
-    "top_n": [
-      1,
-      2,
-      3
-    ],
-    "rebalance_modes": [
-      "daily",
-      "weekly",
-      "monthly"
-    ]
+  {
+   "code": "510050.SH",
+   "name": "上证50ETF",
+   "group": "A股宽基"
   },
-  "extra_series": []
+  {
+   "code": "510500.SH",
+   "name": "中证500ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "512100.SH",
+   "name": "中证1000ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "159915.SZ",
+   "name": "创业板ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "588000.SH",
+   "name": "科创50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "588190.SH",
+   "name": "科创100ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "563300.SH",
+   "name": "中证2000ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "159901.SZ",
+   "name": "深证100ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "510180.SH",
+   "name": "上证180ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "159338.SZ",
+   "name": "中证A500ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "512550.SH",
+   "name": "富时A50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "159601.SZ",
+   "name": "A50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "159949.SZ",
+   "name": "创业板50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "159902.SZ",
+   "name": "中小100ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "512380.SH",
+   "name": "MSCI中国A50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "588330.SH",
+   "name": "双创50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "563350.SH",
+   "name": "中证A50ETF",
+   "group": "A股宽基"
+  },
+  {
+   "code": "510880.SH",
+   "name": "红利ETF",
+   "group": "A股风格"
+  },
+  {
+   "code": "512890.SH",
+   "name": "红利低波ETF",
+   "group": "A股风格"
+  },
+  {
+   "code": "515450.SH",
+   "name": "红利低波100ETF",
+   "group": "A股风格"
+  },
+  {
+   "code": "159905.SZ",
+   "name": "深红利ETF",
+   "group": "A股风格"
+  },
+  {
+   "code": "515080.SH",
+   "name": "红利ETF易方达",
+   "group": "A股风格"
+  },
+  {
+   "code": "515180.SH",
+   "name": "红利ETF华泰柏瑞",
+   "group": "A股风格"
+  },
+  {
+   "code": "515910.SH",
+   "name": "质量ETF",
+   "group": "A股风格"
+  },
+  {
+   "code": "515110.SH",
+   "name": "国企红利ETF",
+   "group": "A股风格"
+  },
+  {
+   "code": "512690.SH",
+   "name": "酒ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515170.SH",
+   "name": "食品饮料ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159928.SZ",
+   "name": "消费ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515030.SH",
+   "name": "新能源车ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159755.SZ",
+   "name": "电池ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159790.SZ",
+   "name": "碳中和ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "516160.SH",
+   "name": "新能源ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515790.SH",
+   "name": "光伏ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512480.SH",
+   "name": "半导体ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159995.SZ",
+   "name": "芯片ETF华夏",
+   "group": "行业主题"
+  },
+  {
+   "code": "512760.SH",
+   "name": "芯片ETF国泰",
+   "group": "行业主题"
+  },
+  {
+   "code": "159516.SZ",
+   "name": "半导体设备ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "588200.SH",
+   "name": "科创芯片ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515020.SH",
+   "name": "芯片ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512660.SH",
+   "name": "军工ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512670.SH",
+   "name": "国防军工ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512680.SH",
+   "name": "军工龙头ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512170.SH",
+   "name": "医疗ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512010.SH",
+   "name": "医药ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512290.SH",
+   "name": "生物医药ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159837.SZ",
+   "name": "生物医药ETF易方达",
+   "group": "行业主题"
+  },
+  {
+   "code": "159992.SZ",
+   "name": "创新药ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159883.SZ",
+   "name": "医疗器械ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512880.SH",
+   "name": "证券ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512000.SH",
+   "name": "证券ETF国泰",
+   "group": "行业主题"
+  },
+  {
+   "code": "512900.SH",
+   "name": "证券ETF南方",
+   "group": "行业主题"
+  },
+  {
+   "code": "512800.SH",
+   "name": "银行ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515290.SH",
+   "name": "银行ETF天弘",
+   "group": "行业主题"
+  },
+  {
+   "code": "512070.SH",
+   "name": "非银金融ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512400.SH",
+   "name": "有色金属ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515220.SH",
+   "name": "煤炭ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515210.SH",
+   "name": "钢铁ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "516150.SH",
+   "name": "稀土ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "562500.SH",
+   "name": "机器人ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159996.SZ",
+   "name": "家电ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "516110.SH",
+   "name": "汽车ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159611.SZ",
+   "name": "电力ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159825.SZ",
+   "name": "农业ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159867.SZ",
+   "name": "畜牧ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159865.SZ",
+   "name": "养殖ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512200.SH",
+   "name": "房地产ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159766.SZ",
+   "name": "旅游ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512580.SH",
+   "name": "环保ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515900.SH",
+   "name": "央企改革ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159819.SZ",
+   "name": "人工智能ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515980.SH",
+   "name": "人工智能ETF华富",
+   "group": "行业主题"
+  },
+  {
+   "code": "512720.SH",
+   "name": "计算机ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "516510.SH",
+   "name": "云计算ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512330.SH",
+   "name": "信息技术ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515880.SH",
+   "name": "通信ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515050.SH",
+   "name": "5GETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "512980.SH",
+   "name": "传媒ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159869.SZ",
+   "name": "游戏ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159997.SZ",
+   "name": "电子ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515000.SH",
+   "name": "科技50ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "515750.SH",
+   "name": "科技龙头ETF",
+   "group": "行业主题"
+  },
+  {
+   "code": "159938.SZ",
+   "name": "医药ETF广发",
+   "group": "行业主题"
+  },
+  {
+   "code": "513100.SH",
+   "name": "纳指ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513500.SH",
+   "name": "标普500ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "159920.SZ",
+   "name": "恒生ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513000.SH",
+   "name": "恒指ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513180.SH",
+   "name": "恒生科技ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513330.SH",
+   "name": "恒生互联网ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513050.SH",
+   "name": "中概互联网ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513520.SH",
+   "name": "日经ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513030.SH",
+   "name": "德国ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "159866.SZ",
+   "name": "东南亚科技ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "513090.SH",
+   "name": "香港证券ETF",
+   "group": "海外避险"
+  },
+  {
+   "code": "518880.SH",
+   "name": "黄金ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "161226.SZ",
+   "name": "白银基金",
+   "group": "商品债券"
+  },
+  {
+   "code": "159985.SZ",
+   "name": "豆粕ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "159980.SZ",
+   "name": "有色期货ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "159981.SZ",
+   "name": "能源化工ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "511010.SH",
+   "name": "国债ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "511380.SH",
+   "name": "可转债ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "511030.SH",
+   "name": "公司债ETF",
+   "group": "商品债券"
+  },
+  {
+   "code": "511990.SH",
+   "name": "货币ETF",
+   "group": "商品债券"
+  }
+ ],
+ "overseas_pool": [
+  "513100.SH",
+  "513500.SH",
+  "159920.SZ",
+  "513000.SH",
+  "513180.SH",
+  "513330.SH",
+  "513050.SH",
+  "513520.SH",
+  "513030.SH",
+  "159866.SZ",
+  "513090.SH",
+  "518880.SH",
+  "161226.SZ",
+  "159985.SZ",
+  "159980.SZ",
+  "511010.SH",
+  "511380.SH",
+  "511030.SH",
+  "511990.SH"
+ ],
+ "regime_indices": {
+  "index_000300.SH": "沪深300",
+  "index_399101.SZ": "中小综指",
+  "index_399006.SZ": "创业板指",
+  "index_000510.SH": "中证A500"
+ },
+ "sensitivity": {
+  "enabled": true,
+  "window_scale": [
+   0.5,
+   1.0,
+   1.5
+  ],
+  "top_n": [
+   1,
+   2,
+   3
+  ],
+  "rebalance_modes": [
+   "daily",
+   "weekly",
+   "monthly"
+  ]
+ },
+ "extra_series": []
 }

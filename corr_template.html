@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>标的相关性分析</title>
+<style>
+  :root{--bg:#0F172A;--card:#111827;--line:#1E293B;--ink:#E2E8F0;--mut:#64748B;--sub:#94A3B8;--acc:#38BDF8;--acc2:#A78BFA}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+  header{position:sticky;top:0;z-index:20;background:rgba(15,23,42,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .hd{max-width:1680px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .hd h1{font-size:17px;margin:0;font-weight:700}
+  .hd .sub{font-size:12px;color:var(--mut)}
+  .hd .badge{margin-left:auto;font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:4px;padding:2px 8px}
+  .wrap{max-width:1680px;margin:0 auto;padding:12px 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .card h2{font-size:14px;margin:0 0 10px;color:var(--ink);font-weight:600}
+  .card h2 small{font-weight:400;color:var(--mut);font-size:11px}
+  /* 控制面板 */
+  .ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld label{font-size:11px;color:var(--mut)}
+  .fld input,.fld select{padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:var(--ink)}
+  .btn{padding:6px 14px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer}
+  .btn.primary{background:#38BDF8;color:#082f49;border-color:#38BDF8;font-weight:600}
+  /* 标的池 */
+  .pool-head{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .pool-head input[type=text]{flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:var(--ink)}
+  .pool-head .mini{font-size:11px;color:var(--mut);cursor:pointer;border:1px solid var(--line);border-radius:4px;padding:3px 8px;background:transparent}
+  .pool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px}
+  .grp{font-size:11px;color:var(--acc);grid-column:1/-1;margin-top:4px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:2px}
+  .pool-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 4px;border-radius:4px}
+  .pool-item:hover{background:#1E293B}
+  .pool-item input{margin:0;accent-color:#38BDF8}
+  .pool-item .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pool-item .cd{font-size:10px;color:var(--mut)}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:4px}
+  .kpi{background:#0F172A;border:1px solid var(--line);border-radius:8px;padding:10px}
+  .kpi .k{font-size:11px;color:var(--mut)}
+  .kpi .v{font-size:18px;font-weight:700;margin-top:3px}
+  .kpi .s{font-size:10px;color:var(--sub);margin-top:2px}
+  .chart{width:100%;height:520px}
+  .chart.bar{height:auto;min-height:300px}
+  /* 低相关对表 */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{color:var(--mut);font-weight:600;font-size:11px}
+  td.c{text-align:right;font-family:ui-monospace,monospace}
+  .low td:first-child{color:#34D399}
+  .note{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.6}
+  .sc{max-height:320px;overflow:auto}
+  .ph{color:var(--mut);font-size:12px;padding:20px 8px;text-align:center}
+  @media(max-width:640px){.chart{height:420px}.hd h1{font-size:15px}}
+</style>
+</head>
+<body>
+<header><div class="hd">
+  <h1>标的相关性分析</h1><span class="sub">基于后复权收益率的 Pearson 相关矩阵 · 辅助筛选低相关标的</span>
+  <span class="badge" id="dataBadge"></span>
+</div></header>
+<div class="wrap">
+  <div id="tip" style="display:none;background:rgba(56,189,248,.12);border:1px solid #38BDF8;color:#7DD3FC;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px"></div>
+  <div class="card">
+    <h2>筛选标的</h2>
+    <div class="ctl">
+      <div class="fld"><label>起始日期</label><input type="date" id="startSel"></div>
+      <div class="fld"><label>结束日期</label><input type="date" id="endSel"></div>
+      <div class="fld"><label>收益率周期</label>
+        <select id="freqSel"><option value="daily">日收益</option><option value="weekly">周收益</option><option value="monthly">月收益</option></select>
+      </div>
+      <div class="fld"><button class="btn primary" id="calcBtn">计算相关性</button></div>
+    </div>
+    <div class="pool-head">
+      <input type="text" id="searchIn" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…">
+      <button class="mini" id="allBtn">全选</button>
+      <button class="mini" id="noneBtn">清空</button>
+      <button class="mini" id="diverBtn">推荐分散组合</button>
+    </div>
+    <div class="pool-grid" id="poolGrid"></div>
+  </div>
+
+  <div id="result" style="display:none">
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <h2>相关矩阵热力图 <small>行×列为标的间相关系数（1=同涨跌，0=无关，负=反向）</small></h2>
+      <div class="chart" id="matChart"><div class="ph">正在计算…</div></div>
+    </div>
+    <div class="card">
+      <h2>平均相关度 <small>每个标的对其他标的的平均相关系数，<b style="color:#34D399">越靠前越利于分散</b>（升序）</small></h2>
+      <div class="chart bar" id="avgChart"></div>
+    </div>
+    <div class="card">
+      <h2>低相关组合 <small>两两相关系数最低的 20 对，适合组合配置</small></h2>
+      <div class="sc"><table><thead><tr><th>#</th><th>标的 A</th><th>标的 B</th><th class="c">相关系数</th><th>分组 A</th><th>分组 B</th></tr></thead><tbody id="pairBody"></tbody></table></div>
+    </div>
+    <div class="card"><p class="note" id="noteBox"></p></div>
+  </div>
+</div>
+<script>/*__ECHARTS__*/</script>
+<script id="wufuDataGz" type="application/json">/*__DATA_GZ__*/</script>
+<script>
+(function(){
+  var DATA=null;
+  var $=function(id){return document.getElementById(id)};
+  var COLOR="#38BDF8", COLOR2="#A78BFA";
+  // 默认勾选一组分散代表标的（A股/海外/商品/债券/货币），首屏即展示；可自行调整
+  var checked=["510300.SH","510500.SH","513100.SH","513500.SH","518880.SH","511010.SH","511990.SH","159920.SZ","159985.SZ"];
+
+  function decodeB64(b64){
+    var bin=atob(b64);var u8=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    return new Blob([u8]).stream().pipeThrough(new DecompressionStream("gzip"));
+  }
+  function load(cb){
+    var raw=document.getElementById("wufuDataGz");
+    if(!raw){showNote("缺少数据块");return;}
+    var b64=(raw.textContent||"").replace(/\s+/g,"");
+    new Response(decodeB64(b64)).text().then(function(t){
+      DATA=JSON.parse(t);
+      $("dataBadge").textContent="数据截止 "+DATA.calendar[DATA.calendar.length-1]+" · "+DATA.pool.length+" 标的";
+      initDates();
+      renderPool();
+      cb&&cb();
+    }).catch(function(e){showNote("解压失败:"+((e&&e.message)||e));});
+  }
+
+  function initDates(){
+    var last=DATA.calendar[DATA.calendar.length-1];
+    var first=DATA.calendar[0];
+    $("startSel").value="2017-01-01";
+    $("endSel").value=last;
+    $("startSel").min=first; $("startSel").max=last;
+    $("endSel").min=first; $("endSel").max=last;
+  }
+
+  function poolMeta(){
+    // pool + 指数
+    var list=DATA.pool.slice();
+    (DATA.indexNames||[]).forEach(function(inm){
+      if(!list.some(function(p){return p.code===inm.code;}))
+        list.push({code:inm.code,name:inm.name,group:"指数"});
+    });
+    return list;
+  }
+
+  function renderPool(){
+    var grid=$("poolGrid");grid.innerHTML="";
+    var list=poolMeta();
+    var kw=($("searchIn").value||"").trim().toLowerCase();
+    var byGroup={};
+    list.forEach(function(p){
+      if(kw&&p.code.toLowerCase().indexOf(kw)<0&&p.name.toLowerCase().indexOf(kw)<0)return;
+      (byGroup[p.group]=byGroup[p.group]||[]).push(p);
+    });
+    var rows=[];
+    Object.keys(byGroup).forEach(function(g){
+      rows.push('<div class="grp">'+g+'</div>');
+      byGroup[g].forEach(function(p){
+        var on=checked.indexOf(p.code)>=0?"checked":"";
+        rows.push('<label class="pool-item"><input type="checkbox" data-c="'+p.code+'" '+on+'><span class="nm">'+p.name+'</span><span class="cd">'+p.code+'</span></label>');
+      });
+    });
+    grid.innerHTML=rows.join("");
+    Array.prototype.forEach.call(grid.querySelectorAll("input[type=checkbox]"),function(cb){
+      cb.addEventListener("change",function(){
+        var c=this.getAttribute("data-c");
+        var i=checked.indexOf(c);
+        if(this.checked&&i<0)checked.push(c);
+        if(!this.checked&&i>=0)checked.splice(i,1);
+        autoCalc();
+      });
+    });
+    updateCount();
+  }
+
+  function updateCount(){
+    $("pool-head-count") && ($("pool-head-count").textContent=checked.length+" 已选");
+  }
+
+  function closeFor(code){
+    var s=DATA.close[code];
+    if(s)return s;
+    // 指数
+    if(DATA.idx&&DATA.idx[code])return DATA.idx[code];
+    return null;
+  }
+
+  function compute(){
+    if(checked.length<2){showNote("请至少勾选 2 个标的");return;}
+    var start=$("startSel").value, end=$("endSel").value;
+    if(!start||!end||end<start){showNote("日期区间无效");return;}
+    var freq=$("freqSel").value;
+    var cal=DATA.calendar;
+    var si=-1,ei=-1;
+    for(var i=0;i<cal.length;i++){if(cal[i]>=start){si=i;break;}}
+    for(var i=cal.length-1;i>=0;i--){if(cal[i]<=end){ei=i;break;}}
+    if(si<0||ei<si){showNote("日期超出数据范围");return;}
+
+    // 各标的收盘价矩阵（区间内）
+    var mat={}, codes=checked.slice();
+    codes.forEach(function(c){mat[c]=closeFor(c);});
+
+    // 共同有效交易日（所有标的有价）
+    var validIdx=[];
+    for(var t=si;t<=ei;t++){
+      var ok=true;
+      for(var k=0;k<codes.length;k++){var v=mat[codes[k]]&&mat[codes[k]][t];if(!(v>0)){ok=false;break;}}
+      if(ok)validIdx.push(t);
+    }
+    if(validIdx.length<10){showNote("共同交易日不足（'"+start+"~"+end+"' 共同交易日 "+validIdx.length+"），请调整区间或标的");return;}
+
+    // 价格矩阵
+    var P=[]; // [code][k]
+    codes.forEach(function(c){P.push(validIdx.map(function(t){return mat[c][t]}));});
+
+    // 收益率（按周期）
+    var R=retsByFreq(P,validIdx,freq);
+    if(!R)return;
+
+    // Pearson 相关矩阵
+    var n=codes.length, C=[];
+    for(var a=0;a<n;a++){
+      C[a]=[];
+      for(var b=0;b<n;b++){C[a][b]=a===b?1:pearson(R[a],R[b]);}
+    }
+
+    // 平均相关度
+    var avg=codes.map(function(c,ai){
+      var s=0;
+      for(var b=0;b<n;b++)if(b!==ai)s+=C[ai][b];
+      return {code:c,name:nameOf(c),avg:s/(n-1)};
+    });
+    avg.sort(function(x,y){return x.avg-y.avg});
+
+    // 低相关对
+    var pairs=[];
+    for(var a=0;a<n;a++)for(var b=a+1;b<n;b++)pairs.push({a:a,b:b,v:C[a][b]});
+    pairs.sort(function(x,y){return x.v-y.v});
+
+    renderKPIs(n,validIdx.length,codes,C,avg);
+    renderMatrix(codes,C);
+    renderAvg(avg);
+    renderPairs(pairs,codes,C);
+    $("result").style.display="";
+    $("noteBox").innerHTML="口径说明：相关系数基于所选标的在「"+start+" ~ "+end+"」区间的"+freqLabel(freq)+"收益率序列（Pearson）。平均相关度 = 该标的与其余所选标的相关系数的算术平均，越低说明与其他标的重合度越小、越利于分散风险。低相关组合按两两相关系数升序取最低 20 对。";
+  }
+
+  function retsByFreq(P,validIdx,freq){
+    // 返回 [code][r] 收益率数组
+    if(freq==="daily"){
+      return P.map(function(px){
+        var r=[];
+        for(var i=1;i<px.length;i++){var a=px[i-1],b=px[i];if(a>0&&b>0)r.push(b/a-1);}
+        return r;
+      });
+    }
+    // 周/月：按自然周期取区间末价再算收益
+    var cal=DATA.calendar, perIdx=periodEnds(validIdx,freq);
+    if(perIdx.length<10){showNote("周期样本不足（"+perIdx.length+" 个周期），请改用更高频或更长区间");return null;}
+    var PP=P.map(function(px){return perIdx.map(function(t){return px[pxIndex(validIdx,t)];});});
+    return PP.map(function(px){
+      var r=[];
+      for(var i=1;i<px.length;i++){var a=px[i-1],b=px[i];if(a>0&&b>0)r.push(b/a-1);}
+      return r;
+    });
+  }
+
+  function pxIndex(validIdx,t){
+    // 返回 t 在 validIdx 中的位置（binary-ish linear，数据量小）
+    return validIdx.indexOf(t);
+  }
+
+  function periodEnds(validIdx,freq){
+    var cal=DATA.calendar;
+    var ends=[],lastKey=null,lastT=null;
+    for(var i=0;i<validIdx.length;i++){
+      var d=cal[validIdx[i]];
+      var key=freq==="weekly"?weekKey(d):d.slice(0,7);
+      if(lastKey!==null&&key!==lastKey){ends.push(lastT);}
+      lastKey=key;lastT=validIdx[i];
+    }
+    if(lastT!==null)ends.push(lastT);
+    return ends;
+  }
+
+  function weekKey(d){
+    // 按 ISO 周
+    var dt=new Date(d.replace(/-/g,"/"));
+    var one=86400000;
+    var day=dt.getDay()||7; // 周一=1
+    var thurs=new Date(dt.getTime()+(4-day)*one);
+    var y=thurs.getFullYear();
+    var start=new Date(y,0,1);
+    var week=Math.ceil((((thurs-start)/one)+1)/7);
+    return y+"-W"+week;
+  }
+
+  function pearson(x,y){
+    var n=x.length, mx=0, my=0;
+    for(var i=0;i<n;i++){mx+=x[i];my+=y[i];}
+    mx/=n;my/=n;
+    var cov=0,vx=0,vy=0;
+    for(var i=0;i<n;i++){var dx=x[i]-mx,dy=y[i]-my;cov+=dx*dy;vx+=dx*dx;vy+=dy*dy;}
+    if(vx===0||vy===0)return 0;
+    return cov/Math.sqrt(vx*vy);
+  }
+
+  function nameOf(code){
+    var m=poolMeta().filter(function(p){return p.code===code})[0];
+    return m?m.name:code;
+  }
+  function groupOf(code){
+    var m=poolMeta().filter(function(p){return p.code===code})[0];
+    return m?m.group:"";
+  }
+  function freqLabel(f){return f==="daily"?"日":(f==="weekly"?"周":"月")}
+
+  function renderKPIs(n,days,codes,C,avg){
+    var allAvg=avg.reduce(function(s,x){return s+x.avg},0)/avg.length;
+    var lo=avg[0],hi=avg[avg.length-1];
+    var minPair=1;
+    for(var a=0;a<n;a++)for(var b=a+1;b<n;b++)minPair=Math.min(minPair,C[a][b]);
+    var html=
+      '<div class="kpi"><div class="k">所选标的</div><div class="v">'+n+'</div><div class="s">只</div></div>'+
+      '<div class="kpi"><div class="k">共同交易日</div><div class="v">'+days+'</div><div class="s">交易日</div></div>'+
+      '<div class="kpi"><div class="k">平均相关度</div><div class="v" style="color:'+(allAvg<0.5?"#34D399":"#FBBF24")+'">'+fmt(allAvg)+'</div><div class="s">越低越分散</div></div>'+
+      '<div class="kpi"><div class="k">最低相关标的</div><div class="v" style="font-size:13px;color:#34D399">'+lo.name+'</div><div class="s">平均 '+fmt(lo.avg)+'</div></div>'+
+      '<div class="kpi"><div class="k">最高相关标的</div><div class="v" style="font-size:13px;color:#F87171">'+hi.name+'</div><div class="s">平均 '+fmt(hi.avg)+'</div></div>'+
+      '<div class="kpi"><div class="k">最低单对相关</div><div class="v" style="font-size:13px;color:#34D399">'+fmt(minPair)+'</div><div class="s">分散潜力</div></div>';
+    $("kpis").innerHTML=html;
+  }
+
+  function fmt(v){return (Math.round(v*1000)/1000).toFixed(2);}
+
+  function renderMatrix(codes,C){
+    var names=codes.map(nameOf);
+    var cells=[];
+    for(var a=0;a<names.length;a++)for(var b=0;b<names.length;b++)
+      cells.push([b,a,+C[a][b].toFixed(3)]);
+    var el=$("matChart");el.innerHTML="";
+    var chart=echarts.init(el,"dark");
+    chart.setOption({
+      tooltip:{position:"top",formatter:function(p){return p.value[2]>=0?names[p.value[1]]+" × "+names[p.value[0]]+"："+p.value[2]:"";}},
+      grid:{left:120,right:40,top:60,bottom:80},
+      xAxis:{type:"category",data:names,axisLabel:{fontSize:10,rotate:45}},
+      yAxis:{type:"category",data:names,axisLabel:{fontSize:10}},
+      visualMap:{min:-1,max:1,calculable:true,orient:"vertical",right:0,top:"center",
+        textStyle:{fontSize:10},inRange:{color:["#7C3AED","#1E293B","#38BDF8"]}},
+      series:[{type:"heatmap",data:cells,label:{show:false}}]
+    });
+    window.addEventListener("resize",function(){chart.resize();});
+  }
+
+  function renderAvg(avg){
+    var el=$("avgChart");el.innerHTML="";
+    var data=avg.map(function(x){return {name:x.name,value:+x.avg.toFixed(3)}});
+    var chart=echarts.init(el,"dark");
+    chart.setOption({
+      tooltip:{trigger:"axis",axisPointer:{type:"shadow"}},
+      grid:{left:180,right:50,top:8,bottom:20},
+      xAxis:{type:"value",max:1,min:0,axisLabel:{fontSize:10}},
+      yAxis:{type:"category",data:data.map(function(d){return d.name}),axisLabel:{fontSize:10}},
+      series:[{type:"bar",barWidth:14,data:data.map(function(d,i){
+        return {value:d.value,itemStyle:{color:d.value<0.5?COLOR:"#F87171"}};
+      })}]
+    });
+    window.addEventListener("resize",function(){chart.resize();});
+  }
+
+  function renderPairs(pairs,codes,C){
+    var body=$("pairBody");body.innerHTML="";
+    var list=pairs.slice(0,20);
+    list.forEach(function(p,i){
+      var a=codes[p.a],b=codes[p.b];
+      var tr=document.createElement("tr");
+      tr.className=p.v<0.5?"low":"";
+      tr.innerHTML='<td>'+(i+1)+'</td><td>'+nameOf(a)+' <span style="color:var(--mut);font-size:10px">'+a+'</span></td><td>'+nameOf(b)+' <span style="color:var(--mut);font-size:10px">'+b+'</span></td><td class="c" style="color:'+(p.v<0.5?"#34D399":"inherit")+'">'+fmt(p.v)+'</td><td>'+groupOf(a)+'</td><td>'+groupOf(b)+'</td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function showNote(msg){
+    var t=$("tip");
+    if(!t){alert(msg);return;}
+    t.textContent=msg;t.style.display="block";
+    setTimeout(function(){t.style.display="none";},4000);
+  }
+  function autoCalc(){ if($("result").style.display!=="none") compute(); }
+
+  // 事件
+  $("calcBtn").addEventListener("click",function(){compute();});
+  ["freqSel","startSel","endSel"].forEach(function(id){
+    $(id).addEventListener("change",function(){ if($("result").style.display!=="none") compute(); });
+  });
+  $("searchIn").addEventListener("input",function(){renderPool();});
+  $("allBtn").addEventListener("click",function(){
+    var list=poolMeta();
+    var kw=($("searchIn").value||"").trim().toLowerCase();
+    list.forEach(function(p){if(!kw||p.code.toLowerCase().indexOf(kw)>=0||p.name.toLowerCase().indexOf(kw)>=0)checked.push(p.code);});
+    checked=checked.filter(function(c,i){return checked.indexOf(c)===i;});
+    renderPool();
+  });
+  $("noneBtn").addEventListener("click",function(){checked=[];renderPool();});
+  $("diverBtn").addEventListener("click",function(){
+    // 全选后算相关，取平均相关度最低的一批
+    var list=poolMeta();checked=list.map(function(p){return p.code;});
+    renderPool();
+    // 用更长默认区间计算并提示
+    var tmp=$("result").style.display;
+    compute();
+  });
+
+  load(function(){compute();});
+})();
+</script>
+</body>
+</html>

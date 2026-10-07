@@ -33,6 +33,10 @@ header .tag{margin-left:auto;font-size:11px;color:#A5F3FC;background:rgba(255,25
 #backBtn{font-size:12.5px;color:var(--acc);background:#111827;border:1px solid var(--line);border-radius:6px;padding:5px 14px;cursor:pointer}
 #backBtn:hover{background:#1E293B}
 .s2tip{font-size:12px;color:var(--mut)}
+.s2sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 16px;max-width:1680px;margin:0 auto;font-size:12px}
+.s2sel .sellab{color:#64748B;white-space:nowrap}
+.s2sel .seltag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid #1E293B;border-radius:4px;background:#111827;color:#E2E8F0}
+.s2sel .seltag i{font-style:normal;color:#64748B}
 @media (max-width:760px){#step1{padding:14px 10px}.s1card{padding:14px}}
 
 .trades td.fc, .trades th.fc{max-width:240px;white-space:normal;word-break:break-all;line-height:1.4}
@@ -47,6 +51,13 @@ aside .phead button:hover{text-decoration:underline}
 .psec:last-child{border-bottom:none}
 .psec h3{font-size:12px;color:var(--mut);font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .psec h3 .v{color:var(--acc);font-weight:700;font-variant-numeric:tabular-nums}
+.sfold{border-bottom:1px solid var(--line)}
+.sfold-h{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0F172A;color:var(--mut);border:none;padding:9px 14px;font-size:12px;cursor:pointer;text-align:left;box-sizing:border-box}
+.sfold-h:hover{background:#111827}
+.sfold-h b{color:#CBD5E1;font-weight:600}
+.sfold-h .sf-a{font-size:11px;color:var(--acc);white-space:nowrap}
+.sfold-b{padding:6px 0}
+.sfold-b.hide{display:none}
 label.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:7px;color:var(--ink)}
 input[type=number]{min-width:0;font-variant-numeric:tabular-nums}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -91,8 +102,9 @@ table.trades td.wk{color:#FBBF24} table.trades td.nm{color:var(--acc)}
 .tblwrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:8px}
 footer{color:var(--mut);font-size:11px;padding:14px 16px;text-align:center;line-height:1.7}
 footer b{color:#94A3B8}
-.nav{display:flex;gap:8px;padding:10px 16px 0;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box}
-.nav button{font-size:13px;padding:7px 18px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer}
+.nav{display:flex;gap:8px;padding:10px 16px 0;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{font-size:12px;padding:7px 10px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer;white-space:nowrap;flex:0 0 auto}
 .nav button.on{background:var(--acc);color:#fff;font-weight:600}
 .slist{display:flex;flex-direction:column;gap:8px}
 .srow{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
@@ -125,17 +137,38 @@ footer b{color:#94A3B8}
 @media (min-width:1024px){
   aside{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
 }
+/* ---------- 相关性视图 ---------- */
+.corr-mini{font-size:11px;color:#94A3B8;cursor:pointer;border:1px solid var(--line);border-radius:4px;padding:3px 8px;background:transparent}
+.corr-mini:hover{border-color:var(--acc);color:var(--acc)}
+.corr-grp{font-size:11px;color:var(--acc);grid-column:1/-1;margin-top:4px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:2px}
+.corr-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 4px;border-radius:4px}
+.corr-item:hover{background:#1E293B}
+.corr-item input{margin:0;accent-color:var(--acc)}
+.corr-item .corr-nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.corr-item .corr-cd{font-size:10px;color:#64748B}
+.corr-item .rot{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;color:#94A3B8;white-space:nowrap;font-weight:400;cursor:pointer}
+.corr-item .rot:hover{color:var(--acc)}
+.corr-item .rot input{accent-color:#F59E0B;margin:0;cursor:pointer}
+.corr-item .wlab{display:none;align-items:center;gap:3px;white-space:nowrap;font-size:11px;color:#94A3B8}
+.corr-kpi{background:#0F172A;border:1px solid var(--line);border-radius:8px;padding:10px}
+.corr-kpi .k{font-size:11px;color:var(--mut)}
+.corr-kpi .v{font-size:18px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+.corr-kpi .s{font-size:10px;color:#94A3B8;margin-top:2px}
+#corrResult table.trades td.low:first-child{color:#34D399}
+#corrResult table.trades td.c{text-align:right;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
 <header>
   <h1>ETF量化<span class="fu">回测系统</span></h1>
-  <span class="sub">多因子动量口径 · 因子截面z-score加权合成 · 收盘决策次日开盘换仓（无前视）</span>
   <span class="tag">Wind Alice 后复权日K · 2017~2026</span>
 </header>
 <div class="nav">
+  <button type="button" id="tabCorr">相关性</button>
   <button type="button" id="tabBacktest" class="on">回测</button>
-  <button type="button" id="tabStrategies">已保存策略</button>
+  <button type="button" id="tabStrategies">我的策略</button>
+  <button type="button" id="tabCombo">策略组合</button>
+  <button type="button" id="tabIc">因子IC</button>
 </div>
 <div id="pageErr" style="display:none;background:#3F1D1D;color:#FECACA;font-size:13px;padding:10px 16px;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box"></div>
 <div id="viewBacktest">
@@ -161,7 +194,12 @@ footer b{color:#94A3B8}
     </div>
     <div class="psec" id="psecPool">
       <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
-      <div id="poolBox"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+        <button class="corr-mini" id="poolAll" type="button">全选</button>
+        <button class="corr-mini" id="poolNone" type="button">清空</button>
+      </div>
+      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
       <div class="notice" id="survivorTip" style="display:none"></div>
     </div>
     <div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div>
@@ -169,33 +207,37 @@ footer b{color:#94A3B8}
 </div>
 <div id="step2" style="display:none">
 <div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div>
+<div class="s2sel" id="selSummary" style="display:none"></div>
 <div class="wrap">
   <aside id="panel">
     <div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div>
     <div class="pbody">
+      <div style="display:flex;justify-content:flex-end;margin:2px 0 4px"><button type="button" id="sfToggle" style="font-size:11px;padding:2px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;color:#94A3B8;cursor:pointer">展开全部</button></div>
+      <div class="sfold">
+        <button type="button" class="sfold-h" data-g="fac"><b>② 因子与选股</b><span class="sf-a">点击展开</span></button>
+        <div class="sfold-b hide" id="sfg-fac">
       <div class="psec" id="psecFactor">
         <h3>因子管理</h3>
         <div id="mfBox" style="margin-top:2px">
           <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">创建因子并选择归属：<b>排名</b> → 放入「排名条件」参与轮动打分；<b>筛选</b> → 放入「筛选条件」作为过滤条件（全部满足才进入候选池，先筛选后排序）。可添加基础因子，或用公式四则运算组合自定义因子（最少2个成分）。</div>
           <div id="mfLibList"></div>
           <div class="row" style="display:flex;align-items:center;margin-top:6px;gap:6px">
-            <select id="mfCat" style="width:92px">
+            <select id="mfCat" style="width:110px;text-align:center;appearance:none;-webkit-appearance:none">
               <option value="all">全部因子</option>
               <option value="price">行情因子</option>
               <option value="tech">技术因子</option>
               <option value="custom">自定义因子</option>
             </select>
             <select id="mfAddKind" style="flex:1;min-width:0"></select>
-            <select id="mfAddUsage" style="width:52px">
+            <select id="mfAddUsage" style="width:66px;padding:2px 4px;text-align:center;appearance:none;-webkit-appearance:none">
               <option value="filter" selected>筛选</option>
               <option value="rank">排名</option>
             </select>
             <button type="button" id="mfAddBtn" style="margin-left:2px">添加</button>
           </div>
-          <div class="row" style="display:flex;align-items:center;margin-top:6px;gap:6px">
+          <div class="row" id="cfNameRow" style="display:none;align-items:center;margin-top:6px;gap:6px">
             <input id="cfName" type="text" placeholder="自定义因子名，如：动量增强"
                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-            <button type="button" id="cfToggleBtn">自定义公式因子</button>
           </div>
           <div id="cfEditor" style="display:none;margin-top:6px;padding:8px;border:1px dashed #334155;border-radius:6px">
             <div style="font-size:12px;color:#64748B;margin-bottom:4px">用公式组合现有因子（最少2个成分）：成分间用 + − × ÷ 连接，每项 系数×因子值；确认后按下拉选择放入排名或筛选。</div>
@@ -281,6 +323,11 @@ footer b{color:#94A3B8}
           <button type="button" id="holdBtn">添加</button>
         </div>
       </div>
+        </div><!-- /因子与选股 -->
+      </div><!-- /sfold fac -->
+      <div class="sfold">
+        <button type="button" class="sfold-h" data-g="core"><b>① 交易参数</b><span class="sf-a">收起</span></button>
+        <div class="sfold-b" id="sfg-core">
       <div class="psec">
         <div id="topnRow">
         <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
@@ -308,6 +355,13 @@ footer b{color:#94A3B8}
             <option value="money">货币ETF（511990）</option>
           </select>
         </h3>
+        <h3 style="margin-top:10px">回测区间</h3>
+        <label class="row">起始日期
+          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">结束日期
+          <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+        </label>
       </div>
       <div class="psec">
         <h3>交易成本</h3>
@@ -319,6 +373,11 @@ footer b{color:#94A3B8}
         </label>
         <label class="row" style="margin-top:4px"><span>成本分档（按流动性调整滑点<span class="tip">开启后按标的近20日平均成交额分档：≥10亿→3bp / ≥1亿→5bp / ≥5000万→8bp / ≥1000万→15bp / 其余→30bp；关闭则用上方统一滑点</span>）</span><input id="tierSw" type="checkbox"></label>
       </div>
+        </div><!-- /核心参数 -->
+      </div><!-- /sfold core -->
+      <div class="sfold">
+        <button type="button" class="sfold-h" data-g="exe"><b>③ 择时管理</b><span class="sf-a">点击展开</span></button>
+        <div class="sfold-b hide" id="sfg-exe">
       <div class="psec" id="psecRegime">
         <h3>走弱期机制</h3>
         <label class="row"><span>启用走弱期判断</span><input id="regSw" type="checkbox"></label>
@@ -345,12 +404,11 @@ footer b{color:#94A3B8}
         <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时指数（全部站上 MA 才开仓，可多选）</div>
         <div class="chips" id="tmIdxChips"></div>
       </div>
-      <div class="psec">
-        <h3>回测区间</h3>
-        <label class="row">起始日期
-          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
-        </label>
-      </div>
+        </div><!-- /执行细节 -->
+      </div><!-- /sfold exe -->
+      <div class="sfold">
+        <button type="button" class="sfold-h" data-g="mgmt"><b>④ 策略与管理</b><span class="sf-a">点击展开</span></button>
+        <div class="sfold-b hide" id="sfg-mgmt">
       <div class="psec">
         <h3>策略管理 <span class="v" id="stCount">0 个</span></h3>
         <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
@@ -373,6 +431,59 @@ footer b{color:#94A3B8}
           <button type="button" id="delSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">删除</button>
         </div>
       </div>
+      <div class="psec" id="psecTune">
+        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <span style="width:16px;flex:0 0 16px"></span>
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
+          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+            <option value="total" selected>累计收益</option>
+            <option value="sharpe">夏普比率</option>
+            <option value="calmar">收益/回撤比</option>
+            <option value="val_total">验证段累计收益（样本外）</option>
+          </select>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
+          <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
+          <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
+          <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
+          <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
+                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0;resize:vertical"></textarea>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
+          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">开始调优</button>
+          <span class="st" id="tuneState" style="font-size:11px">就绪</span>
+        </div>
+        <div id="tuneProg" style="display:none;margin:4px 0 2px">
+          <div style="height:6px;background:#1E293B;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#38BDF8;transition:width .2s"></div></div>
+          <span id="tuneProgTxt" style="font-size:11px;color:#94A3B8"></span>
+        </div>
+        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
+          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
+          <div id="tuneGrid" style="display:block;margin-top:4px"></div>
+          <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
+        </div>
+      </div>
+        </div><!-- /策略与管理 -->
+      </div><!-- /sfold mgmt -->
       <div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
         <span class="st" id="runState">就绪</span>
@@ -444,6 +555,110 @@ footer b{color:#94A3B8}
     </div>
   </div>
 </div>
+<div id="viewCorr" style="display:none">
+  <div style="max-width:1680px;margin:0 auto;padding:12px 16px 40px;box-sizing:border-box">
+    <div id="corrTip" style="display:none;background:rgba(56,189,248,.12);border:1px solid #38BDF8;color:#7DD3FC;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px"></div>
+    <div class="card">
+      <h2>标的相关性 <span class="n" id="corrBadge"></span></h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">起始日期<input type="date" id="corrStart" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">结束日期<input type="date" id="corrEnd" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">收益率周期
+          <select id="corrFreq" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;padding-right:24px;font-size:12px;background:#0F172A url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%2394A3B8'/%3E%3C/svg%3E&quot;) no-repeat right 8px center / 8px;border:1px solid #334155;border-radius:6px;color:#E2E8F0"><option value="daily">日收益</option><option value="weekly">周收益</option><option value="monthly">月收益</option></select>
+        </label>
+        <button id="corrCalc" type="button" style="align-self:flex-end;padding:6px 16px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer">计算相关性</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <input id="corrSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;height:24px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+        <button class="corr-mini" id="corrAll" type="button">全选</button>
+        <button class="corr-mini" id="corrNone" type="button">清空</button>
+        <button class="corr-mini" id="corrDiver" type="button">推荐分散组合</button>
+      </div>
+      <div id="corrPool" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
+    </div>
+    <div id="corrResult" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px" id="corrKpis"></div>
+      <div class="card"><h2>低相关组合 <span class="n">两两相关系数最低的 20 对</span></h2>
+        <div class="tblwrap"><table class="trades"><thead><tr><th style="width:40px">#</th><th>标的 A</th><th>标的 B</th><th style="width:80px">相关系数</th><th>分组 A</th><th>分组 B</th></tr></thead><tbody id="corrPairBody"></tbody></table></div>
+      </div>
+      <div class="card"><p style="font-size:11px;color:#94A3B8;margin:0;line-height:1.7" id="corrNote"></p></div>
+    </div>
+  </div>
+</div>
+<div id="viewCombo" style="display:none">
+  <div style="max-width:1280px;margin:0 auto;padding:12px 16px 40px;box-sizing:border-box">
+    <div class="card">
+      <h2>多策略组合</h2>
+      <p style="font-size:12px;color:#94A3B8;margin:2px 0 12px;line-height:1.7">从「我的策略」中勾选多个策略、手动分配权重，按所选周期做组合再平衡，合成组合净值；并计算各策略<b>日收益率相关</b>矩阵，辅助判断分散化。</p>
+      <h3 style="margin:8px 0 6px;font-size:13px">选择策略与权重</h3>
+      <div id="comboStratList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;max-height:300px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:8px"></div>
+      <div id="comboWarn" style="display:none;background:rgba(251,191,36,.12);border:1px solid #FBBF24;color:#FCD34D;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:8px"></div>
+      <h3 style="margin:14px 0 6px;font-size:13px">组合参数</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">起始日期<input type="date" id="comboStart" style="padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">结束日期<input type="date" id="comboEnd" style="padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">组合再平衡
+          <span style="display:flex;align-items:center;gap:4px;white-space:nowrap">
+            <select id="comboReb" style="padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+              <option value="none">不调仓（买入持有）</option>
+              <option value="daily">每交易日</option>
+              <option value="weekly" selected>每周</option>
+              <option value="monthly">每月</option>
+              <option value="quarterly">每季</option>
+              <option value="yearly">每年</option>
+            </select>
+            <span style="color:#94A3B8">每</span>
+            <select id="comboRebInt" style="padding:5px 6px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+            <span style="color:#94A3B8">个周期调仓</span>
+          </span>
+        </label>
+        <button id="comboRun" type="button" style="padding:6px 18px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer">运行组合回测</button>
+      </div>
+    </div>
+    <div id="comboResult" style="display:none;margin-top:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px" id="comboKpis"></div>
+      <div class="card"><h2>组合与各策略净值</h2><div id="comboChart" style="width:100%;height:340px"></div></div>
+      <div class="card"><h2>策略收益率相关性 <span class="n">各策略日收益率序列皮尔逊相关</span></h2><div id="comboHeatmap" style="width:100%;height:340px"></div></div>
+      <div class="card"><h2>目标权重占比</h2><div id="comboWeightLegend" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:10px;padding:8px;border:1px solid #1E293B;border-radius:6px"></div><div id="comboWeight" style="width:100%;height:300px"></div></div>
+    </div>
+  </div>
+</div>
+<div id="viewIc" style="display:none">
+  <div class="card" style="padding:12px">
+    <h2>因子 IC 分析 <span class="n">因子值 vs 未来收益的截面秩相关（Spearman IC）</span></h2>
+    <p style="font-size:11px;color:#94A3B8;margin:0 0 12px;line-height:1.7">IC = 每截面下因子值排序与未来 N 日收益排序的秩相关；ICIR = 平均 IC ÷ IC 标准差；有效占比 = IC&gt;0 的截面占比。用于判断哪些因子对未来收益有稳定预测力，辅助因子权重的设定与筛选。</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">未来收益窗口 N 日
+        <input id="icFutN" type="number" value="20" min="1" max="250" style="width:90px;height:32px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+      </label>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">截面频率
+        <select id="icFreq" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;padding-right:24px;font-size:12px;background:#0F172A url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%2394A3B8'/%3E%3C/svg%3E&quot;) no-repeat right 8px center / 8px;border:1px solid #334155;border-radius:6px;color:#E2E8F0"><option value="monthly">每月</option><option value="weekly">每周</option><option value="daily">每日</option></select>
+      </label>
+      <button id="icRun" type="button" style="align-self:flex-end;padding:8px 18px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer">开始计算</button>
+    </div>
+    <div id="icMsg" style="display:none;font-size:12px;color:#38BDF8;margin-bottom:10px"></div>
+    <p style="font-size:12px;color:#CBD5E1;margin:6px 0 6px">选择标的池（默认全池）</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <input id="icPoolSearch" type="text" placeholder="搜索代码 / 名称…" style="flex:1;min-width:160px;height:24px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+      <button class="corr-mini" id="icPoolAll" type="button">全选</button>
+      <button class="corr-mini" id="icPoolNone" type="button">清空</button>
+    </div>
+    <div id="icPool" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:220px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
+    <p style="font-size:12px;color:#CBD5E1;margin:12px 0 6px">选择因子（默认全部）</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <button class="corr-mini" id="icFacAll" type="button">全选</button>
+      <button class="corr-mini" id="icFacNone" type="button">清空</button>
+    </div>
+    <div id="icFactors" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+  <div id="icResult">
+    <div class="card" id="icRankWrap" style="display:none"><h2>因子 IC 排名 <span class="n">按平均 IC 绝对值降序</span></h2>
+      <div class="tblwrap"><table class="trades"><thead><tr><th style="width:34px">#</th><th>因子</th><th style="width:80px">平均 IC</th><th style="width:64px">ICIR</th><th style="width:76px">有效占比</th><th style="width:60px">截面数</th></tr></thead><tbody id="icRankBody"></tbody></table></div>
+    </div>
+    <div class="card" id="icSeriesWrap" style="display:none"><h2>IC 时间序列 <span class="n">按平均 IC 绝对值 Top5 因子</span></h2><div id="icSeriesChart" style="width:100%;height:360px"></div></div>
+    <div class="card" id="icDecayWrap" style="display:none"><h2>IC 衰减 <span class="n">按平均 IC 绝对值 Top8 因子 · 平均IC vs 未来收益窗口</span></h2><div id="icDecayChart" style="width:100%;height:360px"></div></div>
+  </div>
+</div>
 <script>/*__ECHARTS__*/</script>
 <script>window.echarts || document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"><\/script>');</script>
 <script>var WUFU_POOL = /*__POOL__*/;</script>
@@ -451,5 +666,8 @@ footer b{color:#94A3B8}
 <script id="wufuDataGz" type="text/plain">/*__DATA_GZ_B64__*/</script>
 <script>/*__ENGINE__*/</script>
 <script>/*__UI__*/</script>
+<script>/*__TUNE__*/</script>
+<script>/*__CORR__*/</script>
+<script>/*__IC__*/</script>
 </body>
 </html>

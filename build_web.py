@@ -21,6 +21,12 @@ def main():
         engine_js = f.read()
     with open(os.path.join(ROOT, "js_ui.js"), "r", encoding="utf-8") as f:
         ui_js = f.read()
+    with open(os.path.join(ROOT, "js_tune.js"), "r", encoding="utf-8") as f:
+        tune_js = f.read()
+    with open(os.path.join(ROOT, "corr_view.js"), "r", encoding="utf-8") as f:
+        corr_js = f.read()
+    with open(os.path.join(ROOT, "ic_view.js"), "r", encoding="utf-8") as f:
+        ic_js = f.read()
     with open(os.path.join(ROOT, "output", "web_data.json"), "r", encoding="utf-8") as f:
         data_json = f.read()
     with open(os.path.join(ROOT, "echarts.min.js"), "r", encoding="utf-8") as f:
@@ -52,10 +58,13 @@ def main():
     html = html.replace("/*__DATA_GZ_B64__*/", data_gz_b64)
     html = html.replace("/*__ENGINE__*/", engine_js)
     html = html.replace("/*__UI__*/", ui_js)
+    html = html.replace("/*__TUNE__*/", tune_js)
+    html = html.replace("/*__CORR__*/", corr_js)
+    html = html.replace("/*__IC__*/", ic_js)
     html = html.replace("/*__ECHARTS__*/", echarts_js)
 
     # 安全检查：占位符都必须被替换
-    for marker in ["/*__POOL__*/", "/*__FIRSTDATE__*/", "/*__DATA_GZ_B64__*/", "/*__ENGINE__*/", "/*__UI__*/", "/*__ECHARTS__*/"]:
+    for marker in ["/*__POOL__*/", "/*__FIRSTDATE__*/", "/*__DATA_GZ_B64__*/", "/*__ENGINE__*/", "/*__UI__*/", "/*__TUNE__*/", "/*__CORR__*/", "/*__IC__*/", "/*__ECHARTS__*/"]:
         if marker in html:
             raise SystemExit(f"占位符 {marker} 未被替换，构建中止")
 

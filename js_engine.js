@@ -230,15 +230,19 @@
     while (startPos < n && cal[startPos] < params.start_date) startPos++;
     var warmup = 40;
     (params.factors || []).forEach(function (f) { warmup = Math.max(warmup, f.window || 20); });
-    if (startPos + warmup + 5 > n) throw new Error("回测区间过短，无法完成动量预热");
+    var endPos = n - 1;
+    if (params.end_date) { while (endPos >= 0 && cal[endPos] > params.end_date) endPos--; }
+    if (startPos + warmup + 5 > endPos + 1) throw new Error("回测区间过短，无法完成动量预热");
+    if (endPos < startPos) throw new Error("结束日期早于起始日期");
 
     // 序列
-    var closes = {}, opens = {}, highs = {}, lows = {}, vols = {}, amts = {}, idxClose = {}, codeSet = {};
+    var closes = {}, opens = {}, highs = {}, lows = {}, vols = {}, amts = {}, turnovers = {}, idxClose = {}, codeSet = {};
     var rawOpens = {}, rawCloses = {}, navs = {};
     codes.forEach(function (c) {
       closes[c] = D.series[c].close; opens[c] = D.series[c].open; codeSet[c] = 1;
       highs[c] = D.series[c].high || null; lows[c] = D.series[c].low || null;
       vols[c] = D.series[c].volume || null; amts[c] = D.series[c].amount || null;
+      turnovers[c] = D.series[c].turnover || null;
       rawOpens[c] = D.series[c].raw_open || null; rawCloses[c] = D.series[c].raw_close || null;
       navs[c] = D.series[c].nav || null;
     });
@@ -284,7 +288,7 @@
       return ds.slice(0, 4);  // yearly
     }
     var w0 = null, wSeq = -1, mm0 = null, mSeq2 = -1;
-    for (i = startPos; i < n; i++) {
+    for (i = startPos; i <= endPos; i++) {
       var hit = false;
       if (rmode === "daily") hit = ((i - startPos) % rint) === 0;
       else if (rmode === "weekly") {
@@ -292,7 +296,7 @@
         if (w !== w0) { w0 = w; wSeq++; }
         if (wSeq % rint === 0) {
           var isF = (i === startPos || weekId(cal[i - 1]) !== w);
-          var isL = (i + 1 >= n || weekId(cal[i + 1]) !== w);
+          var isL = (i + 1 > endPos || weekId(cal[i + 1]) !== w);
           if ((anchor === "fri" && isL) || (anchor !== "fri" && isF)) hit = true;
         }
       } else if (rmode === "monthly" || rmode === "quarterly" || rmode === "yearly") {
@@ -300,7 +304,7 @@
         if (mm !== mm0) { mm0 = mm; mSeq2++; }
         if (mSeq2 % rint === 0) {
           var isF2 = (i === startPos || periodKey(cal[i - 1]) !== mm);
-          var isL2 = (i + 1 >= n || periodKey(cal[i + 1]) !== mm);
+          var isL2 = (i + 1 > endPos || periodKey(cal[i + 1]) !== mm);
           if ((anchor === "last" && isL2) || (anchor !== "last" && isF2)) hit = true;
         }
       } else hit = ((i - startPos) % (params.rebalance_days || 20)) === 0;
@@ -407,6 +411,22 @@
       }
       if (kind === "amount") return sumAt(amts[code], i, w1) / w1;
       if (kind === "volume") return sumAt(vols[code], i, w1) / w1;
+      if (kind === "turnover") {
+        // N日平均换手率（%）
+        var tArr = turnovers[code]; if (!tArr) return NaN;
+        var loT = i - w1 + 1, sT = 0, cT = 0;
+        for (var jT = Math.max(0, loT); jT <= i; jT++) { var tv = tArr[jT]; if (tv === -1 || tv == null || isNaN(tv)) return NaN; sT += tv; cT++; }
+        return cT ? sT / cT : NaN;
+      }
+      if (kind === "vol_ratio") {
+        // 放量比 = 近N日均量 / M日前M日均量（w1=N，w2=M）
+        var m1v = sumAt(vols[code], i, w1) / w1;
+        var loM = i - w2 - w2 + 1;
+        if (loM < 0) return NaN;
+        var m2v = sumAt(vols[code], i - w2, w2) / w2;
+        if (!(m2v > 0) || isNaN(m2v)) return NaN;
+        return m1v / m2v;
+      }
       if (kind === "rsrs") {
         if (i + 1 < w1) return NaN;
         var hs = [], ls = [], j2;
@@ -568,7 +588,7 @@
       return out;
     }
 
-    for (i = 0; i < n; i++) {
+    for (i = 0; i <= endPos; i++) {
       // ---- 0) 执行昨日收盘设定的目标（今日开盘成交）----
       var executed = false, r = 0;
       if (pending) {
@@ -920,11 +940,11 @@
     }
 
     // ---- 切片到回测区间 ----
-    var calS = cal.slice(startPos);
-    var navV = navSeries.slice(startPos), ddV = ddSeries.slice(startPos);
-    var benchV = benchNav.slice(startPos), ewV = ewNav.slice(startPos);
-    var dailyR = dailyRet.slice(startPos), benchD = benchDaily.slice(startPos);
-    var holdV = holdSeries.slice(startPos), regV = regSeries.slice(startPos), expV = expSeries.slice(startPos);
+    var calS = cal.slice(startPos, endPos + 1);
+    var navV = navSeries.slice(startPos, endPos + 1), ddV = ddSeries.slice(startPos, endPos + 1);
+    var benchV = benchNav.slice(startPos, endPos + 1), ewV = ewNav.slice(startPos, endPos + 1);
+    var dailyR = dailyRet.slice(startPos, endPos + 1), benchD = benchDaily.slice(startPos, endPos + 1);
+    var holdV = holdSeries.slice(startPos, endPos + 1), regV = regSeries.slice(startPos, endPos + 1), expV = expSeries.slice(startPos, endPos + 1);
     var benchDD = benchV.map(function (v, idx) { return v / benchV.slice(0, idx + 1).reduce(function (a, b) { return b > a ? b : a; }, -Infinity) - 1; });
 
     // ---- 指标 ----
