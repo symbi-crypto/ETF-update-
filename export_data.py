@@ -89,7 +89,7 @@ def main():
 
     series, index = {}, {}
     for p in pool:
-        d = load_ohlc(p["code"])
+        d = load_ohlc(p["code"]) or {}
         uo = load_unadj(p["code"])
         nv = load_nav(p["code"])
         opens, closes, highs, lows, vols, amts, tvs = [], [], [], [], [], [], []
@@ -121,7 +121,7 @@ def main():
         }
     # 附加序列（如货币ETF 511880）：仅供前端展示（现金替代份额），不进 pool、不参与回测
     for p in cfg.get("extra_series", []):
-        d = load_ohlc(p["code"])
+        d = load_ohlc(p["code"]) or {}
         uo = load_unadj(p["code"])
         opens, closes, highs, lows, vols, amts, tvs = [], [], [], [], [], [], []
         r_op, r_cl = [], []

@@ -108,7 +108,8 @@ def fetch_em(code: str, start: str, end: str):
             if attempt == 3:
                 print(f"  [东财失败] {code}: {str(e)[:80]}")
                 return None
-            time.sleep(1.5)
+            # 错峰重试：递增间隔，避开东财限流窗口
+            time.sleep([2.0, 4.0, 8.0][attempt])
 
 
 def write_csv(code: str, rows: list):
@@ -132,16 +133,32 @@ def main():
     start = start.replace("-", "")
     end = end.replace("-", "")
     ok = fail = 0
+    fail_codes = []
     for code, _kind in targets:
         rows = fetch_em(code, start, end)
         if not rows:
             print(f"  [空] {code}: 无数据")
             fail += 1
+            fail_codes.append(code)
             continue
         n = write_csv(code, rows)
         print(f"  [OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
         ok += 1
-        time.sleep(0.3)  # 限频保护
+        time.sleep(1.5)  # 加大间隔，规避东财密集请求限流
+
+    # 补拉一轮：对上一轮失败的标的，间隔更久后再试
+    if fail_codes:
+        print(f"\n补拉失败标的（{len(fail_codes)} 只）…")
+        for code in fail_codes:
+            time.sleep(2.0)
+            rows = fetch_em(code, start, end)
+            if rows:
+                n = write_csv(code, rows)
+                print(f"  [补OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
+                ok += 1
+                fail -= 1
+            else:
+                print(f"  [补失败] {code}")
 
     print(f"\n拉取完成：{ok} 成功 / {fail} 失败")
     if ok == 0:
