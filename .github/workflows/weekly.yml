@@ -23,6 +23,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Probe free data sources
+        run: |
+          for u in \
+            "https://push2his.eastmoney.com" \
+            "https://finance.sina.com.cn" \
+            "https://web.ifzq.gtimg.cn" \
+            "https://hq.sinajs.cn" \
+            "https://github.com" ; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 12 -m 18 -A "Mozilla/5.0" "$u" || echo 000)
+            echo "PROBE $code $u"
+          done
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
