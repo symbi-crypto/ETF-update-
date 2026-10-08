@@ -31,6 +31,8 @@ jobs:
         run: pip install akshare pandas
       - name: Update data and build
         run: python update_data.py
+      - name: Make index page
+        run: cp output/ETF动量轮动回测系统.html output/index.html
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
