@@ -146,10 +146,14 @@ def main():
         ok += 1
         time.sleep(1.5)  # 加大间隔，规避东财密集请求限流
 
-    # 补拉一轮：对上一轮失败的标的，间隔更久后再试
-    if fail_codes:
-        print(f"\n补拉失败标的（{len(fail_codes)} 只）…")
-        for code in fail_codes:
+    # 多轮补拉：对失败的标的，间隔更久后多轮重试（东财限流常有时段性）
+    remaining = fail_codes
+    for round_no in range(3):
+        if not remaining:
+            break
+        print(f"\n补拉第{round_no + 1}轮（剩余 {len(remaining)} 只）…")
+        still = []
+        for code in remaining:
             time.sleep(2.0)
             rows = fetch_em(code, start, end)
             if rows:
@@ -159,6 +163,8 @@ def main():
                 fail -= 1
             else:
                 print(f"  [补失败] {code}")
+                still.append(code)
+        remaining = still
 
     print(f"\n拉取完成：{ok} 成功 / {fail} 失败")
     if ok == 0:
