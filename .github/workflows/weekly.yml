@@ -23,23 +23,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Probe free data sources
-        run: |
-          echo "== 东财kline接口带headers测试 =="
-          resp=$(curl -s -m 20 -A "Mozilla/5.0" -H "Referer: https://quote.eastmoney.com/" "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.510300&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=1&beg=20260901&end=20261008&ut=fa5fd1943c7b386f172d6893dbfba10b" || echo EMPTY)
-          echo "EMPROBE ${resp:0:150}"
-          echo "== 腾讯fqkline测试 =="
-          resp=$(curl -s -m 20 -A "Mozilla/5.0" "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sh510300,day,2026-09-01,2026-10-08,40,hfq" || echo EMPTY)
-          echo "TENPROBE ${resp:0:120}"
-          echo "== 新浪ETF历史接口测试 =="
-          resp=$(curl -s -m 20 -A "Mozilla/5.0" -H "Referer: https://finance.sina.com.cn/" "https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20_=/CN_MarketDataService.getKLineData?symbol=sh510300&scale=240&ma=no&datalen=10" || echo EMPTY)
-          echo "SINPROBE ${resp:0:150}"
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install deps
-        run: pip install akshare pandas
+        run: pip install pandas
       - name: Update data and build
         run: python update_data.py
       - name: Make index page

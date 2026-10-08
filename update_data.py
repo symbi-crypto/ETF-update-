@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-update_data.py — ETF轮动系统·免费数据源自动更新
+update_data.py — ETF轮动系统·免费数据源自动更新（东方财富直连）
 =================================================
-用 AKShare（东方财富免费接口）拉取全部标的后复权日K，规范化成现有
-data/*.csv 格式，并重建 web_data.json 与单文件 HTML。
+用东方财富免费接口（push2his.eastmoney.com）拉取全部标的后复权日K，
+规范化成现有 data/*.csv 格式，并重建 web_data.json 与单文件 HTML。
 
-依赖：pip install akshare
-网络要求：可访问东方财富接口（push2his.eastmoney.com）。
-  注意：豆包云环境网络对 eastmoney.com 不可达，请在本机电脑、自有服务器
-  或 GitHub Actions 上运行；本机正常联网即可。
+依赖：仅标准库 + pandas（export_data.py / build_web.py 需要）。
+网络要求：可访问 push2his.eastmoney.com，且请求需携带 UA+Referer 头
+ （东财对缺头的自动请求会断开连接）。
+ 在 GitHub Actions runner 上已验证可用；豆包云环境对 eastmoney 不可达，
+ 请在 runner / 本机 / 自有服务器上运行。
 
 用法：
     python3 update_data.py [起始日期]   # 默认 2017-01-01；可指定如 2016-06-01
@@ -17,8 +18,7 @@ import json
 import os
 import sys
 import time
-
-import pandas as pd
+import urllib.request
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(ROOT, "data")
@@ -27,21 +27,29 @@ os.makedirs(DATA_DIR, exist_ok=True)
 # 统一 csv 列（与 fetch_data.py / engine.load_ohlc 约定一致）
 HEADER = "date,open,high,low,close,volume,amount\n"
 
+# 东财行情接口固定参数
+UT = "fa5fd1943c7b386f172d6893dbfba10b"
+HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                   "AppleWebKit/537.36 (KHTML, like Gecko) "
+                   "Chrome/120.0 Safari/537.36"),
+    "Referer": "https://quote.eastmoney.com/",
+    "Accept": "*/*",
+}
+
 
 def load_config():
     with open(os.path.join(ROOT, "config.json"), "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def etf_symbol(code: str) -> str:
-    """'510300.SH' -> '510300'（akshare 纯数字代码）"""
-    return code.split(".")[0]
-
-
-def idx_symbol(code: str) -> str:
-    """'index_000300.SH' -> '000300'（akshare 指数代码，去前缀与交易所）"""
-    base = code.split(".")[0]
-    return base.replace("index_", "")
+def secid(code: str) -> str:
+    """'510300.SH' / 'index_000300.SH' -> 东财 secid（市场.代码）"""
+    base = code.split(".")[0].replace("index_", "")
+    # 沪市：6/5/9 开头股票或 ETF，000/880 中证指数；其余判深市
+    if base.startswith(("6", "5", "9")) or base.startswith(("000", "880")):
+        return "1." + base
+    return "0." + base
 
 
 def norm_row(date, o, h, l, c, vol, amt):
@@ -54,48 +62,44 @@ def norm_row(date, o, h, l, c, vol, amt):
         return None
     if c is None or c <= 0:
         return None
-    def f(v):
-        return f"{v:.3f}" if abs(v) - int(abs(v)) != 0 or abs(v) >= 1 else f"{v:.3f}"
-    # 保持现有 csv 数值格式（3 位小数，volume/amount 按需）
     def fmt(v, dec=0):
         return f"{v:.{dec}f}" if dec else str(int(round(v)))
     return ",".join([date, fmt(o, 3), fmt(h, 3), fmt(l, 3), fmt(c, 3),
                      str(int(round(vol))), str(int(round(amt)))])
 
 
-def fetch_etf(code: str, start: str, end: str):
-    """拉取单只 ETF 后复权日K -> 返回 list[行] 或 None"""
-    import akshare as ak
-    sym = etf_symbol(code)
-    df = ak.fund_etf_hist_em(symbol=sym, period="daily",
-                             start_date=start, end_date=end, adjust="hfq")
-    if df is None or df.empty:
-        return None
-    # 东财列：日期 开盘 收盘 最高 最低 成交量 成交额 ...
-    rows = []
-    for _, r in df.iterrows():
-        line = norm_row(str(r["日期"]), r["开盘"], r["最高"], r["最低"],
-                        r["收盘"], r["成交量"], r["成交额"])
-        if line:
-            rows.append(line)
-    return rows
-
-
-def fetch_index(code: str, start: str, end: str):
-    """拉取单只指数日K（指数不复权）-> list[行] 或 None"""
-    import akshare as ak
-    sym = idx_symbol(code)
-    df = ak.index_zh_a_hist(symbol=sym, period="daily",
-                            start_date=start, end_date=end)
-    if df is None or df.empty:
-        return None
-    rows = []
-    for _, r in df.iterrows():
-        line = norm_row(str(r["日期"]), r["开盘"], r["最高"], r["最低"],
-                        r["收盘"], r["成交量"], r["成交额"])
-        if line:
-            rows.append(line)
-    return rows
+def fetch_em(code: str, start: str, end: str):
+    """东财后复权日K -> list[行] 或 None（失败自动重试 3 次）"""
+    sid = secid(code)
+    url = ("https://push2his.eastmoney.com/api/qt/stock/kline/get?"
+           f"secid={sid}"
+           "&fields1=f1,f2,f3,f4,f5,f6"
+           "&fields2=f51,f52,f53,f54,f55,f56,f57"
+           "&klt=101&fqt=2"                      # 日线、后复权
+           f"&beg={start}&end={end}&ut={UT}")
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(url, headers=HEADERS)
+            d = json.load(urllib.request.urlopen(req, timeout=30))
+            kl = (d or {}).get("data", {}).get("klines")
+            if not kl:
+                return None
+            rows = []
+            for line in kl:
+                p = line.split(",")
+                if len(p) < 7:
+                    continue
+                # 东财顺序：日期,开盘,收盘,最高,最低,成交量,成交额
+                date, o, c, h, l, vol, amt = p[0], p[1], p[3], p[2], p[4], p[5], p[6]
+                r = norm_row(date, o, h, l, c, vol, amt)
+                if r:
+                    rows.append(r)
+            return rows
+        except Exception as e:
+            if attempt == 3:
+                print(f"  [东财失败] {code}: {str(e)[:80]}")
+                return None
+            time.sleep(1.5)
 
 
 def write_csv(code: str, rows: list):
@@ -116,34 +120,29 @@ def main():
     targets = [(p["code"], "etf") for p in pool] + \
               [(c, "index") for c in regime] + [(bench, "index")]
 
+    start = start.replace("-", "")
+    end = end.replace("-", "")
     ok = fail = 0
-    for code, kind in targets:
-        try:
-            if kind == "etf":
-                rows = fetch_etf(code, start.replace("-", ""), end.replace("-", ""))
-            else:
-                rows = fetch_index(code, start.replace("-", ""), end.replace("-", ""))
-            if not rows:
-                print(f"  [空] {code}: 无数据")
-                fail += 1
-                continue
-            n = write_csv(code, rows)
-            print(f"  [OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
-            ok += 1
-        except Exception as e:
-            print(f"  [ERR] {code}: {str(e)[:100]}")
+    for code, _kind in targets:
+        rows = fetch_em(code, start, end)
+        if not rows:
+            print(f"  [空] {code}: 无数据")
             fail += 1
-        time.sleep(0.2)  # 限频保护
+            continue
+        n = write_csv(code, rows)
+        print(f"  [OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
+        ok += 1
+        time.sleep(0.3)  # 限频保护
 
     print(f"\n拉取完成：{ok} 成功 / {fail} 失败")
-    if fail:
-        print("存在失败标的，请检查网络（本机应可访问 eastmoney.com）或单独重试。")
-    else:
-        print("全部成功，开始重建网页版…")
-        import subprocess
-        subprocess.check_call([sys.executable, "export_data.py"], cwd=ROOT)
-        subprocess.check_call([sys.executable, "build_web.py"], cwd=ROOT)
-        print("重建完成。输出：output/ETF动量轮动回测系统.html")
+    if ok == 0:
+        print("全部标的失败，不重建网页。")
+        sys.exit(1)
+    print("开始重建网页…")
+    import subprocess
+    subprocess.check_call([sys.executable, "export_data.py"], cwd=ROOT)
+    subprocess.check_call([sys.executable, "build_web.py"], cwd=ROOT)
+    print("重建完成。输出：output/ETF动量轮动回测系统.html")
 
 
 if __name__ == "__main__":
