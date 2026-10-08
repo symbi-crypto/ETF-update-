@@ -1,8 +1,6 @@
 name: ETF数据每周更新
 
 on:
-  schedule:
-    - cron: "0 6 * * 6"
   workflow_dispatch:
     inputs:
       mode:
