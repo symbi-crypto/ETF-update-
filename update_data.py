@@ -69,7 +69,9 @@ def norm_row(date, o, h, l, c, vol, amt):
 
 
 def fetch_em(code: str, start: str, end: str):
-    """东财后复权日K -> list[行] 或 None（失败自动重试 3 次）"""
+    """东财后复权日K -> list[行] 或 None（用 curl 携带完整请求头；失败重试 3 次）
+    注：东财 WAF 会断开 Python urllib 的 TLS 指纹，必须用 curl 子进程。"""
+    import subprocess
     sid = secid(code)
     url = ("https://push2his.eastmoney.com/api/qt/stock/kline/get?"
            f"secid={sid}"
@@ -77,10 +79,17 @@ def fetch_em(code: str, start: str, end: str):
            "&fields2=f51,f52,f53,f54,f55,f56,f57"
            "&klt=101&fqt=2"                      # 日线、后复权
            f"&beg={start}&end={end}&ut={UT}")
+    cmd = ["curl", "-s", "-m", "40",
+           "-A", HEADERS["User-Agent"],
+           "-H", "Referer: https://quote.eastmoney.com/",
+           "-H", "Accept: */*",
+           url]
     for attempt in range(4):
         try:
-            req = urllib.request.Request(url, headers=HEADERS)
-            d = json.load(urllib.request.urlopen(req, timeout=30))
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=50)
+            if out.returncode != 0:
+                raise RuntimeError(f"curl exit {out.returncode}")
+            d = json.loads(out.stdout)
             kl = (d or {}).get("data", {}).get("klines")
             if not kl:
                 return None
