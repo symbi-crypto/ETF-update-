@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "0 6 * * 6"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'full=完整更新(拉行情+重建+部署) | quick=快速部署(仅内容改动,不动行情)'
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - quick
   push:
     branches:
       - master
@@ -23,16 +32,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # ===== 完整更新：拉行情 + 重建 =====
       - name: Setup Python
+        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install deps
+        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
         run: pip install pandas
       - name: Update data and build
+        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
         run: python update_data.py
-      - name: Make index page
-        run: cp output/ETF动量轮动回测系统.html output/index.html
+      - name: Make index page (full)
+        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
+        run: mkdir -p output && cp output/ETF动量轮动回测系统.html output/index.html
+
+      # ===== 快速部署：直接用 web_live（内容改动，不碰行情）=====
+      - name: Make index page (quick)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick' }}
+        run: mkdir -p output && cp web_live/index.html output/index.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
