@@ -5,19 +5,23 @@ update_data.py — ETF轮动系统·免费数据源自动更新（东方财富�
 用东方财富免费接口（push2his.eastmoney.com）拉取全部标的后复权日K，
 规范化成现有 data/*.csv 格式，并重建 web_data.json 与单文件 HTML。
 
+默认【增量】更新：读取 data/*.csv 现有最后日期，只拉"最后一天+1 → 今天"，
+合并去重后写回；无旧数据时自动全量。用 --full 强制全量（首次初始化/校准）。
+
 依赖：仅标准库 + pandas（export_data.py / build_web.py 需要）。
 网络要求：可访问 push2his.eastmoney.com，且请求需携带 UA+Referer 头
  （东财对缺头的自动请求会断开连接）。
- 在 GitHub Actions runner 上已验证可用；豆包云环境对 eastmoney 不可达，
- 请在 runner / 本机 / 自有服务器上运行。
+ 在 GitHub Actions runner 上已验证可用；豆包云环境对 eastmoney 不可达。
 
 用法：
-    python3 update_data.py [起始日期]   # 默认 2017-01-01；可指定如 2016-06-01
+    python3 update_data.py            # 增量更新（默认 2017-01-01 起补，到今日）
+    python3 update_data.py --full     # 全量重建（覆盖 data/*.csv）
 """
 import json
 import os
 import sys
 import time
+import datetime
 import urllib.request
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -120,9 +124,40 @@ def write_csv(code: str, rows: list):
     return len(rows)
 
 
+def load_existing(code):
+    """读现有 csv -> (最后日期 'YYYY-MM-DD' 或 None, 旧数据行列表)"""
+    p = os.path.join(DATA_DIR, code + ".csv")
+    if not os.path.exists(p):
+        return None, []
+    rows = []
+    with open(p, encoding="utf-8") as f:
+        lines = f.read().strip().splitlines()
+    for ln in lines[1:]:
+        if ln.strip():
+            rows.append(ln.strip())
+    last = rows[-1].split(",")[0] if rows else None
+    return last, rows
+
+
+def next_day(yyyymmdd):
+    d = datetime.datetime.strptime(yyyymmdd, "%Y%m%d")
+    return (d + datetime.timedelta(days=1)).strftime("%Y%m%d")
+
+
+def merge_rows(old_rows, new_rows):
+    """按日期合并去重（新数据覆盖同日旧数据），升序返回。"""
+    d = {}
+    for r in old_rows:
+        d[r.split(",")[0]] = r
+    for r in new_rows:
+        d[r.split(",")[0]] = r
+    return [d[k] for k in sorted(d)]
+
+
 def main():
-    start = sys.argv[1] if len(sys.argv) > 1 else "2017-01-01"
-    end = sys.argv[2] if len(sys.argv) > 2 else time.strftime("%Y-%m-%d")
+    full = "--full" in sys.argv or "--seed" in sys.argv
+    start = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else "2017-01-01"
+    end = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else time.strftime("%Y-%m-%d")
     cfg = load_config()
     pool = cfg["pool"]
     regime = list(cfg["regime_indices"].keys())
@@ -130,20 +165,33 @@ def main():
     targets = [(p["code"], "etf") for p in pool] + \
               [(c, "index") for c in regime] + [(bench, "index")]
 
-    start = start.replace("-", "")
-    end = end.replace("-", "")
+    start_yyyymmdd = start.replace("-", "")
+    end_yyyymmdd = end.replace("-", "")
     ok = fail = 0
     fail_codes = []
     for code, _kind in targets:
-        rows = fetch_em(code, start, end)
-        if not rows:
-            print(f"  [空] {code}: 无数据")
-            fail += 1
-            fail_codes.append(code)
-            continue
-        n = write_csv(code, rows)
-        print(f"  [OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
-        ok += 1
+        if full:
+            rows = fetch_em(code, start_yyyymmdd, end_yyyymmdd)
+            if not rows:
+                print(f"  [空] {code}: 无数据")
+                fail += 1
+                fail_codes.append(code)
+                continue
+            n = write_csv(code, rows)
+            print(f"  [全量OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
+            ok += 1
+        else:
+            last, old = load_existing(code)
+            s = next_day(last.replace("-", "")) if last else start_yyyymmdd
+            new = fetch_em(code, s, end_yyyymmdd)
+            if not new:
+                print(f"  [无更新] {code}: 保留 {len(old)} 行（截至 {last}）")
+                ok += 1
+                continue
+            merged = merge_rows(old, new)
+            n = write_csv(code, merged)
+            print(f"  [增量OK] {code}: {n} 行 (新增 {len(new)}, {len(old)}->{n})")
+            ok += 1
         time.sleep(1.5)  # 加大间隔，规避东财密集请求限流
 
     # 单轮补拉：持久断连的标的再补一轮即可（多轮只增等待、收益极小）
@@ -155,10 +203,17 @@ def main():
         still = []
         for code in remaining:
             time.sleep(2.0)
-            rows = fetch_em(code, start, end)
+            if full:
+                rows = fetch_em(code, start_yyyymmdd, end_yyyymmdd)
+            else:
+                last, old = load_existing(code)
+                s = next_day(last.replace("-", "")) if last else start_yyyymmdd
+                rows = fetch_em(code, s, end_yyyymmdd)
+                if rows:
+                    rows = merge_rows(old, rows)
             if rows:
                 n = write_csv(code, rows)
-                print(f"  [补OK] {code}: {n} 行 ({rows[0].split(',')[0]} ~ {rows[-1].split(',')[0]})")
+                print(f"  [补OK] {code}: {n} 行")
                 ok += 1
                 fail -= 1
             else:

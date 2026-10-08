@@ -6,19 +6,17 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'full=完整更新(拉行情+重建+部署) | quick=快速部署(仅内容改动,不动行情)'
+        description: 'seed=全量初始化 | full=增量更新 | quick=快速部署(仅内容,不动行情)'
         required: true
         default: full
         type: choice
         options:
           - full
+          - seed
           - quick
-  push:
-    branches:
-      - master
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -33,26 +31,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ===== 完整更新：拉行情 + 重建 =====
+      # ===== 数据更新（seed 全量 / full 增量）：拉行情 + 重建 =====
       - name: Setup Python
-        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
+        if: ${{ github.event.inputs.mode != 'quick' }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install deps
-        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
+        if: ${{ github.event.inputs.mode != 'quick' }}
         run: pip install pandas
       - name: Update data and build
-        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
-        run: python update_data.py
-      - name: Make index page (full)
-        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick') }}
+        if: ${{ github.event.inputs.mode != 'quick' }}
+        run: python update_data.py ${{ github.event.inputs.mode == 'seed' && '--full' || '' }}
+      - name: Make index page (data)
+        if: ${{ github.event.inputs.mode != 'quick' }}
         run: mkdir -p output && cp output/ETF动量轮动回测系统.html output/index.html
 
       # ===== 快速部署：直接用 web_live（内容改动，不碰行情）=====
       - name: Make index page (quick)
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'quick' }}
+        if: ${{ github.event.inputs.mode == 'quick' }}
         run: mkdir -p output && cp web_live/index.html output/index.html
+
+      # ===== 数据回写：更新后的 data/*.csv 提交回仓库，供下次增量续拉 =====
+      - name: Commit data back
+        if: ${{ github.event.inputs.mode != 'quick' }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/*.csv
+          if git diff --cached --quiet; then
+            echo "行情无变化，跳过提交"
+          else
+            git commit -m "chore(data): 更新行情(增量/全量)"
+            git push origin master
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

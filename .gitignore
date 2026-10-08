@@ -1,6 +1,5 @@
-# 生成物（workflow 每次重建，无需入库）
+# 生成物（workflow 重建产物不入库；data/*.csv 需入库供增量续拉）
 data/raw/
-data/*.csv
 data/nav/
 data/unadj/
 data/raw_unadj/
