@@ -2339,7 +2339,7 @@ function buildChips() {
     }
   }
 
-  // ---------- 参数稳健性检查：排名因子窗口±5日扰动回测 ----------
+  // ---------- 参数稳健性检查：排名因子窗口±5日扰动回测（异步分步，避免手机端冻结） ----------
   function robustnessCheck() {
     var box = $("robBox"), state = $("robState");
     if (!D || !engine) { if (state) state.textContent = "请先进入回测"; return; }
@@ -2348,25 +2348,24 @@ function buildChips() {
     var rankFacs = facs.filter(function (f) { return (f.usage || "rank") !== "filter"; });
     if (!rankFacs.length) rankFacs = facs;
     if (!rankFacs.length) { if (box) { box.style.display = ""; box.innerHTML = "当前没有排名因子，无法进行稳健性检查。"; } return; }
-    if (state) state.textContent = "检查中（" + rankFacs.length * 2 + " 次回测）…";
-    try {
-      var base = engine.backtest(D, JSON.parse(JSON.stringify(params))).metrics.total_return;
-      var variants = [];
-      rankFacs.forEach(function (f, i) {
-        [5, -5].forEach(function (d) {
-          var w = f.window + d;
-          if (w < 3 || w > 250) return;
-          var pf = JSON.parse(JSON.stringify(params));
-          pf.factors = facs.map(function (x, j) {
-            var o = JSON.parse(JSON.stringify(x));
-            if (j === i) o.window = w;
-            return o;
-          });
-          var r = engine.backtest(D, pf);
-          variants.push({ label: f.kind + " 窗口 " + f.window + "→" + w, total: r.metrics.total_return });
+    // 先构造扰动任务清单
+    var tasks = [];
+    rankFacs.forEach(function (f, i) {
+      [5, -5].forEach(function (d) {
+        var w = f.window + d;
+        if (w < 3 || w > 250) return;
+        var pf = JSON.parse(JSON.stringify(params));
+        pf.factors = facs.map(function (x, j) {
+          var o = JSON.parse(JSON.stringify(x));
+          if (j === i) o.window = w;
+          return o;
         });
+        tasks.push({ label: f.kind + " 窗口 " + f.window + "→" + w, pf: pf });
       });
-      if (!variants.length) { if (box) { box.style.display = ""; box.innerHTML = "无可用扰动变体（窗口边界）。"; } if (state) state.textContent = ""; return; }
+    });
+    if (!tasks.length) { if (box) { box.style.display = ""; box.innerHTML = "无可用扰动变体（窗口边界）。"; } if (state) state.textContent = ""; return; }
+    var base = null, variants = [], idx = 0;
+    function finish() {
       var mn = Infinity, mx = -Infinity;
       variants.forEach(function (v) { if (v.total < mn) mn = v.total; if (v.total > mx) mx = v.total; });
       var span = mx - mn;
@@ -2384,10 +2383,22 @@ function buildChips() {
       box.innerHTML = "<div style=\"font-weight:700;margin-bottom:4px\">参数稳健性检查（原收益 " + FMT.pct(base, 1) + "，扰动 " + variants.length + " 组）</div>" +
         "<div style=\"color:" + levelCls + ";font-weight:700;margin-bottom:6px\">" + levelMsg + "</div>" + rows;
       if (state) state.textContent = "";
-    } catch (e) {
-      if (state) state.textContent = "";
-      showNotice("稳健性检查失败：" + String((e && e.message) || e));
     }
+    function step() {
+      try {
+        if (!base) { base = engine.backtest(D, JSON.parse(JSON.stringify(params))).metrics.total_return; }
+      } catch (e) { if (state) state.textContent = ""; showNotice("稳健性检查失败：" + String((e && e.message) || e)); return; }
+      if (idx >= tasks.length) { finish(); return; }
+      if (state) state.textContent = "检查中（" + (idx + 1) + "/" + tasks.length + "）…";
+      var t = tasks[idx++];
+      var r;
+      try { r = engine.backtest(D, t.pf); }
+      catch (e) { if (state) state.textContent = ""; showNotice("稳健性检查失败：" + String((e && e.message) || e)); return; }
+      variants.push({ label: t.label, total: r.metrics.total_return });
+      setTimeout(step, 0);   // 让出主线程，保持界面响应
+    }
+    if (state) state.textContent = "检查中（0/" + tasks.length + "）…";
+    setTimeout(step, 0);
   }
 
   function boot() {
