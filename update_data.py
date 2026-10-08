@@ -79,14 +79,14 @@ def fetch_em(code: str, start: str, end: str):
            "&fields2=f51,f52,f53,f54,f55,f56,f57"
            "&klt=101&fqt=2"                      # 日线、后复权
            f"&beg={start}&end={end}&ut={UT}")
-    cmd = ["curl", "-s", "-m", "40",
+    cmd = ["curl", "-s", "-m", "15",
            "-A", HEADERS["User-Agent"],
            "-H", "Referer: https://quote.eastmoney.com/",
            "-H", "Accept: */*",
            url]
     for attempt in range(4):
         try:
-            out = subprocess.run(cmd, capture_output=True, text=True, timeout=50)
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
             if out.returncode != 0:
                 raise RuntimeError(f"curl exit {out.returncode}")
             d = json.loads(out.stdout)
@@ -146,9 +146,9 @@ def main():
         ok += 1
         time.sleep(1.5)  # 加大间隔，规避东财密集请求限流
 
-    # 多轮补拉：对失败的标的，间隔更久后多轮重试（东财限流常有时段性）
+    # 单轮补拉：持久断连的标的再补一轮即可（多轮只增等待、收益极小）
     remaining = fail_codes
-    for round_no in range(3):
+    for round_no in range(1):
         if not remaining:
             break
         print(f"\n补拉第{round_no + 1}轮（剩余 {len(remaining)} 只）…")
