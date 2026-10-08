@@ -4106,6 +4106,7 @@ function buildChips() {
       new Response(stream).text().then(function (t) {
         try {
           D = JSON.parse(t);
+          if (D && D.pool) POOL = D.pool;   // 统一标的池：权威源=数据块，解析后全局池同步
           var q = _dataWait; _dataWait = [];
           cb();
           q.forEach(function (f) { f(); });
