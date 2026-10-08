@@ -515,6 +515,7 @@
       if (kd === "ma_vs_ma_lag") return Math.max(w1, w2 + w3);
       return w1;
     }
+    var icSnapshots = [];   // 每个调仓决策日的综合得分截面 + 单因子原始值（供组合IC/单因子IC分析）
     function factorScores(candidates, i) {
       var rankFactors = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
       if (!rankFactors.length) return [];
@@ -678,6 +679,25 @@
 
         var scored = factorScores(candidates, i);
         scored.sort(function (a, b) { return b.score - a.score; });
+        // 收集组合IC所需的截面：综合得分 + 各排名因子原始值（与本次回测同口径）
+        if (scored.length) {
+          var _sn = { i: i, scores: {}, fv: {} };
+          for (var _si = 0; _si < scored.length; _si++) _sn.scores[scored[_si].code] = scored[_si].score;
+          var _rkf = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+          for (var _fi2 = 0; _fi2 < _rkf.length; _fi2++) {
+            var _f2 = _rkf[_fi2];
+            var _kk2 = _f2.kind + ":" + (_f2.window || 20) + ":" + (_f2.window2 || 0) + ":" + (_f2.window3 || 0);
+            var _vals2 = {};
+            // 只对综合得分（scored）内的标的取单因子值，确保单因子IC与组合IC同标的集（含走弱期过滤）同口径
+            for (var _si2 = 0; _si2 < scored.length; _si2++) {
+              var _code2 = scored[_si2].code;
+              var _v2 = factorValue(_f2.kind, _code2, i, _f2, params.annualize_factor);
+              if (!isNaN(_v2) && _v2 !== null && _v2 !== undefined) _vals2[_code2] = _v2;
+            }
+            _sn.fv[_kk2] = _vals2;
+          }
+          icSnapshots.push(_sn);
+        }
 
         var wNew2 = new Array(nAssets).fill(0);
         var holding = [];
@@ -1005,6 +1025,7 @@
       drawdown: ddV, bench_drawdown: benchDD, daily_ret: dailyR,
       holdings: holdV, regime: regV, exposure: expV,
       trades: tradeRecords, pool: codes,
+      ic_snapshots: icSnapshots,
       metrics: {
         total_return: totalReturn, cagr: cagr, max_dd: maxDD,
         sharpe: sharpe, vol: vol, calmar: calmar,

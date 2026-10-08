@@ -9,7 +9,7 @@
     amplitude: "日内振幅", position: "日内位置", rsi: "RSI", amount: "成交额", volume: "成交量", turnover: "换手率", vol_ratio: "放量比", rsrs: "RSRS"
   };
   window.IC_KINDS = IC_KINDS;
-  var icSel = {}, fSel = {};   // 标的池 / 因子的勾选状态（首次默认不勾选，重渲染保留）
+  var icSel = {}, fSel = {}, fWinVals = {};   // 标的池 / 因子勾选 / 因子主窗口（首次默认不勾选，重渲染保留）
   function poolMeta(D) {
     var list = (D.pool || []).slice();
     (D.indexNames || []).forEach(function (inm) {
@@ -302,21 +302,68 @@
     Array.prototype.forEach.call(pool.querySelectorAll("input[type=checkbox]"), function (cb) {
       cb.addEventListener("change", function () { icSel[this.value] = this.checked; });
     });
-    // 因子多选：保留勾选状态
-    var kinds = ["roc", "slope_r2", "wslope_r2", "vol", "risk_adj", "r2", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "close", "open", "high", "low", "amplitude", "position", "rsi", "amount", "volume", "turnover", "vol_ratio"];
+    // 因子多选：保留勾选状态；每个因子旁带可调主窗口，初始为该因子默认窗口
+    var syncBtn = document.getElementById("icSync");
+    if (syncBtn) syncBtn.onclick = syncFromBacktest;
+    renderFactorBox();
+  }
+
+  function renderFactorBox() {
+    var kinds = window.IC_KINDS_KINDS || ["roc", "slope_r2", "wslope_r2", "vol", "risk_adj", "r2", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "close", "open", "high", "low", "amplitude", "position", "rsi", "amount", "volume", "turnover", "vol_ratio"];
+    window.IC_KINDS_KINDS = kinds;
     var fbox = document.getElementById("icFactors");
     fbox.innerHTML = "";
     kinds.forEach(function (k) {
       var label = (window.IC_KINDS && IC_KINDS[k]) ? IC_KINDS[k] : k;
       if (!(k in fSel)) fSel[k] = false;   // 首次默认不勾选
+      if (!(k in fWinVals)) fWinVals[k] = defaultWin(k);
       var lab = document.createElement("label");
-      lab.style.cssText = "display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#CBD5E1;cursor:pointer;padding:3px 7px;border:1px solid #1E293B;border-radius:4px;margin:2px";
-      lab.innerHTML = "<input type='checkbox' value='" + k + "' " + (fSel[k] ? "checked" : "") + "> " + label;
+      lab.style.cssText = "display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#CBD5E1;cursor:pointer;padding:3px 7px;border:1px solid #1E293B;border-radius:4px;margin:2px";
+      lab.innerHTML = "<input type='checkbox' value='" + k + "' " + (fSel[k] ? "checked" : "") + "> " + label +
+        "<input type='number' class='icw' data-k='" + k + "' value='" + fWinVals[k] + "' title='该因子窗口' style='width:52px;height:20px;box-sizing:border-box;padding:0 4px;font-size:11px;background:#0F172A;border:1px solid #334155;border-radius:4px;color:#E2E8F0;text-align:center'>";
       fbox.appendChild(lab);
     });
     Array.prototype.forEach.call(fbox.querySelectorAll("input[type=checkbox]"), function (cb) {
       cb.addEventListener("change", function () { fSel[this.value] = this.checked; });
     });
+    Array.prototype.forEach.call(fbox.querySelectorAll("input.icw"), function (wInp) {
+      wInp.addEventListener("input", function () { fWinVals[this.getAttribute("data-k")] = parseInt(this.value, 10) || defaultWin(this.getAttribute("data-k")); });
+    });
+  }
+
+  // 因子默认主窗口（取因子定义默认值，缺省 20）
+  function defaultWin(k) {
+    var K = window.KIND_INFO;
+    var d = K && K[k] && K[k].def;
+    return (d && d > 0) ? d : 20;
+  }
+  // 读取因子主窗口（存储值或默认）
+  function getWin(k) {
+    if (k in fWinVals) return fWinVals[k];
+    var d = defaultWin(k); fWinVals[k] = d; return d;
+  }
+  // 按因子构造计算参数：主窗口可调，第二/第三窗口取因子定义默认
+  function makeF(k) {
+    var K = (window.KIND_INFO && window.KIND_INFO[k]) || {};
+    var f = { kind: k, window: getWin(k) };
+    if (K.def2) f.window2 = K.def2;
+    if (K.def3) f.window3 = K.def3;
+    return f;
+  }
+  // 同步回测页当前因子设置：勾选匹配因子并填入其主窗口
+  function syncFromBacktest() {
+    var p = window.WufuUI && WufuUI.getParams ? WufuUI.getParams() : null;
+    if (!p || !p.factors) { showMsg("回测页尚未配置因子"); return; }
+    var kinds = window.IC_KINDS_KINDS || [];
+    var done = 0;
+    p.factors.forEach(function (fc) {
+      if (!fc || kinds.indexOf(fc.kind) < 0) return;
+      fSel[fc.kind] = true;
+      if (fc.window) fWinVals[fc.kind] = fc.window;
+      done++;
+    });
+    renderFactorBox();
+    showMsg(done ? ("已同步回测因子设置：" + done + " 个因子，窗口已填入") : "回测页无匹配的因子");
   }
 
   function run() {
@@ -343,10 +390,7 @@
         // 主 futN 的排名与时间序列
         var rows = [], seriesData = {};
         selKinds.forEach(function (k) {
-          var f = { kind: k, window: 20, window2: 5, window3: 20 };
-          if (k === "vol" || k === "risk_adj") f.window = 60;
-          if (k === "c_vs_ma_lag" || k === "ma_lag" || k === "ma_vs_ma_lag") { f.window = 5; f.window2 = 20; f.window3 = 20; }
-          if (k === "vol_ratio") { f.window = 20; f.window2 = 60; }
+          var f = makeF(k);
           var r = calcFactorIC(seq, k, f, { futN: futN, freq: freq, ann: ann }, calendar, codes);
           if (!r.icList.length) return;
           var mean = 0, t;
@@ -422,10 +466,7 @@
     if (wrap) wrap.style.display = top.length ? "" : "none";
     if (!top.length) return;
     var series = top.map(function (r) {
-      var k = r.kind, f = { kind: k, window: 20, window2: 5, window3: 20 };
-      if (k === "vol" || k === "risk_adj") f.window = 60;
-      if (k === "c_vs_ma_lag" || k === "ma_lag" || k === "ma_vs_ma_lag") { f.window = 5; f.window2 = 20; f.window3 = 20; }
-      if (k === "vol_ratio") { f.window = 20; f.window2 = 60; }
+      var k = r.kind, f = makeF(k);
       var means = futNs.map(function (fn) {
         var rr = calcFactorIC(seq, k, f, { futN: fn, freq: freq, ann: ann }, calendar, codes);
         if (!rr.icList.length) return 0;
