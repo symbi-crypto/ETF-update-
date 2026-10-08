@@ -937,7 +937,7 @@
       }
 
       // ---- 2) 当日收益 ----
-      if (i === 0) { navSeries[0] = nav; regSeries[0] = regime; continue; }
+      if (i === 0) { navSeries[0] = nav; regSeries[0] = regime; ddSeries[0] = 0; expSeries[0] = 0; holdSeries[0] = []; continue; }
       if (!executed) {
         r = 0;
         for (k = 0; k < nAssets; k++) {
