@@ -154,8 +154,20 @@ def merge_rows(old_rows, new_rows):
     return [d[k] for k in sorted(d)]
 
 
+def parse_batch(argv):
+    """--batch N：本轮只处理"尚无 csv"的前 N 只（全量拉），其余留给下一轮"""
+    for i, a in enumerate(argv):
+        if a == "--batch" and i + 1 < len(argv):
+            try:
+                return int(argv[i + 1])
+            except ValueError:
+                return 20
+    return 0
+
+
 def main():
     full = "--full" in sys.argv or "--seed" in sys.argv
+    batch = parse_batch(sys.argv)
     start = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else "2017-01-01"
     end = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else time.strftime("%Y-%m-%d")
     cfg = load_config()
@@ -165,12 +177,19 @@ def main():
     targets = [(p["code"], "etf") for p in pool] + \
               [(c, "index") for c in regime] + [(bench, "index")]
 
+    if batch:
+        # 分批初始化：只拉"尚无 csv"的前 N 只，全量写入，成功后入库供下轮续拉
+        todo = [t for t in targets if not os.path.exists(os.path.join(DATA_DIR, t[0] + ".csv"))][:batch]
+        print(f"分批seed：本轮处理 {len(todo)} 只（缺失标的），其余留待下轮续拉")
+    else:
+        todo = targets
+
     start_yyyymmdd = start.replace("-", "")
     end_yyyymmdd = end.replace("-", "")
     ok = fail = 0
     fail_codes = []
-    for code, _kind in targets:
-        if full:
+    for code, _kind in todo:
+        if full or batch:
             rows = fetch_em(code, start_yyyymmdd, end_yyyymmdd)
             if not rows:
                 print(f"  [空] {code}: 无数据")

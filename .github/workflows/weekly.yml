@@ -42,7 +42,7 @@ jobs:
         run: pip install pandas
       - name: Update data and build
         if: ${{ github.event.inputs.mode != 'quick' }}
-        run: python update_data.py ${{ github.event.inputs.mode == 'seed' && '--full' || '' }}
+        run: python update_data.py ${{ github.event.inputs.mode == 'seed' && '--batch 20' || '' }}
       - name: Make index page (data)
         if: ${{ github.event.inputs.mode != 'quick' }}
         run: mkdir -p output && cp output/ETF动量轮动回测系统.html output/index.html
