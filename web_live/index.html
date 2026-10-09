@@ -4338,12 +4338,18 @@ function buildChips() {
     buildIdxChips();
     updatePoolCount();
     updateSurvivorTip();
-    var robBtn = $("robBtn");
-    if (robBtn) robBtn.onclick = robustnessCheck;
     showView(hashView());
-    $("runBtn").addEventListener("click", run);
     setTimeout(run, 60);          // 显示后执行默认回测
   }
+
+  // 静态按钮事件绑定：页面加载即完成，不依赖 boot()
+  //（修复「应用已保存策略」等入口跳过 boot() 导致 robBtn/runBtn 无反应）
+  (function bindStaticButtons() {
+    var rb = $("robBtn");
+    if (rb) rb.onclick = robustnessCheck;
+    var rn = $("runBtn");
+    if (rn) rn.addEventListener("click", run);
+  })();
 
   // 暴露给参数调优模块（js_tune.js）的只读/复用接口
   window.KIND_INFO = KIND_INFO;
