@@ -361,6 +361,7 @@ footer b{color:#94A3B8}
         <label class="row">结束日期
           <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
         </label>
+        <label class="row" style="margin-top:4px"><input id="realPoolSw" type="checkbox" checked style="width:auto;margin:0"> <span>真实可得池 <span class="tip">按各标的上市日动态过滤，消除幸存者偏差（未上市标的早期不参与候选/排名）</span></span></label>
       </div>
       <div class="psec">
         <h3>交易成本</h3>
@@ -369,6 +370,9 @@ footer b{color:#94A3B8}
         </label>
         <label class="row">滑点(单边,bp) <span class="v" id="slV" style="display:none">5</span>
           <input id="slIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">最低佣金(元/笔) <span class="tip">ETF 常见 5 元；万1免5 可填 0.1，填 0 关闭</span>
+          <input id="minCmIn" type="number" min="0" max="100" step="0.1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
         </label>
         <label class="row" style="margin-top:4px"><span>成本分档（按流动性调整滑点<span class="tip">开启后按标的近20日平均成交额分档：≥10亿→3bp / ≥1亿→5bp / ≥5000万→8bp / ≥1000万→15bp / 其余→30bp；关闭则用上方统一滑点</span>）</span><input id="tierSw" type="checkbox"></label>
       </div>
@@ -437,10 +441,9 @@ footer b{color:#94A3B8}
           <span style="width:16px;flex:0 0 16px"></span>
           <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
           <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
-            <option value="total" selected>累计收益</option>
-            <option value="sharpe">夏普比率</option>
-            <option value="calmar">收益/回撤比</option>
-            <option value="val_total">验证段累计收益（样本外）</option>
+            <option value="total" selected>研究段累计收益</option>
+            <option value="sharpe">研究段夏普比率</option>
+            <option value="calmar">研究段收益/回撤比</option>
           </select>
         </div>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
@@ -478,6 +481,8 @@ footer b{color:#94A3B8}
         <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
           <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
           <div id="tuneGrid" style="display:block;margin-top:4px"></div>
+          <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
+          <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
           <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
         </div>
       </div>
@@ -546,7 +551,7 @@ footer b{color:#94A3B8}
           <input type="number" id="stInvIn2" min="1000" step="10000" value="1000000" style="width:120px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
         </label>
         <label style="font-size:12.5px;color:#64748B">投资起始日期
-          <input type="date" id="stStartIn" value="2017-01-01" style="width:140px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
+          <input type="date" id="stStartIn" value="2016-06-01" style="width:140px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
         </label>
         <span class="n" style="font-size:12.5px;color:#CBD5E1">最新投资额 <b id="stLatestCap">—</b> 元</span>
         <span class="n" style="font-size:11.5px;color:#94A3B8">最新投资额按策略净值自起始日起的变化计算；修改后自动更新该策略</span>
@@ -947,7 +952,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var startPos = 0;
     while (startPos < n && cal[startPos] < params.start_date) startPos++;
     var warmup = 40;
-    (params.factors || []).forEach(function (f) { warmup = Math.max(warmup, f.window || 20); });
+    // P2-10：预热按 needOf(f) 校验（ma_vs_ma_lag 需 max(w1, w2+w3)），避免前期用不完整窗口
+    (params.factors || []).forEach(function (f) { warmup = Math.max(warmup, needOf(f) || 20); });
     var endPos = n - 1;
     if (params.end_date) { while (endPos >= 0 && cal[endPos] > params.end_date) endPos--; }
     if (startPos + warmup + 5 > endPos + 1) throw new Error("回测区间过短，无法完成动量预热");
@@ -964,13 +970,29 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       rawOpens[c] = D.series[c].raw_open || null; rawCloses[c] = D.series[c].raw_close || null;
       navs[c] = D.series[c].nav || null;
     });
+    // 各标的首个有效交易日（幸存者偏差「真实可得池」用；close>0 的首日，上市前 -1 占位不计）
+    var firstValid = {};
+    codes.forEach(function (c) {
+      var cv = closes[c], fvi = -1, vi2;
+      for (vi2 = 0; vi2 < cv.length; vi2++) { if (cv[vi2] > 0) { fvi = vi2; break; } }
+      firstValid[c] = fvi;
+    });
     D.regime.forEach(function (ic) { idxClose[ic] = D.index[ic]; });
 
     // 基准（沪深300）
     var benchClose = D.index[D.benchmark];
+    // P2-9：基准序列 -1/缺失日不参与计算——缺失日沿用前一值、日收益记 0，避免首日缺失污染整段基准
+    var benchBase = 0;
+    while (benchBase < n && (isMiss(benchClose[benchBase]) || benchClose[benchBase] <= 0)) benchBase++;
     var benchNav = new Array(n), benchDaily = new Array(n);
-    benchNav[0] = 1; benchDaily[0] = 0;
-    for (var i = 1; i < n; i++) { benchNav[i] = benchClose[i] / benchClose[0]; benchDaily[i] = benchNav[i] / benchNav[i - 1] - 1; }
+    if (benchBase >= n) {
+      for (var bi = 0; bi < n; bi++) { benchNav[bi] = 1; benchDaily[bi] = 0; }
+    } else {
+      for (var i = 0; i < n; i++) {
+        if (isMiss(benchClose[i]) || benchClose[i] <= 0) { benchNav[i] = i > 0 ? benchNav[i - 1] : 1; benchDaily[i] = 0; }
+        else { benchNav[i] = benchClose[i] / benchClose[benchBase]; benchDaily[i] = i > 0 ? benchNav[i] / benchNav[i - 1] - 1 : 0; }
+      }
+    }
 
     // 等权池（选中标的）
     var ewDaily = new Array(n); ewDaily[0] = 0;
@@ -1204,16 +1226,23 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         return (cArr[i] - lP) / (hP - lP);
       }
       if (kind === "rsi") {
-        if (i + 1 < w1) return NaN;
-        var segR = cArr.slice(i - w1 + 1, i + 1);
+        // P2-11：Wilder 平滑——首值取前 w1 个涨跌幅的简单均值，其后按 alpha=1/w1 递推（与 TradingView/主流实现一致）
+        if (i + 1 < w1 + 1) return NaN;
+        var segR = cArr.slice(i - w1, i + 1);
         for (var qr = 0; qr < segR.length; qr++) if (isMiss(segR[qr])) return NaN;
-        var gR = 0, lR = 0;
-        for (var tR = 1; tR < segR.length; tR++) {
-          var dR = segR[tR] / segR[tR - 1] - 1;
-          if (dR > 0) gR += dR; else lR -= dR;
+        var gR = 0, lR = 0, tR;
+        for (tR = 1; tR <= w1; tR++) {
+          var dR0 = segR[tR] / segR[tR - 1] - 1;
+          if (dR0 > 0) gR += dR0; else lR -= dR0;
         }
-        if (gR + lR <= 0) return NaN;
-        return 100 * gR / (gR + lR);
+        var avgG = gR / w1, avgL = lR / w1;
+        for (tR = w1 + 1; tR < segR.length; tR++) {
+          var dR = segR[tR] / segR[tR - 1] - 1;
+          avgG = (avgG * (w1 - 1) + (dR > 0 ? dR : 0)) / w1;
+          avgL = (avgL * (w1 - 1) + (dR < 0 ? -dR : 0)) / w1;
+        }
+        if (avgG + avgL <= 0) return NaN;
+        return avgL === 0 ? 100 : 100 * avgG / (avgG + avgL);
       }
       return NaN;
     }
@@ -1234,13 +1263,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       return w1;
     }
     var icSnapshots = [];   // 每个调仓决策日的综合得分截面 + 单因子原始值（供组合IC/单因子IC分析）
+    var icSnapshotsFull = [];  // 全池 IC 截面：决策日全部有效标的（未过滤 scoreFloor/筛选/走弱），供「筛选池 vs 全池」IC 对照
     function factorScores(candidates, i) {
       var rankFactors = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
-      if (!rankFactors.length) return [];
+      if (!rankFactors.length) return { scored: [], full: [] };
       var need = 0, fi, f;
       for (fi = 0; fi < rankFactors.length; fi++) need = Math.max(need, needOf(rankFactors[fi]));
       need += 1;
-      var raw = {}, out = [], code, cArr, bad;
+      var raw = {}, out = [], fullOut = [], code, cArr, bad;
       for (var ci2 = 0; ci2 < candidates.length; ci2++) {
         code = candidates[ci2];
         cArr = closes[code];
@@ -1258,7 +1288,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         raw[code] = vals;
       }
       var keys = Object.keys(raw);
-      if (!keys.length) return [];
+      if (!keys.length) return { scored: [], full: [] };
       for (var kj = 0; kj < keys.length; kj++) {
         code = keys[kj];
         var score = 0;
@@ -1278,8 +1308,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             var sdA = Math.sqrt(ss2 / arr.length);
             z = sdA < 1e-12 ? 0 : (raw[code][k] - meanA) / sdA;
           } else if (stdMode === "rank") {
-            var sRank = arr.slice().sort(function (a, b) { return a - b; });
-            var ridx = sRank.indexOf(raw[code][k]);
+            // P2-12：线性求秩——一次遍历统计小于/等于当前值的个数，重复值取平均秩（替代 sort+indexOf 的首索引偏置与 O(n²)）
+            var vv = raw[code][k], lt = 0, eq = 0, tt2;
+            for (tt2 = 0; tt2 < arr.length; tt2++) { if (arr[tt2] < vv) lt++; else if (arr[tt2] === vv) eq++; }
+            var ridx = lt + (eq - 1) / 2;
             z = keys.length > 1 ? (ridx < 0 ? 0 : ridx / (keys.length - 1)) : 0;
           } else {  // robust（默认，与 Python 同构）
             var sA = arr.slice().sort(function (a, b) { return a - b; });
@@ -1294,6 +1326,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           var dir = f.direction !== undefined ? f.direction : (f.kind === "vol" ? -1 : 1);
           score += (f.weight || 0) * dir * z;
         }
+        // 全池记录：scoreFloor/筛选/走弱过滤之前先记一份（供「筛选池 vs 全池」IC 对照）
+        if (fullOut) {
+          var _fvm = {};
+          for (fi = 0; fi < rankFactors.length; fi++) {
+            var kkm = (rankFactors[fi].kind || "roc") + ":" + (rankFactors[fi].window || 20) + ":" + (rankFactors[fi].window2 || 0) + ":" + (rankFactors[fi].window3 || 0) + ":" + (rankFactors[fi].formula_parts ? JSON.stringify(rankFactors[fi].formula_parts.map(function (pp) { return pp.kind + ":" + (pp.window || 0) + ":" + (pp.window2 || 0) + ":" + (pp.window3 || 0) + ":" + (pp.coef || 0); })) : "");
+            if (vals[kkm] !== undefined) _fvm[kkm] = vals[kkm];
+          }
+          fullOut.push({ code: code, score: score, fv: _fvm });
+        }
         if (stdMode !== "none") {
           if (Math.abs(score) < 1e-12) score = 0;   // 浮点噪声归零（与 Python 同构；none 模式保留原始尺度不归零）
           if (!(score > scoreFloor)) continue;
@@ -1304,42 +1345,76 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         }
         out.push({ score: score, r2: null, code: code, annSlope: null, slope: null });
       }
-      return out;
+      return { scored: out, full: fullOut };
     }
 
     for (i = 0; i <= endPos; i++) {
       // ---- 0) 执行昨日收盘设定的目标（今日开盘成交）----
       var executed = false, r = 0;
       if (pending) {
-        var wNew = pending[0], costPct = pending[1];
-        cumCost += nav * params.initial_capital * costPct;
-        var rLegs = 0, k2, code2, o1, c0b, c1b;
-        for (k2 = 0; k2 < nAssets; k2++) {          // 卖出腿：昨收 -> 今开
-          if (wOld[k2] > 0) {
+        var wNew = pending[0], costPct = pending[1], pendDf = pending[2] || 0;
+        // P1-5a 可执行性：执行日任一需交易腿开盘价缺失（停牌/未上市）→ 顺延至下一交易日（上限 20 日，超限按可成交腿执行）
+        var openOk = true, k2, code2, o1, c0b, c1b;
+        for (k2 = 0; k2 < nAssets; k2++) {
+          if (wOld[k2] > 0 || wNew[k2] > 0) {
             code2 = codes[k2];
-            c0b = closes[code2][i - 1]; o1 = opens[code2][i];
-            if (!isMiss(c0b) && !isMiss(o1) && c0b > 0 && o1 > 0) rLegs += wOld[k2] * (o1 / c0b - 1);
+            o1 = opens[code2][i];
+            if (isMiss(o1) || o1 <= 0) { openOk = false; break; }
           }
         }
-        for (k2 = 0; k2 < nAssets; k2++) {          // 买入腿：今开 -> 今收
-          if (wNew[k2] > 0) {
+        if (!openOk && pendDf < 20) {
+          pending = [wNew, costPct, pendDf + 1];
+          executed = false;
+        } else {
+          // P1-5b 一字涨跌停（未复权口径）：开盘封板且收盘仍在板价 → 对应买卖腿标记不可成交
+          var blocked = {};
+          for (k2 = 0; k2 < nAssets; k2++) {
+            if (!(wOld[k2] > 0 || wNew[k2] > 0)) continue;
             code2 = codes[k2];
-            o1 = opens[code2][i]; c1b = closes[code2][i];
-            if (!isMiss(o1) && !isMiss(c1b) && o1 > 0) rLegs += wNew[k2] * (c1b / o1 - 1);
+            var ro0 = rawOpens && rawOpens[code2] ? rawOpens[code2][i] : null;
+            var rc0 = rawCloses && rawCloses[code2] ? rawCloses[code2][i - 1] : null;
+            var rcT = rawCloses && rawCloses[code2] ? rawCloses[code2][i] : null;
+            if (!(ro0 > 0) || !(rc0 > 0) || !(rcT > 0)) continue;
+            var limR = (code2.slice(0, 2) === "30" || code2.slice(0, 2) === "68") ? 1.195 : 1.095;
+            if (ro0 >= rc0 * limR - 1e-9 && rcT >= ro0 * 0.999) blocked[code2] = "buy";            // 一字涨停：买不进
+            else if (ro0 <= rc0 * (2 - limR) + 1e-9 && rcT <= ro0 * 1.001) blocked[code2] = "sell";  // 一字跌停：卖不出
+          }
+          cumCost += nav * params.initial_capital * costPct;
+          var rLegs = 0;
+          for (k2 = 0; k2 < nAssets; k2++) {          // 卖出腿：昨收 -> 今开（一字跌停腿跳过）
+            if (wOld[k2] > 0 && blocked[codes[k2]] !== "sell") {
+              code2 = codes[k2];
+              c0b = closes[code2][i - 1]; o1 = opens[code2][i];
+              if (!isMiss(c0b) && !isMiss(o1) && c0b > 0 && o1 > 0) rLegs += wOld[k2] * (o1 / c0b - 1);
+            }
+          }
+          for (k2 = 0; k2 < nAssets; k2++) {          // 买入腿：今开 -> 今收（一字涨停腿跳过）
+            if (wNew[k2] > 0 && blocked[codes[k2]] !== "buy") {
+              code2 = codes[k2];
+              o1 = opens[code2][i]; c1b = closes[code2][i];
+              if (!isMiss(o1) && !isMiss(c1b) && o1 > 0) rLegs += wNew[k2] * (c1b / o1 - 1);
+            }
+          }
+          r = (1 - costPct) * (1 + rLegs) - 1;        // 成本开盘扣减，并入当日收益
+          wOld = wNew;
+          pending = null;
+          executed = true;
+          if (tradeRecords.length && tradeRecords[tradeRecords.length - 1].exec_date === cal[i]) {
+            var blkL = Object.keys(blocked).map(function (bc) { return { code: bc, side: blocked[bc] }; });
+            if (blkL.length) tradeRecords[tradeRecords.length - 1].blocked = blkL;
           }
         }
-        r = (1 - costPct) * (1 + rLegs) - 1;        // 成本开盘扣减，并入当日收益
-        wOld = wNew;
-        pending = null;
-        executed = true;
       }
 
       // ---- 1) 收盘后决策（次日开盘执行，杜绝前视）----
       if (decisionIdx[i] && i + 1 < n) {
         var below = 0, above = 0, ic, mv;
         var regCodes = (params.regime_indices && params.regime_indices.length) ? params.regime_indices : D.regime;
+        // P1-7 前视修正：中证A500（index_000510.SH）2024-09-23 才发布，此前为按当前成分回溯值，早期不参与择时投票
+        var REGIME_SINCE = params.regime_since || { "index_000510.SH": "2024-09-23" };
         for (var ri2 = 0; ri2 < regCodes.length; ri2++) {
           ic = regCodes[ri2];
+          if (REGIME_SINCE[ic] && cal[i] < REGIME_SINCE[ic]) continue;
           mv = rollingMA(idxClose[ic], i, params.regime_ma_window);
           if (isNaN(mv)) continue;
           if (idxClose[ic][i] < mv) below++; else above++;
@@ -1359,6 +1434,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         }
         // fallback 标的仅作兜底持仓，不参与候选/排名/筛选
         if (idleC) candidates = candidates.filter(function (c) { return c !== idleC; });
+        // P1-4 幸存者偏差修正（开关）：只保留决策日已上市（已有行情）的标的
+        if (params.use_real_pool) candidates = candidates.filter(function (c) { return firstValid[c] >= 0 && firstValid[c] <= i; });
+        var candFull = candidates.slice();   // 全池截面（未过滤 scoreFloor/筛选，供全池 IC 对照）
 
         // 筛选条件：统一因子列表中 usage=filter 的全部满足才进入候选池（{kind, window, op: gte/lte, threshold}）
         var allFactors = (params.factors && params.factors.length) ? params.factors
@@ -1395,8 +1473,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           candidates = cand3;
         }
 
-        var scored = factorScores(candidates, i);
+        var fsR = factorScores(candidates, i);
+        var scored = fsR.scored;
         scored.sort(function (a, b) { return b.score - a.score; });
+        var fsFull = (candFull && candFull !== candidates) ? factorScores(candFull, i) : fsR;
         // 收集组合IC所需的截面：综合得分 + 各排名因子原始值（与本次回测同口径）
         if (scored.length) {
           var _sn = { i: i, scores: {}, fv: {} };
@@ -1416,6 +1496,16 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           }
           icSnapshots.push(_sn);
         }
+        // 全池 IC 截面（未过滤：与筛选池同日对齐）
+        if (fsFull.full.length) {
+          var _snF = { i: i, scores: {}, fv: {} };
+          for (var _siF = 0; _siF < fsFull.full.length; _siF++) {
+            var _cF = fsFull.full[_siF];
+            _snF.scores[_cF.code] = _cF.score;
+            for (var _kF in _cF.fv) { _snF.fv[_kF] = _snF.fv[_kF] || {}; _snF.fv[_kF][_cF.code] = _cF.fv[_kF]; }
+          }
+          icSnapshotsFull.push(_snF);
+        }
 
         var wNew2 = new Array(nAssets).fill(0);
         var holding = [];
@@ -1425,15 +1515,22 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           var rwm2 = params.reb_weight_mode || "fixed";
           var codesH2 = [];
           for (var ckR0 = 0; ckR0 < nAssets; ckR0++) if ((rwM[codes[ckR0]] || 0) > 0) codesH2.push(codes[ckR0]);
+          // P2-13 已上市检查：决策日尚无有效行情（未上市/停牌）的标的不参与再平衡，避免静默贡献 0 收益
+          var notListed = [];
+          codesH2 = codesH2.filter(function (c) {
+            var okR = !isMiss(closes[c][i]) && closes[c][i] > 0;
+            if (!okR) notListed.push(c);
+            return okR;
+          });
           if (rwm2 === "inv_vol" || rwm2 === "risk_parity") {
             var rc2 = params.reb_codes || codesH2;
-            var codesH3 = rc2.filter(function (c) { return codeSet[c]; });
+            var codesH3 = rc2.filter(function (c) { return codeSet[c] && !isMiss(closes[c][i]) && closes[c][i] > 0; });
             var relW2 = holdingWeights(rwm2, codesH3, i);
             codesH3.forEach(function (ch) { wNew2[codes.indexOf(ch)] = relW2[ch]; holding.push(ch); });
           } else {
             for (var ckR = 0; ckR < nAssets; ckR++) {
               var wrR = rwM[codes[ckR]] || 0;
-              if (wrR > 0) { wNew2[ckR] = wrR; holding.push(codes[ckR]); }
+              if (wrR > 0 && codesH2.indexOf(codes[ckR]) >= 0) { wNew2[ckR] = wrR; holding.push(codes[ckR]); }
             }
           }
         } else {
@@ -1510,6 +1607,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             var nT = +(params.timing_ma_window) || 200;
             var tms = params.timing_indices || [];
             for (var ti2 = 0; ti2 < tms.length; ti2++) {
+              if (REGIME_SINCE[tms[ti2]] && cal[i] < REGIME_SINCE[tms[ti2]]) continue;   // 同上：未发布指数不参与择时
               var mvT = rollingMA(idxClose[tms[ti2]], i, nT);
               if (isNaN(mvT) || idxClose[tms[ti2]][i] <= mvT) { timingOk = false; break; }
             }
@@ -1558,8 +1656,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           var wt = 1 / (rankM - rankN + 1);
           var hwMode = params.holding_weight || "equal";
           var codesH = Object.keys(wTarget);
-          var idleMap = { cash: null, gold: "518880.SH", bond: "511010.SH", money: "511990.SH" };
-          var idleC = idleMap[params.fallback_when_no_signal] || null;
+          // P2-12：idleC 已在 backtest 顶部由 idleMap0 声明，此处复用，删除同作用域重复 var 声明
           if (codesH.length) {
             var relW = holdingWeights(hwMode, codesH, i);
             var totalW = Math.min(1, codesH.length * wt);
@@ -1600,16 +1697,18 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
         var turnover = 0, k3;
         for (k3 = 0; k3 < nAssets; k3++) turnover += Math.abs(wNew2[k3] - wOld[k3]);
-        var costPct2 = turnover * costPerSide;
-        if (tiered) {
-          // 分档成本：各换手腿按标的分档滑点（佣金固定），与 Python 同构
-          costPct2 = 0;
-          var dk2, k6;
-          for (k6 = 0; k6 < nAssets; k6++) {
-            dk2 = wNew2[k6] - wOld[k6];
-            if (dk2 > 0) costPct2 += dk2 * (params.commission_rate + slippageFor(codes[k6], i));
-            else if (dk2 < 0) costPct2 += -dk2 * (params.commission_rate + slippageFor(codes[k6], i));
-          }
+        // P1-5c 最低佣金（元/笔）：佣金部分不足最低额时按最低额计（占组合净值比例 = 最低佣金/当前组合净值×初始资金）
+        var minCommPct = (params.min_commission > 0) ? params.min_commission / (nav * (params.initial_capital || 1000000)) : 0;
+        function legCost(dw6, c6) {
+          var comm = Math.abs(dw6) * params.commission_rate;
+          if (minCommPct > 0 && comm < minCommPct) comm = minCommPct;
+          return comm + Math.abs(dw6) * (tiered ? slippageFor(c6, i) : params.slippage_rate);
+        }
+        var costPct2 = 0, k6;
+        for (k6 = 0; k6 < nAssets; k6++) {
+          var dw6 = wNew2[k6] - wOld[k6];
+          if (dw6 > 0) costPct2 += legCost(dw6, codes[k6]);
+          else if (dw6 < 0) costPct2 += legCost(dw6, codes[k6]);
         }
 
         var fromCodes = [], k4;
@@ -1623,14 +1722,16 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         var capK = params.initial_capital || 1000000;
         sellAmt = sellAmt * nav * capK;
         buyAmt = buyAmt * nav * capK;
-        var exRaw = rawOpens && rawOpens[holding[0]] ? rawOpens[holding[0]][i + 1] : null;
-        if (holding.length > 1) {
-          exRaw = 0;
-          for (var k7 = 0; k7 < holding.length; k7++) {
-            var rr7 = rawOpens && rawOpens[holding[k7]] ? rawOpens[holding[k7]][i + 1] : null;
-            if (rr7) exRaw += rr7 / holding.length;
-          }
+        // P2-15：买入均价 = 按目标权重（近似买入金额）加权的次日开盘未复权价；单标的直接取其开盘价
+        var exRaw = null, wSumR = 0;
+        for (var k7 = 0; k7 < holding.length; k7++) {
+          var rr7 = rawOpens && rawOpens[holding[k7]] ? rawOpens[holding[k7]][i + 1] : null;
+          if (!(rr7 > 0)) continue;
+          var wK7 = wNew2[codes.indexOf(holding[k7])] || 0;
+          if (exRaw === null) exRaw = 0;
+          exRaw += wK7 * rr7; wSumR += wK7;
         }
+        if (wSumR > 0 && exRaw !== null) exRaw /= wSumR;
         var buyShares = (exRaw && exRaw > 0) ? buyAmt / exRaw : null;
         var soldList = [];
         for (var k8 = 0; k8 < fromCodes.length; k8++) {
@@ -1655,7 +1756,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
 
       // ---- 2) 当日收益 ----
-      if (i === 0) { navSeries[0] = nav; regSeries[0] = regime; ddSeries[0] = 0; expSeries[0] = 0; holdSeries[0] = []; continue; }
+      if (i === 0) { navSeries[0] = nav; regSeries[0] = regime; ddSeries[0] = 0; expSeries[0] = 0; holdSeries[0] = []; dailyRet[0] = 0; continue; }
       if (!executed) {
         r = 0;
         for (k = 0; k < nAssets; k++) {
@@ -1743,7 +1844,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       drawdown: ddV, bench_drawdown: benchDD, daily_ret: dailyR,
       holdings: holdV, regime: regV, exposure: expV,
       trades: tradeRecords, pool: codes,
-      ic_snapshots: icSnapshots,
+      ic_snapshots: icSnapshots, ic_snapshots_full: icSnapshotsFull,
       metrics: {
         total_return: totalReturn, cagr: cagr, max_dd: maxDD,
         sharpe: sharpe, vol: vol, calmar: calmar,
@@ -1972,7 +2073,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     { label: "年", mode: "yearly", unit: "年", def: 1, min: 1, max: 5,
       anchors: [{ label: "年初", value: "first" }, { label: "年末", value: "last" }], anchorDef: "first" }
   ];
-  var rebSel = REB[1], rebInterval = 1, rebAnchor = "mon", startDate = "2017-01-01", endDate = "2026-09-30";
+  var rebSel = REB[1], rebInterval = 1, rebAnchor = "mon", startDate = "2016-06-01", endDate = "2026-09-30";
   // ---------- 因子列表（可增删；kind: roc/slope_r2/vol/risk_adj/amount/volume/rsrs/c_vs_ma/c_vs_ma_lag/ma_vs_ma/ma_vs_ma_lag） ----------
   // nwin=窗口数；多窗口时窗口2/3 用 wMin2/wMax2/wStep2/def2、wMin3/...（窗口A/B/C 语义见 title）
   // cat=因子分类：price=行情因子 / tech=技术因子 / custom=自定义因子
@@ -2524,7 +2625,7 @@ function buildChips() {
   if ($("tierSw")) $("tierSw").addEventListener("change", scheduleRun);
   if ($("rebWeightMode")) $("rebWeightMode").addEventListener("change", function () { applyModeUI(); scheduleRun(); });
 
-  var startOptions = ["2017-01-01", "2018-01-01", "2019-01-01", "2020-01-01", "2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01"];
+  var startOptions = ["2016-06-01", "2017-01-01", "2018-01-01", "2019-01-01", "2020-01-01", "2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01"];
   var sdEl = $("startSel");
   if (sdEl && sdEl.tagName === "SELECT") {
     startOptions.forEach(function (d) {
@@ -2730,6 +2831,8 @@ function buildChips() {
       commission_rate: (+$("cmIn").value) / 10000,
       slippage_rate: (+$("slIn").value) / 10000,
       tiered_slippage: $("tierSw") ? $("tierSw").checked : false,
+      min_commission: (+$("minCmIn").value) || 0,
+      use_real_pool: $("realPoolSw") ? $("realPoolSw").checked : false,
       holding_weight: $("hwSel") ? $("hwSel").value : "equal",
       start_date: startDate,
       end_date: endDate,
@@ -2822,6 +2925,8 @@ function buildChips() {
     if (cm) { cm.value = +(p.commission_rate) * 10000 || 2.5; $("cmV").textContent = cm.value; }
     if (sl) { sl.value = +(p.slippage_rate) * 10000 || 5; $("slV").textContent = sl.value; }
     if ($("tierSw")) $("tierSw").checked = !!p.tiered_slippage;
+    if ($("realPoolSw")) $("realPoolSw").checked = p.use_real_pool !== false;
+    if ($("minCmIn")) $("minCmIn").value = +(p.min_commission) || 0;
     if ($("hwSel")) $("hwSel").value = p.holding_weight || "equal";
     if ($("rebWeightMode")) $("rebWeightMode").value = p.reb_weight_mode || "fixed";
     // 走弱期
@@ -3053,6 +3158,7 @@ function buildChips() {
     if (!card) return;
     var snaps = res.ic_snapshots;
     if (!snaps || !snaps.length) { card.style.display = "none"; return; }
+    var snapsF = res.ic_snapshots_full || [];      // P1-3 全池 IC 截面（未过滤 scoreFloor/筛选/走弱）
     card.style.display = "block";
     var cal = D.calendar, series = D.series, n = cal.length;
 
@@ -3084,16 +3190,18 @@ function buildChips() {
       return (va > 0 && vb > 0) ? cov / Math.sqrt(va * vb) : 0;
     }
     function futReturn(c, i, fut) {
+      // P1-2 IC 口径：决策日收盘 -> 次日开盘买入（open[i+1]）-> 第 fut 日收盘，剔除隔夜跳空（与回测执行口径一致）
       var a = series[c]; if (!a) return null;
-      var cl = a.close; if (!cl) return null;
-      var p0 = cl[i], p1 = cl[i + fut];
+      var cl = a.close, op = a.open; if (!cl || !op) return null;
+      var p0 = op[i + 1], p1 = cl[i + fut];
       if (miss(p0) || miss(p1) || p0 <= 0) return null;
       return p1 / p0 - 1;
     }
-    function compIC(fut) {
+    function compIC(fut, snapsSrc) {
+      var snaps0 = snapsSrc || snaps;
       var ics = [], dates = [], k, j, c;
-      for (k = 0; k < snaps.length; k++) {
-        var sn = snaps[k];
+      for (k = 0; k < snaps0.length; k++) {
+        var sn = snaps0[k];
         if (sn.i + fut >= n) continue;
         var sc = [], rc = [], codes = Object.keys(sn.scores);
         for (j = 0; j < codes.length; j++) {
@@ -3125,6 +3233,8 @@ function buildChips() {
       }
     }
     var mIC = mean(main.ics), sIC = sd(main.ics), icir = sIC > 0 ? mIC / sIC : 0;
+    var full = compIC(baseFut, snapsF);             // P1-3 全池 IC 对照
+    var fIC = full.ics.length ? mean(full.ics) : 0;
     var pos = 0, i2;
     for (i2 = 0; i2 < main.ics.length; i2++) if (main.ics[i2] > 0) pos++;
     var posRate = main.ics.length ? pos / main.ics.length : 0;
@@ -3136,10 +3246,11 @@ function buildChips() {
         '<div style="font-size:10px;color:#64748B">' + s + '</div></div>';
     }
     $("cICSum").innerHTML =
-      kpi("平均 IC", mIC.toFixed(3), "主窗口 " + baseFut + " 日", icolor(mIC)) +
+      kpi("平均IC·筛选池", mIC.toFixed(3), "主窗口 " + baseFut + " 日", icolor(mIC)) +
+      kpi("平均IC·全池", fIC.toFixed(3), "未过滤截面 " + full.ics.length + " 个", icolor(fIC)) +
       kpi("ICIR", icir.toFixed(2), "均值/标准差", icolor(icir)) +
       kpi("有效占比", (posRate * 100).toFixed(0) + "%", "IC>0 截面占比", icolor(mIC)) +
-      kpi("截面数", String(main.ics.length), "有效调仓截面", "");
+      kpi("截面数", String(main.ics.length), "筛选池有效截面", "");
 
     if (main.ics.length > 0) {
       initChart("cICChart").setOption({
@@ -3682,9 +3793,9 @@ function buildChips() {
       };
     }
     if (stStart) {
-      stStart.value = (m[name].start_date) || "2017-01-01";
+      stStart.value = (m[name].start_date) || "2016-06-01";
       stStart.onchange = function () {
-        var v = stStart.value || "2017-01-01";
+        var v = stStart.value || "2016-06-01";
         m[name].start_date = v;
         storeAll(m);
         delete stRes[name];
@@ -3914,19 +4025,28 @@ function buildChips() {
         paramsList.push(p);
         resList.push(engine.backtest(D, p));
       });
-      var comboRes = buildCombo(resList, w, intervalDays);
+      // P1-6 组合再平衡扣成本：取各策略中较高的单边成本作为组合换仓成本
+      var comboCost = 0;
+      paramsList.forEach(function (pp) { var cc = (+pp.commission_rate || 0) + (+pp.slippage_rate || 0); if (cc > comboCost) comboCost = cc; });
+      var comboRes = buildCombo(resList, w, intervalDays, comboCost);
       renderComboResult(names, resList, comboRes, w);
     });
   }
-  function buildCombo(resList, w, intervalDays) {
+  function buildCombo(resList, w, intervalDays, costPerSide) {
     var L = resList[0].nav.length;
     var navs = resList.map(function (r) { return r.nav; });
     var ww = w.slice();
     var combo = new Array(L); combo[0] = 1;
+    var cps = costPerSide || 0;
     for (var t = 1; t < L; t++) {
       var ri = navs.map(function (nav) { var p0 = nav[t - 1]; return (p0 > 0) ? (nav[t] / p0 - 1) : 0; });
       var cr = 0; for (var k = 0; k < navs.length; k++) cr += ww[k] * ri[k];
-      combo[t] = combo[t - 1] * (1 + cr);
+      var crNet = cr;
+      if (intervalDays > 0 && (t % intervalDays === 0) && cps > 0) {
+        var turn = 0; for (var kk = 0; kk < navs.length; kk++) turn += Math.abs(ww[kk] - w[kk]);
+        crNet = (1 + cr) * (1 - turn * cps) - 1;   // P1-6：再平衡当日按换手扣减交易成本
+      }
+      combo[t] = combo[t - 1] * (1 + crNet);
       var denom = 1 + cr;
       if (denom > 0) { ww = ww.map(function (x, k) { return x * (1 + ri[k]) / denom; }); }
       if (intervalDays > 0 && (t % intervalDays === 0)) ww = w.slice();
@@ -4126,10 +4246,14 @@ function buildChips() {
     if (di < 0) { el.style.display = "none"; return; }
     var base = D.calendar[di];
     var total = POOL.length || (D.pool ? D.pool.length : 0);
+    // P1-4：与引擎真实可得池同口径——按 series close>0 首日判定（WUFU_FIRSTDATE 为旧披露口径，偏保守且与数据不一致）
     var n = 0;
     POOL.forEach(function (p) {
-      var fd = FIRSTDATE[p.code];
-      if (fd && fd <= base) n++;
+      var sv = D.series[p.code];
+      if (!sv || !sv.close) return;
+      var fdi = -1;
+      for (var fk = 0; fk < sv.close.length; fk++) { if (sv.close[fk] > 0) { fdi = fk; break; } }
+      if (fdi >= 0 && D.calendar[fdi] <= base) n++;
     });
     var pct = Math.round(n / total * 100);
     if (n < total) {
@@ -4311,16 +4435,25 @@ function buildChips() {
     try { r = eng.backtest(W.getData(), p); } catch (e) { return null; }
     var m = r.metrics;
     var obj = $("tuneObj").value;
-    var score = (obj === "total") ? m.total_return
-      : (obj === "sharpe") ? m.sharpe
-      : (obj === "calmar") ? (isFinite(m.calmar) ? m.calmar : null)
-      : (m.segments && m.segments.validation ? m.segments.validation.total : null);
+    // P1-1 数据窥探修正：排序分数一律取研究段（前N年）指标；验证段（最近3年冻结段）只检验、不参与排序推荐
+    var sg = m.segments && m.segments.study;
+    function segScore(s) {
+      if (!s || s.n_days < 5) return null;
+      if (obj === "sharpe") return s.sharpe;
+      if (obj === "calmar") return (s.max_dd < 0 ? s.cagr / Math.abs(s.max_dd) : null);
+      return s.total;
+    }
+    var score = segScore(sg);
     if (score === null || score === undefined || isNaN(score)) return null;
     return {
       score: score,
       total: m.total_return, cagr: m.cagr, dd: m.max_dd,
       sharpe: m.sharpe,
-      valTotal: m.segments && m.segments.validation ? m.segments.validation.total : null
+      stTotal: sg ? sg.total : null,
+      stSharpe: sg ? sg.sharpe : null,
+      stCalmar: sg ? (sg.max_dd < 0 ? sg.cagr / Math.abs(sg.max_dd) : null) : null,
+      valTotal: m.segments && m.segments.validation ? m.segments.validation.total : null,
+      valSharpe: m.segments && m.segments.validation ? m.segments.validation.sharpe : null
     };
   }
 
@@ -4381,11 +4514,11 @@ function buildChips() {
     var obj = $("tuneObj").value;
     results.sort(function (a, b) { return b.m.score - a.m.score; });
     var bm = metric(base);
-    var objLabel = { total: "目标·累计", sharpe: "目标·夏普", calmar: "目标·收益回撤", val_total: "目标·验证段累计" }[obj] || "目标";
+    var objLabel = { total: "目标·研究段累计", sharpe: "目标·研究段夏普", calmar: "目标·研究段收益回撤" }[obj] || "目标";
 
     function scoreText(m) {
-      if (obj === "sharpe") return (isFinite(m.sharpe) ? m.sharpe.toFixed(2) : "—");
-      var v = (obj === "total") ? m.total : (obj === "val_total") ? m.valTotal : (isFinite(m.calmar) ? m.calmar : null);
+      if (obj === "sharpe") return (isFinite(m.stSharpe) ? m.stSharpe.toFixed(2) : "—");
+      var v = (obj === "calmar") ? (m.stCalmar !== undefined && m.stCalmar !== null ? m.stCalmar : null) : m.stTotal;
       return pct(v);
     }
 
@@ -4400,16 +4533,18 @@ function buildChips() {
       var rank = '<span style="color:#64748B;width:22px;font-size:12px;text-align:center">' + idx + '</span>';
       var name = '<span style="font-size:12px;' + (isBase ? "color:#94A3B8" : "color:#CBD5E1") + ';min-width:130px;flex:1;flex-basis:120px;word-break:break-all">' + desc + '</span>';
       var cells = item(objLabel, scoreText(m), "#38BDF8") +
+        item("研究段", pct(m.stTotal), "#F59E0B") +
+        item("验证段", pct(m.valTotal), "#E2E8F0") +
         item("累计", pct(m.total), "#F87171") +
         item("年化", pct(m.cagr), "#E2E8F0") +
         item("回撤", pct(m.dd), "#34D399") +
         item("夏普", (isFinite(m.sharpe) ? m.sharpe.toFixed(2) : "—"), "#E2E8F0") +
-        item("验证", pct(m.valTotal), "#E2E8F0");
+        item("验证段", pct(m.valTotal), "#E2E8F0");
       var btn = combo ? '<button type="button" class="tuneApply" data-combo="' + JSON.stringify(combo).replace(/"/g, "&quot;") + '" style="padding:2px 10px;font-size:12px;border-radius:4px;border:1px solid #334155;background:#111827;color:#E2E8F0;cursor:pointer">应用</button>' : '';
       return '<div style="display:flex;flex-wrap:wrap;gap:3px 12px;align-items:center;padding:6px 2px;border-top:1px solid #1E293B">' + rank + name + cells + btn + '</div>';
     }
 
-    var html = '<div style="font-size:11px;color:#64748B;padding:2px 2px 6px">加粗蓝为所选优化目标；正收益红、回撤绿，点「应用」回填参数</div>';
+    var html = '<div style="font-size:11px;color:#64748B;padding:2px 2px 6px">加粗蓝为所选优化目标（研究段指标）；正收益红、回撤绿，点「应用」回填参数。验证段只检验、不参与排序</div>';
     if (bm) html += row("基线", "基线 · 当前参数", bm, true, null);
     var shown = Math.min(25, results.length);
     for (var i = 0; i < shown; i++) {
@@ -4417,8 +4552,66 @@ function buildChips() {
       html += row(String(i + 1), describeCombo(r.combo), r.m, false, r.combo);
     }
     $("tuneGrid").innerHTML = html;
-    $("tuneCount").textContent = "前 " + shown + "/" + results.length + " 组 · 基线=当前参数（仅参考）";
+    $("tuneCount").textContent = "前 " + shown + "/" + results.length + " 组（按研究段排序）· 基线=当前参数（仅参考）· 验证段仅检验不参与排序";
     $("tuneState").textContent = "完成 · " + results.length + " 组";
+    renderSenseSummary(results, base);
+  }
+
+  // P1-1：最优参数 vs 参数中位数 收益差 + 参数敏感度平原图（最优点孤峰突起 → 过拟合提示）
+  function renderSenseSummary(results, base) {
+    var el = $("tuneSense");
+    if (!el) return;
+    var best = results.length ? results[0] : null;
+    if (!best) { el.innerHTML = ""; return; }
+    var dimKeys = Object.keys(best.combo);
+    var medCombo = {};
+    dimKeys.forEach(function (dk) {
+      var vals = [];
+      results.forEach(function (rr) { if (vals.indexOf(rr.combo[dk]) < 0) vals.push(rr.combo[dk]); });
+      vals.sort(function (a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true }); });
+      medCombo[dk] = vals[Math.floor((vals.length - 1) / 2)];
+    });
+    var medRes = null;
+    for (var mr = 0; mr < results.length; mr++) {
+      var c = results[mr].combo, okM = true;
+      for (var dk2 in medCombo) if (String(c[dk2]) !== String(medCombo[dk2])) { okM = false; break; }
+      if (okM) { medRes = results[mr]; break; }
+    }
+    var txt = "";
+    if (best && medRes && best !== medRes) {
+      txt = "最优(研究段 " + pct(best.m.stTotal) + " / 验证段 " + pct(best.m.valTotal) + ") vs 中位参数(研究段 " + pct(medRes.m.stTotal) + " / 验证段 " + pct(medRes.m.valTotal) + ") —— 研究段差 " + pct(best.m.stTotal - medRes.m.stTotal) + "、验证段差 " + pct(best.m.valTotal - medRes.m.valTotal) + "：若研究段优势大而验证段趋同，最优点疑似过拟合（孤峰）。";
+    }
+    el.innerHTML = txt;
+    var chEl = $("tuneSenseChart");
+    if (!chEl || !window.echarts || !dimKeys.length) return;
+    var series = [], xlabels = [];
+    dimKeys.forEach(function (dk) {
+      var pts = [];
+      results.forEach(function (rr) {
+        var c = rr.combo, same = true;
+        for (var d2 in c) { if (d2 !== dk && String(c[d2]) !== String(best.combo[d2])) { same = false; break; } }
+        if (!same) return;
+        pts.push({ v: String(c[dk]), st: rr.m.stTotal, va: rr.m.valTotal });
+      });
+      if (pts.length >= 2) {
+        pts.sort(function (a, b) { return String(a.v).localeCompare(String(b.v), undefined, { numeric: true }); });
+        pts.forEach(function (p) { if (xlabels.indexOf(p.v) < 0) xlabels.push(p.v); });
+        series.push({ name: "研究段·" + dk, type: "line", symbolSize: 5, data: pts.map(function (p) { return [p.v, +(p.st * 100).toFixed(2)]; }) });
+        series.push({ name: "验证段·" + dk, type: "line", symbolSize: 5, data: pts.map(function (p) { return [p.v, +(p.va * 100).toFixed(2)]; }) });
+      }
+    });
+    if (!series.length) { chEl.style.display = "none"; return; }
+    chEl.style.display = "block";
+    var chart = echarts.getInstanceByDom(chEl) || echarts.init(chEl);
+    chart.setOption({
+      tooltip: { trigger: "axis", triggerOn: "click", renderMode: "richText", confine: true },
+      legend: { type: "scroll", textStyle: { color: "#94A3B8", fontSize: 10 }, top: 4, height: 22, iconSize: 9 },
+      grid: { left: 44, right: 16, top: 62, bottom: 26, containLabel: true },
+      xAxis: { type: "category", data: xlabels, axisLabel: { color: "#64748B", fontSize: 10 } },
+      yAxis: { type: "value", axisLabel: { color: "#64748B", fontSize: 10, formatter: function (v) { return v + "%"; } }, splitLine: { lineStyle: { color: "#1E293B" } } },
+      series: series
+    }, true);
+    chart.resize();
   }
 
   function describeCombo(c) {
@@ -4629,7 +4822,7 @@ function buildChips() {
     WufuUI.ensureData(function () {
       var D = WufuUI.getData();
       var last = D.calendar[D.calendar.length - 1];
-      $("corrStart").value = "2017-01-01";
+      $("corrStart").value = "2016-06-01";
       $("corrEnd").value = last;
       $("corrStart").min = D.calendar[0]; $("corrStart").max = last;
       $("corrEnd").min = D.calendar[0]; $("corrEnd").max = last;
@@ -4860,13 +5053,16 @@ function buildChips() {
       return (cArr[i] - lP) / (hP - lP);
     }
     if (kind === "rsi") {
-      if (i + 1 < w1) return NaN;
-      var segR = cArr.slice(i - w1 + 1, i + 1);
+      // 与 js_engine 同构：Wilder 平滑（P2-11），涨跌幅用收益率口径
+      if (i + 1 < w1 + 1) return NaN;
+      var segR = cArr.slice(i - w1, i + 1);
       for (var qr = 0; qr < segR.length; qr++) if (isMiss(segR[qr])) return NaN;
       var gR = 0, lR = 0, tr;
-      for (tr = 1; tr < segR.length; tr++) { var dR = segR[tr] - segR[tr - 1]; if (dR > 0) gR += dR; else lR -= dR; }
-      if (gR + lR <= 0) return NaN;
-      return 100 * gR / (gR + lR);
+      for (tr = 1; tr <= w1; tr++) { var dR0 = segR[tr] / segR[tr - 1] - 1; if (dR0 > 0) gR += dR0; else lR -= dR0; }
+      var avgG = gR / w1, avgL = lR / w1;
+      for (tr = w1 + 1; tr < segR.length; tr++) { var dR = segR[tr] / segR[tr - 1] - 1; avgG = (avgG * (w1 - 1) + (dR > 0 ? dR : 0)) / w1; avgL = (avgL * (w1 - 1) + (dR < 0 ? -dR : 0)) / w1; }
+      if (avgG + avgL <= 0) return NaN;
+      return avgL === 0 ? 100 : 100 * avgG / (avgG + avgL);
     }
     return NaN;
   }
@@ -4925,11 +5121,13 @@ function buildChips() {
     for (var i = need; i + futN < L; i += freq) {
       var fvs = [], rets = [], j;
       for (j = 0; j < codes.length; j++) {
-        var c = codes[j], cc = closes[c];
+        var c = codes[j], cc = closes[c], oc = seq.opens ? seq.opens[c] : null;
         if (!cc || isMiss(cc[i]) || isMiss(cc[i + futN]) || !(cc[i] > 0)) continue;
+        var p0 = oc ? oc[i + 1] : null;                 // P1-2：次日开盘买入（无隔夜跳空，与回测执行口径一致）
+        if (isMiss(p0) || !(p0 > 0)) continue;
         var fv = factorValAt(seq, kind, c, i, f, ann);
         if (isNaN(fv)) continue;
-        fvs.push(fv); rets.push(cc[i + futN] / cc[i] - 1);
+        fvs.push(fv); rets.push(cc[i + futN] / p0 - 1);
       }
       if (fvs.length >= 5) {
         var ic = rankIC(fvs, rets);
