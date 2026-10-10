@@ -381,42 +381,45 @@ footer b{color:#94A3B8}
       <div class="sfold">
         <button type="button" class="sfold-h" data-g="exe"><b>③ 择时管理</b><span class="sf-a">点击展开</span></button>
         <div class="sfold-b hide" id="sfg-exe">
-      <div class="psec" id="psecRegime">
-        <h3>走弱期机制</h3>
-        <label class="row"><span>启用走弱期判断</span><input id="regSw" type="checkbox"></label>
-        <label class="row">走弱期均线(MA窗口,日) <span class="v" id="maV" style="display:none">10</span>
-          <input id="maIn" type="number" min="5" max="60" step="1" value="10" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">走弱期指数（跌破 MA 判定用，可多选）</div>
-        <div class="chips" id="regIdxChips"></div>
-        <label class="row"><span>走弱期轮动范围</span>
-          <select id="weakMode" style="flex:1;min-width:0;max-width:250px">
-            <option value="overseas_pool">海外避险池</option>
-            <option value="cash">空仓避险</option>
-            <option value="full_pool">全池轮动</option>
-          </select>
-        </label>
-        <label class="row"><span>走弱期叠加均线过滤</span><input id="weakMa" type="checkbox"></label>
-      </div>
       <div class="psec" id="psecMt">
-        <h3>大盘择时</h3>
-        <label class="row"><span>启用均线仓位控制</span><input id="mtOn" type="checkbox"></label>
+        <h3>市场状态风控 <span class="tip">合并走弱期机制与大盘择时</span></h3>
+        <label class="row"><span>启用市场状态风控</span><input id="mmOn" type="checkbox"></label>
         <label class="row"><span>触发模式</span>
-          <select id="mtModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827">
-            <option value="any" selected>任一跌破（默认）：任一指数跌破MA即降仓，全部站上才恢复</option>
-            <option value="all">全部跌破：全部跌破MA才降仓，任一站上即恢复</option>
+          <select id="mmModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827">
+            <option value="any" selected>任一跌破（默认）：任一指数跌破MA即看弱，全部站上才恢复</option>
+            <option value="all">全部跌破：全部跌破MA才看弱，任一站上即恢复</option>
           </select>
         </label>
-        <label class="row" style="margin-top:4px"><input id="mtSearchIn" type="text" placeholder="搜索指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时基准指数（可多选，默认沪深300全收益；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
-        <div class="chips" id="mtIdxChips"></div>
-        <label class="row">均线窗口(MA,日) <span class="v" id="mtV" style="display:none">20</span>
-          <input id="mtWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        <label class="row" style="margin-top:4px"><input id="mmSearchIn" type="text" placeholder="搜索状态判定指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">状态判定指数（可多选，默认沪深300全收益；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
+        <div class="chips" id="mmIdxChips"></div>
+        <label class="row">均线窗口(MA,日) <span class="v" id="mmWV" style="display:none">20</span>
+          <input id="mmWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
         </label>
-        <label class="row">跌破均线仓位降至(0~1) <span class="v" id="mtPV" style="display:none">0</span>
-          <input id="mtMinIn" type="number" min="0" max="1" step="0.05" value="0" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        <label class="row">连续跌破N日进入走弱 <span class="v" id="mmNV" style="display:none">3</span>
+          <input id="mmNIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
         </label>
-        <div style="font-size:11px;color:#64748B;margin:2px 0">任一跌破：所选指数中任一收盘跌破其 N 日均线 → 目标仓位整体乘以该比例（0=全部持现金/货币兜底），全部站上才恢复满仓；全部跌破：所有指数都跌破才降仓，任一站上即恢复。指数未发布日前不生效</div>
+        <label class="row">连续站上N日恢复 <span class="v" id="mmMV" style="display:none">3</span>
+          <input id="mmMIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row"><span>避险动作</span>
+          <select id="mmActionSel" style="flex:1;min-width:0;max-width:250px">
+            <option value="cut">降至X%（降仓）</option>
+            <option value="cash">空仓</option>
+            <option value="switch">换入自定义避险池</option>
+          </select>
+        </label>
+        <label class="row" id="mmCutRow">降至仓位(%) <span class="v" id="mmCV" style="display:none">50</span>
+          <input id="mmCutIn" type="number" min="0" max="100" step="5" value="50" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <div id="mmHedgeBox" style="display:none">
+          <label class="row" style="margin-top:4px"><input id="mmHedgeSearchIn" type="text" placeholder="搜索避险标的名称或代码（如 黄金 / 511990）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
+          <div style="font-size:12px;color:#64748B;margin:4px 0 2px">避险标的池（走弱期换入的轮动标的，可多选；默认预选海外避险池成员）</div>
+          <div class="chips" id="mmHedgeChips"></div>
+        </div>
+        <label class="row"><span>走弱期内叠加标的均线过滤</span><input id="mmWeakMa" type="checkbox"></label>
+        <div style="font-size:11px;color:#64748B;margin:2px 0">连续跌破 N 日进入走弱：所选指数连续看弱 N 日才切换（1=即时，可覆盖旧大盘择时无迟滞行为）；避险动作：降至 X%（目标仓位整体×X%）、空仓（现金零息）、或换入自定义避险池轮动。指数未发布日前不生效</div>
+        <div id="mmMigrateTip" style="display:none;font-size:11px;color:#F59E0B;margin:2px 0"></div>
       </div>
       <div class="psec" id="psecSt">
         <h3>大盘择时·风格切换（相对强弱） <span class="tip">小盘 vs 大盘 N 日动量差</span></h3>
@@ -1088,7 +1091,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var pending = null;               // [wNew(array), costPct]
     var lastSell = {};                // 卖出冷却：code -> 最近卖出决策日索引
     var posMeta = {};                 // 持仓状态：code -> {buy_i, buy_px, hi}（卖出/不卖条件用）
-    var nav = 1, cumCost = 0, regime = "normal";
+    var nav = 1, cumCost = 0, regime = "normal", mmWeakRun = 0, mmNormalRun = 0;
     var navSeries = new Array(n), ddSeries = new Array(n), expSeries = new Array(n);
     var holdSeries = new Array(n), regSeries = new Array(n), dailyRet = new Array(n);
     var tradeRecords = [];
@@ -1373,8 +1376,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           if (Math.abs(score) < 1e-12) score = 0;   // 浮点噪声归零（与 Python 同构；none 模式保留原始尺度不归零）
           if (!(score > scoreFloor)) continue;
         }
-        if (params.weak_period_use_ma_filter && regime === "weak") {
-          var mv2 = rollingMA(closes[code], i, params.regime_ma_window);
+        if (params.mm_weak_ma && regime === "weak") {
+          var mv2 = rollingMA(closes[code], i, params.mm_window || 20);
           if (isNaN(mv2) || closes[code][i] <= mv2) continue;
         }
         out.push({ score: score, r2: null, code: code, annSlope: null, slope: null });
@@ -1443,26 +1446,52 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
       // ---- 1) 收盘后决策（次日开盘执行，杜绝前视）----
       if (decisionIdx[i] && i + 1 < n) {
-        var below = 0, above = 0, ic, mv;
-        var regCodes = (params.regime_indices && params.regime_indices.length) ? params.regime_indices : D.regime;
-        // P1-7 前视修正：中证A500（index_000510.SH）2024-09-23 才发布，此前为按当前成分回溯值，早期不参与择时投票
+        var ic, mv;
+        // 市场状态风控（合并走弱期机制 + 大盘择时）：统一状态机
+        // 1) 对选中指数逐日判弱：rollingMA 比较，按触发模式（any=任一跌破 / all=全部跌破）聚合为「当日看弱」
+        // 2) 连续迟滞：连续看弱 >= mm_enter_days 进入 weak；连续不看弱 >= mm_exit_days 恢复 normal（1=即时，可覆盖旧大盘择时无迟滞行为）
+        // 3) 避险动作：cut=目标仓位整体×X% / cash=候选清空（空仓零收益/货币兜底语义不变） / switch=候选换入自定义避险池
         var REGIME_SINCE = params.regime_since || { "index_000510.SH": "2024-09-23" };
-        for (var ri2 = 0; ri2 < regCodes.length; ri2++) {
-          ic = regCodes[ri2];
-          if (REGIME_SINCE[ic] && cal[i] < REGIME_SINCE[ic]) continue;
-          mv = rollingMA(idxClose[ic], i, params.regime_ma_window);
-          if (isNaN(mv)) continue;
-          if (idxClose[ic][i] < mv) below++; else above++;
-        }
-        if (params.use_regime_filter) {
-          if (regime === "normal" && below >= params.regime_require_below) regime = "weak";
-          else if (regime === "weak" && above >= params.regime_require_above) regime = "normal";
+        var mmAction = "normal";
+        if (params.mm_on) {
+          var mmW = Math.max(1, +(params.mm_window) || 20);
+          var mmCs = params.mm_bench;
+          if (Object.prototype.toString.call(mmCs) !== "[object Array]" || !mmCs.length) mmCs = ["H00300.CSI"];
+          var mmMode = params.mm_mode === "all" ? "all" : "any";
+          var mmBelow = 0, mmValid = 0;
+          for (var mmTi = 0; mmTi < mmCs.length; mmTi++) {
+            var mmC = mmCs[mmTi];
+            var mmArr = idxArr(mmC);
+            if (!mmArr) continue;
+            var mmMv = rollingMA(mmArr, i, mmW);
+            if (isNaN(mmMv)) continue;
+            var mmPub = REGIME_SINCE[mmC] || REGIME_SINCE["index_" + mmC];
+            if (mmPub && cal[i] < mmPub) continue;
+            mmValid++;
+            if (isMiss(mmArr[i]) || mmArr[i] <= 0 || mmArr[i] < mmMv) mmBelow++;
+          }
+          var dayWeak = false;
+          if (mmValid > 0) dayWeak = (mmMode === "all") ? (mmBelow === mmValid) : (mmBelow >= 1);
+          var mmN = Math.max(1, +(params.mm_enter_days) || 3);
+          var mmM = Math.max(1, +(params.mm_exit_days) || 3);
+          if (regime === "normal") {
+            mmWeakRun = dayWeak ? mmWeakRun + 1 : 0;
+            if (mmWeakRun >= mmN) { regime = "weak"; mmWeakRun = 0; mmNormalRun = 0; }
+          } else {
+            mmNormalRun = dayWeak ? 0 : mmNormalRun + 1;
+            if (mmNormalRun >= mmM) { regime = "normal"; mmNormalRun = 0; mmWeakRun = 0; }
+          }
+          if (regime === "weak") mmAction = params.mm_action || "cut";
         }
 
         var candidates, ci;
-        if (regime === "weak" && params.weak_period_mode === "overseas_pool") {
-          candidates = codes.filter(function (c) { return overseasSet[c]; });
-        } else if (regime === "weak" && params.weak_period_mode === "cash") {
+        if (mmAction === "switch") {
+          var mmPool = params.mm_hedge_pool;
+          if (Object.prototype.toString.call(mmPool) !== "[object Array]" || !mmPool.length) mmPool = D.overseas || [];
+          var mmSet = {};
+          mmPool.forEach(function (c) { mmSet[c] = 1; });
+          candidates = codes.filter(function (c) { return mmSet[c]; });
+        } else if (mmAction === "cash") {
           candidates = [];
         } else {
           candidates = codes;
@@ -1737,30 +1766,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           });
         }
 
-        // 大盘择时-均线仓位控制（独立开关）：择时指数多选，各指数独立算 rollingMA 并与自身 MA 比较；
-        // 触发模式 mt_mode：any=任一跌破→整体降仓（全部站上才恢复满仓）；all=全部跌破才降仓（任一站上即恢复）；指数未发布日前不生效
-        if (params.mt_on) {
-          var mtW = Math.max(1, +(params.mt_window) || 20);
-          var mtCs = params.mt_bench;
-          if (Object.prototype.toString.call(mtCs) !== "[object Array]" || !mtCs.length) mtCs = ["H00300.CSI"];
-          var mtMode = params.mt_mode === "all" ? "all" : "any";
-          var mtCut = 1, mtBelow = 0, mtValid = 0;
-          for (var mTi = 0; mTi < mtCs.length; mTi++) {
-            var mtC = mtCs[mTi];
-            var mtArr = idxArr(mtC);
-            if (!mtArr) continue;
-            var mtMv = rollingMA(mtArr, i, mtW);
-            if (isNaN(mtMv)) continue;
-            var mtPub = REGIME_SINCE[mtC];
-            if (mtPub && cal[i] < mtPub) continue;
-            mtValid++;
-            if (isMiss(mtArr[i]) || mtArr[i] <= 0 || mtArr[i] < mtMv) mtBelow++;
-          }
-          if (mtValid > 0) {
-            var mtTrigger = (mtMode === "all") ? (mtBelow === mtValid) : (mtBelow >= 1);
-            if (mtTrigger) mtCut = Math.max(0, Math.min(1, +(params.mt_min_pos) || 0));
-          }
-          if (mtCut < 1) { for (var mK = 0; mK < nAssets; mK++) wNew2[mK] *= mtCut; }
+        // 市场状态风控-降仓动作（weak 且动作=降至X%）：目标仓位整体×X%（0=全部持现金/货币兜底）
+        if (mmAction === "cut") {
+          var mmCut = Math.max(0, Math.min(1, (+(params.mm_cut_pct) || 0) / 100));
+          if (mmCut < 1) { for (var mK = 0; mK < nAssets; mK++) wNew2[mK] *= mmCut; }
         }
 
         var turnover = 0, k3;
@@ -2036,7 +2045,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   }
   function applyModeUI() {
     var isReb = stMode === "rebalance";
-    ["psecFactor", "psecFilter", "psecRank", "topnRow", "psecBuyAdd", "psecSell", "psecHold", "psecRegime", "psecTiming", "psecRebW", "psecTune"].forEach(function (id) {
+    ["psecFactor", "psecFilter", "psecRank", "topnRow", "psecBuyAdd", "psecSell", "psecHold", "psecRebW", "psecTune"].forEach(function (id) {
       var el = $(id); if (el) el.style.display = isReb ? (id === "psecRebW" ? "" : "none") : (id === "psecRebW" ? "none" : "");
     });
     // 参数稳健性检查仅对排名因子有意义：再平衡模式隐藏
@@ -2657,18 +2666,22 @@ function buildChips() {
   $("rankNIn").addEventListener("change", function () { syncRankV(true); scheduleRun(); });
   $("rankMIn").addEventListener("change", function () { syncRankV(true); scheduleRun(); });
   $("slIn").addEventListener("input", function () { $("slV").textContent = this.value; scheduleRun(); });
-  $("regSw").addEventListener("change", scheduleRun);
   if ($("idleSel")) $("idleSel").addEventListener("change", scheduleRun);
   if ($("stdSel")) $("stdSel").addEventListener("change", function () { updateStdSel(); scheduleRun(); });
-  $("maIn").addEventListener("input", function () { $("maV").textContent = this.value; scheduleRun(); });
-  $("weakMode").addEventListener("change", scheduleRun);
-  $("weakMa").addEventListener("change", scheduleRun);
-  // ---------- 走弱期指数选择（可多选，默认全选 4 宽基） ----------
-  var regIdxSel = {};
-  // 功能1/3：大盘择时（独立）、自定义基准（择时指数多选 + 触发模式 any/all；分组折叠 + 搜索）
-  var mtOn = false, mtWin = 20, mtMinPos = 0, mtMode = "any", mtIdxSel = {}, mtCollapsed = {}, mtSearch = "";
+  // 市场状态风控（合并走弱期机制+大盘择时）控件事件
+  $("mmOn").addEventListener("change", scheduleRun);
+  $("mmModeSel").addEventListener("change", scheduleRun);
+  $("mmWinIn").addEventListener("input", function () { $("mmWV").textContent = this.value; scheduleRun(); });
+  $("mmNIn").addEventListener("input", function () { $("mmNV").textContent = this.value; scheduleRun(); });
+  $("mmMIn").addEventListener("input", function () { $("mmMV").textContent = this.value; scheduleRun(); });
+  $("mmActionSel").addEventListener("change", function () { applyMmActionUI(); scheduleRun(); });
+  $("mmCutIn").addEventListener("input", function () { $("mmCV").textContent = this.value; scheduleRun(); });
+  $("mmWeakMa").addEventListener("change", scheduleRun);
+  // ---------- 市场状态风控：判定指数选择（分组折叠+搜索）与避险标的池（分组折叠+搜索） ----------
+  var mmIdxSel = {}, mmCollapsed = {}, mmSearch = "";
   // 默认只展开「宽基」组，其余组收起（已勾选组自动展开，不受此状态限制）
-  ["风格", "行业主题", "海外", "商品债券", "其他"].forEach(function (g) { mtCollapsed[g] = true; });
+  ["风格", "行业主题", "海外", "商品债券", "其他"].forEach(function (g) { mmCollapsed[g] = true; });
+  var mmHedgeSel = {}, mmHedgeCollapsed = {}, mmHedgeSearch = "";
   var stOn = false, stWin = 20, stSmallIdx = "000852.SH", stLargeIdx = "H00300.CSI";
   var RDIDX = null, RDIDXBusy = false;
   var STYLE_SMALL_CODES = ["512100.SH", "563300.SH", "8841431.WI"];
@@ -2681,7 +2694,7 @@ function buildChips() {
     };
   }
   // 大盘择时可选指数列表：优先用内嵌指数块清单 RDIDX.pool（全部 94 条，含 group 分组），RDIDX 未就绪时回退主块展示指数；始终补沪深300全收益（默认）
-  function mtIdxList() {
+  function mmIdxList() {
     var l = (RDIDX && RDIDX.pool && RDIDX.pool.length)
       ? RDIDX.pool.map(function (p) { return { code: p.code, name: p.name, group: p.group }; })
       : (D && D.indexNames ? D.indexNames.map(function (it) { return { code: it.code, name: it.name, group: "宽基" }; }) : []);
@@ -2690,25 +2703,25 @@ function buildChips() {
     if (!hasH) l.push({ code: "H00300.CSI", name: "沪深300全收益", group: "宽基" });
     return l;
   }
-  // 择时指数分组折叠渲染（timing 分支专用）：按 group 分组，组标题可点击折叠/展开；默认只展开宽基；已勾选组自动展开；搜索时命中组展开、未命中组隐藏
-  function renderMtChips() {
-    var box = $("mtIdxChips");
+  // 状态判定指数分组折叠渲染：按 group 分组，组标题可点击折叠/展开；默认只展开宽基；已勾选组自动展开；搜索时命中组展开、未命中组隐藏
+  function renderMmChips() {
+    var box = $("mmIdxChips");
     if (!box) return;
     box.innerHTML = "";
-    var list = mtIdxList();
+    var list = mmIdxList();
     var groups = ["宽基", "风格", "行业主题", "海外", "商品债券", "其他"];
     var byG = {};
     groups.forEach(function (g) { byG[g] = []; });
     list.forEach(function (it) { var g = byG[it.group] !== undefined ? it.group : "其他"; byG[g].push(it); });
-    var q = mtSearch;
+    var q = mmSearch;
     groups.forEach(function (g) {
       if (!byG[g].length) return;
       var items = byG[g];
       var vis;
       if (q) { vis = items.filter(function (x) { return (x.name || "").toLowerCase().indexOf(q) >= 0 || (x.code || "").toLowerCase().indexOf(q) >= 0; }); if (!vis.length) return; }
       else vis = items;
-      var anyOn = items.some(function (x) { return mtIdxSel[x.code]; });
-      var collapsed = !q && !anyOn && mtCollapsed[g];
+      var anyOn = items.some(function (x) { return mmIdxSel[x.code]; });
+      var collapsed = !q && !anyOn && mmCollapsed[g];
       var hd = document.createElement("div");
       hd.style.cssText = "font-size:12px;color:#94A3B8;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #334155;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
       var caret = document.createElement("span");
@@ -2717,7 +2730,7 @@ function buildChips() {
       var tt = document.createElement("span");
       tt.textContent = g + "（" + items.length + "）";
       hd.appendChild(caret); hd.appendChild(tt);
-      (function (g2, anyOn2) { hd.addEventListener("click", function () { if (mtSearch) return; mtCollapsed[g2] = !mtCollapsed[g2]; renderMtChips(); }); })(g, anyOn);
+      (function (g2, anyOn2) { hd.addEventListener("click", function () { if (mmSearch) return; mmCollapsed[g2] = !mmCollapsed[g2]; renderMmChips(); }); })(g, anyOn);
       box.appendChild(hd);
       if (!collapsed) {
         var wr = document.createElement("div");
@@ -2726,18 +2739,68 @@ function buildChips() {
           var b = document.createElement("button");
           b.type = "button";
           b.textContent = it.name + " " + it.code;
-          b.className = mtIdxSel[it.code] ? "chip on" : "chip";
-          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #334155;border-radius:12px;background:" + (mtIdxSel[it.code] ? "#3B82F6" : "#1E293B") + ";color:#E2E8F0";
-          b.addEventListener("click", chipToggle(box, mtIdxSel, it.code));
+          b.className = mmIdxSel[it.code] ? "chip on" : "chip";
+          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #334155;border-radius:12px;background:" + (mmIdxSel[it.code] ? "#3B82F6" : "#1E293B") + ";color:#E2E8F0";
+          b.addEventListener("click", chipToggle(box, mmIdxSel, it.code));
           wr.appendChild(b);
         });
         box.appendChild(wr);
       }
     });
   }
+  // 避险标的池分组折叠渲染：按标的池大类分组（A股宽基/A股风格/行业主题/海外避险/商品债券），默认全展开；已勾选组自动展开；搜索时命中组展开
+  function hedgePoolList() {
+    return (D && D.pool) ? D.pool.map(function (p) { return { code: p.code, name: p.name, group: p.group }; }) : [];
+  }
+  function renderHedgeChips() {
+    var box = $("mmHedgeChips");
+    if (!box) return;
+    box.innerHTML = "";
+    var list = hedgePoolList();
+    var groups = [];
+    list.forEach(function (it) { if (groups.indexOf(it.group) < 0) groups.push(it.group); });
+    var q = mmHedgeSearch;
+    groups.forEach(function (g) {
+      var items = list.filter(function (x) { return x.group === g; });
+      var vis = q ? items.filter(function (x) { return (x.name || "").toLowerCase().indexOf(q) >= 0 || (x.code || "").toLowerCase().indexOf(q) >= 0; }) : items;
+      if (!vis.length) return;
+      var anyOn = items.some(function (x) { return mmHedgeSel[x.code]; });
+      var collapsed = !q && !anyOn && mmHedgeCollapsed[g];
+      var hd = document.createElement("div");
+      hd.style.cssText = "font-size:12px;color:#94A3B8;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #334155;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
+      var caret = document.createElement("span");
+      caret.textContent = collapsed ? "▶" : "▼";
+      caret.style.cssText = "font-size:9px;color:#64748B";
+      var tt = document.createElement("span");
+      tt.textContent = g + "（" + items.length + "）";
+      hd.appendChild(caret); hd.appendChild(tt);
+      (function (g2) { hd.addEventListener("click", function () { if (mmHedgeSearch) return; mmHedgeCollapsed[g2] = !mmHedgeCollapsed[g2]; renderHedgeChips(); }); })(g);
+      box.appendChild(hd);
+      if (!collapsed) {
+        var wr = document.createElement("div");
+        wr.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;padding:2px 0 2px 10px";
+        vis.forEach(function (it) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = it.name + " " + it.code;
+          b.className = mmHedgeSel[it.code] ? "chip on" : "chip";
+          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #334155;border-radius:12px;background:" + (mmHedgeSel[it.code] ? "#10B981" : "#1E293B") + ";color:#E2E8F0";
+          b.addEventListener("click", chipToggle(box, mmHedgeSel, it.code));
+          wr.appendChild(b);
+        });
+        box.appendChild(wr);
+      }
+    });
+  }
+  // 避险动作 UI 联动：cut 显示比例输入、switch 显示避险池多选
+  function applyMmActionUI() {
+    var a = $("mmActionSel") ? $("mmActionSel").value : "cut";
+    if ($("mmCutRow")) $("mmCutRow").style.display = a === "cut" ? "" : "none";
+    if ($("mmHedgeBox")) $("mmHedgeBox").style.display = a === "switch" ? "" : "none";
+  }
   function renderIdxChips(box, sel, kind) {
     if (!box) return;
-    if (kind === "timing" || box.id === "mtIdxChips") { renderMtChips(); return; }
+    if (kind === "timing" || box.id === "mmIdxChips") { renderMmChips(); return; }
     box.innerHTML = "";
     var list = D && D.indexNames ? D.indexNames : [];
     list.forEach(function (it) {
@@ -2751,10 +2814,13 @@ function buildChips() {
     });
   }
   function buildIdxChips() {
-    D.indexNames.forEach(function (it) { regIdxSel[it.code] = true; });
-    mtIdxList().forEach(function (it) { mtIdxSel[it.code] = it.code === "H00300.CSI"; });
-    renderIdxChips($("regIdxChips"), regIdxSel, "reg");
-    renderIdxChips($("mtIdxChips"), mtIdxSel, "timing");
+    mmIdxList().forEach(function (it) { mmIdxSel[it.code] = it.code === "H00300.CSI"; });
+    renderIdxChips($("mmIdxChips"), mmIdxSel, "timing");
+    // 避险池默认预选海外避险池成员（D.overseas），用户可增删
+    var hw = (D && D.overseas) ? D.overseas : [];
+    hedgePoolList().forEach(function (it) { mmHedgeSel[it.code] = hw.indexOf(it.code) >= 0; });
+    renderHedgeChips();
+    applyMmActionUI();
   }
   $("startSel").addEventListener("change", function () {
     startDate = this.value;
@@ -2962,13 +3028,16 @@ function buildChips() {
       annualize_factor: 252,
       score_floor: 0,
       r2_filter_mode: "normal_only",
-      use_regime_filter: $("regSw").checked,
-      regime_ma_window: +$("maIn").value,
-      regime_indices: (D ? D.indexNames : []).filter(function (it) { return regIdxSel[it.code]; }).map(function (it) { return it.code; }),
-      regime_require_below: 3,
-      regime_require_above: 3,
-      weak_period_mode: $("weakMode").value,
-      weak_period_use_ma_filter: $("weakMa").checked,
+      mm_on: $("mmOn").checked,
+      mm_bench: (function () { var r = []; Object.keys(mmIdxSel).forEach(function (k) { if (mmIdxSel[k]) r.push(k); }); if (!r.length) r = ["H00300.CSI"]; return r; })(),
+      mm_mode: $("mmModeSel") ? $("mmModeSel").value : "any",
+      mm_window: +($("mmWinIn") ? $("mmWinIn").value : 20) || 20,
+      mm_enter_days: +($("mmNIn") ? $("mmNIn").value : 3) || 3,
+      mm_exit_days: +($("mmMIn") ? $("mmMIn").value : 3) || 3,
+      mm_action: $("mmActionSel") ? $("mmActionSel").value : "cut",
+      mm_cut_pct: +($("mmCutIn") ? $("mmCutIn").value : 50) || 0,
+      mm_hedge_pool: (function () { var r = []; Object.keys(mmHedgeSel).forEach(function (k) { if (mmHedgeSel[k]) r.push(k); }); if (!r.length && D) r = D.overseas.slice(); return r; })(),
+      mm_weak_ma: $("mmWeakMa") ? $("mmWeakMa").checked : false,
       fallback_when_no_signal: $("idleSel") ? $("idleSel").value : "cash",
       commission_rate: (+$("cmIn").value) / 10000,
       slippage_rate: (+$("slIn").value) / 10000,
@@ -2981,12 +3050,6 @@ function buildChips() {
       initial_capital: Math.max(1000, +$("stInvIn").value || 1000000),
       risk_free_rate: 0.02,
       overseas_codes: D ? D.overseas : [],
-      // 功能1：大盘择时（独立开关；mt_bench 为数组多选，mt_mode any/all）
-      mt_on: $("mtOn") ? $("mtOn").checked : false,
-      mt_bench: (function () { var r = []; Object.keys(mtIdxSel).forEach(function (k) { if (mtIdxSel[k]) r.push(k); }); if (!r.length) r = ["H00300.CSI"]; return r; })(),
-      mt_mode: $("mtModeSel") ? $("mtModeSel").value : "any",
-      mt_window: +($("mtWinIn") ? $("mtWinIn").value : 20) || 20,
-      mt_min_pos: +($("mtMinIn") ? $("mtMinIn").value : 0) || 0,
       st_on: $("stOn") ? $("stOn").checked : false,
       st_small_idx: $("stSmallSel") ? $("stSmallSel").value : "000852.SH",
       st_large_idx: $("stLargeSel") ? $("stLargeSel").value : "H00300.CSI",
@@ -3097,27 +3160,58 @@ function buildChips() {
     if ($("minCmIn")) $("minCmIn").value = +(p.min_commission) || 0;
     if ($("hwSel")) $("hwSel").value = p.holding_weight || "equal";
     if ($("rebWeightMode")) $("rebWeightMode").value = p.reb_weight_mode || "fixed";
-    // 走弱期
-    $("regSw").checked = !!p.use_regime_filter;
-    var ma = $("maIn"); if (ma) { ma.value = +(p.regime_ma_window) || 10; $("maV").textContent = ma.value; }
-    // 走弱期指数选择
-    var regIdxWant = p.regime_indices || [];
-    (D ? D.indexNames : []).forEach(function (it) { regIdxSel[it.code] = regIdxWant.indexOf(it.code) >= 0; });
-    renderIdxChips($("regIdxChips"), regIdxSel, "reg");
-    $("weakMode").value = p.weak_period_mode || "overseas_pool";
     if ($("idleSel")) $("idleSel").value = p.fallback_when_no_signal || "cash";
-    $("weakMa").checked = !!p.weak_period_use_ma_filter;
-    // 功能1/3 参数恢复（mt_bench 数组多选；老策略 mt_bench 为字符串时转单元素数组；无 mt_mode 默认 any）
-    if ($("mtOn")) $("mtOn").checked = !!p.mt_on;
-    var mtWant = [];
-    if (Object.prototype.toString.call(p.mt_bench) === "[object Array]") mtWant = p.mt_bench.slice();
-    else if (typeof p.mt_bench === "string" && p.mt_bench) mtWant = [p.mt_bench];
-    if (!mtWant.length) mtWant = ["H00300.CSI"];
-    mtIdxList().forEach(function (it) { mtIdxSel[it.code] = mtWant.indexOf(it.code) >= 0; });
-    renderIdxChips($("mtIdxChips"), mtIdxSel, "timing");
-    if ($("mtModeSel")) $("mtModeSel").value = p.mt_mode === "all" ? "all" : "any";
-    if ($("mtWinIn")) { $("mtWinIn").value = +(p.mt_window) || 20; $("mtV").textContent = $("mtWinIn").value; }
-    if ($("mtMinIn")) { $("mtMinIn").value = +(p.mt_min_pos) || 0; $("mtPV").textContent = $("mtMinIn").value; }
+    // 市场状态风控（合并走弱期机制+大盘择时）：参数恢复 + 老策略迁移
+    if ($("mmOn") && $("mmWinIn")) {
+      var oldRF = p.use_regime_filter, oldWP = p.weak_period_mode, oldMt = p.mt_on;
+      var mmMigrated = false;
+      var mmOnNew = p.mm_on !== undefined ? !!p.mm_on : (!!oldRF || !!oldMt);
+      var mmActionNew = p.mm_action;
+      if (mmActionNew === undefined) {
+        mmMigrated = true;
+        if (oldRF && oldWP === "cash") mmActionNew = "cash";
+        else if (oldRF && oldWP === "overseas_pool") mmActionNew = "switch";
+        else if (oldRF) mmActionNew = "cut";   // full_pool：走弱期仍全池轮动 → 等价降至100%
+        else if (oldMt) mmActionNew = "cut";
+        else { mmActionNew = "cut"; mmOnNew = false; }
+      }
+      if (mmActionNew === "cut") {
+        var mmCutNew = p.mm_cut_pct !== undefined ? p.mm_cut_pct : (oldMt && !oldRF ? Math.round(+(p.mt_min_pos || 0) * 100) : 100);
+        $("mmCutIn").value = Math.max(0, Math.min(100, +mmCutNew || 0)); $("mmCV").textContent = $("mmCutIn").value;
+      }
+      var mmNNew = p.mm_enter_days !== undefined ? p.mm_enter_days : (oldMt && !oldRF ? 1 : 3);
+      var mmMNew = p.mm_exit_days !== undefined ? p.mm_exit_days : (oldMt && !oldRF ? 1 : 3);
+      $("mmNIn").value = mmNNew; $("mmNV").textContent = mmNNew;
+      $("mmMIn").value = mmMNew; $("mmMV").textContent = mmMNew;
+      $("mmOn").checked = mmOnNew;
+      $("mmModeSel").value = p.mm_mode || (oldMt && p.mt_mode ? p.mt_mode : "any");
+      var mmWinNew = p.mm_window !== undefined ? p.mm_window : (oldRF ? (p.regime_ma_window || 10) : (oldMt ? (p.mt_window || 20) : 20));
+      $("mmWinIn").value = mmWinNew; $("mmWV").textContent = mmWinNew;
+      var mmWant = [];
+      if (Object.prototype.toString.call(p.mm_bench) === "[object Array]") mmWant = p.mm_bench.slice();
+      else if (typeof p.mm_bench === "string" && p.mm_bench) mmWant = [p.mm_bench];
+      else if (oldMt && p.mt_bench) mmWant = Object.prototype.toString.call(p.mt_bench) === "[object Array]" ? p.mt_bench.slice() : [p.mt_bench];
+      else if (oldRF && p.regime_indices && p.regime_indices.length) mmWant = p.regime_indices.map(function (ic) { return (ic || "").replace(/^index_/, ""); });
+      if (!mmWant.length) mmWant = ["H00300.CSI"];
+      mmIdxList().forEach(function (it) { mmIdxSel[it.code] = mmWant.indexOf(it.code) >= 0; });
+      renderIdxChips($("mmIdxChips"), mmIdxSel, "timing");
+      $("mmActionSel").value = mmActionNew;
+      var mmHedgeWant = [];
+      if (Object.prototype.toString.call(p.mm_hedge_pool) === "[object Array]") mmHedgeWant = p.mm_hedge_pool.slice();
+      else if (D && D.overseas) mmHedgeWant = D.overseas.slice();
+      hedgePoolList().forEach(function (it) { mmHedgeSel[it.code] = mmHedgeWant.indexOf(it.code) >= 0; });
+      renderHedgeChips();
+      $("mmWeakMa").checked = p.mm_weak_ma !== undefined ? !!p.mm_weak_ma : !!p.weak_period_use_ma_filter;
+      applyMmActionUI();
+      if (mmMigrated) {
+        var tip = $("mmMigrateTip");
+        if (tip) {
+          tip.style.display = "";
+          tip.textContent = "策略已迁移至「市场状态风控」：走弱期机制与大盘择时已合并，动作/迟滞参数按新语义映射。";
+          setTimeout(function () { tip.style.display = "none"; }, 6000);
+        }
+      }
+    }
     if ($("stOn")) $("stOn").checked = !!p.st_on;
     if ($("stSmallSel") && p.st_small_idx) $("stSmallSel").value = p.st_small_idx;
     if ($("stLargeSel") && p.st_large_idx) $("stLargeSel").value = p.st_large_idx;
@@ -4575,11 +4669,9 @@ function buildChips() {
   }
   // 事件绑定（新控件）
   (function bindRound4() {
-    var mts = $("mtOn"); if (mts) mts.addEventListener("change", function () { mtOn = this.checked; scheduleRun(); });
-    var mms = $("mtModeSel"); if (mms) mms.addEventListener("change", function () { mtMode = this.value; scheduleRun(); });
-    var msr = $("mtSearchIn"); if (msr) msr.addEventListener("input", function () { mtSearch = this.value.trim().toLowerCase(); renderMtChips(); });
-    var mwi = $("mtWinIn"); if (mwi) mwi.addEventListener("input", function () { mtWin = +this.value || 20; $("mtV").textContent = mtWin; scheduleRun(); });
-    var mpi = $("mtMinIn"); if (mpi) mpi.addEventListener("input", function () { mtMinPos = Math.max(0, Math.min(1, +this.value || 0)); $("mtPV").textContent = mtMinPos; scheduleRun(); });
+    var mms = $("mmModeSel"); if (mms) mms.addEventListener("change", scheduleRun);
+    var msr = $("mmSearchIn"); if (msr) msr.addEventListener("input", function () { mmSearch = this.value.trim().toLowerCase(); renderMmChips(); });
+    var hs = $("mmHedgeSearchIn"); if (hs) hs.addEventListener("input", function () { mmHedgeSearch = this.value.trim().toLowerCase(); renderHedgeChips(); });
     var sts = $("stOn"); if (sts) sts.addEventListener("change", function () { stOn = this.checked; scheduleRun(); });
     var sss = $("stSmallSel"); if (sss) sss.addEventListener("change", function () { stSmallIdx = this.value; scheduleRun(); });
     var sls = $("stLargeSel"); if (sls) sls.addEventListener("change", function () { stLargeIdx = this.value; scheduleRun(); });
@@ -4589,7 +4681,7 @@ function buildChips() {
     (function tryIdxLoad() {
       ensureRDIDX(function () {
         if (!RDIDX) setTimeout(tryIdxLoad, 1500);
-        else { fillIdxSelects(); if (D) { renderPool(); renderIdxChips($("mtIdxChips"), mtIdxSel, "timing"); scheduleRun(); } }
+        else { fillIdxSelects(); if (D) { renderPool(); renderIdxChips($("mmIdxChips"), mmIdxSel, "timing"); scheduleRun(); } }
       });
     })();
   })();
