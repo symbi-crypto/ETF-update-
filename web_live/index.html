@@ -1004,8 +1004,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     });
     D.regime.forEach(function (ic) { idxClose[ic] = D.index[ic]; });
 
+    // 指数序列统一取数：主块 D.index 优先，其次内嵌指数块 wufuIdxGz（RDIDX.index，异步加载后可用）——择时/基准/风格切换均支持全部 94 条内嵌指数
+    function idxArr(code) {
+      var a = D.index[code];
+      if (!a && typeof window !== "undefined" && window.RDIDX && window.RDIDX.index && window.RDIDX.index[code]) a = window.RDIDX.index[code];
+      return a;
+    }
+
     // 基准（默认 D.benchmark=H00300.CSI，可经 params.benchmark 换成任一内嵌指数）
-    var benchClose = D.index[params.benchmark || D.benchmark];
+    var benchClose = idxArr(params.benchmark || D.benchmark);
     // P2-9：基准序列 -1/缺失日不参与计算——缺失日沿用前一值、日收益记 0，避免首日缺失污染整段基准
     var benchBase = 0;
     while (benchBase < n && (isMiss(benchClose[benchBase]) || benchClose[benchBase] <= 0)) benchBase++;
@@ -1470,7 +1477,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         if (params.st_on && (params.st_small_codes || []).length && (params.st_large_codes || []).length) {
           var stWin = Math.max(1, +(params.st_window) || 20);
           function momIdxAt(ic2, i2) {
-            var arr = D.index[ic2];
+            var arr = idxArr(ic2);
             if (!arr) return 0;
             var c1 = arr[i2], c0 = arr[i2 - stWin];
             if (isMiss(c1) || isMiss(c0) || c0 <= 0) return 0;
@@ -1739,7 +1746,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           var mtCut = 1, mtBelow = 0, mtValid = 0;
           for (var mTi = 0; mTi < mtCs.length; mTi++) {
             var mtC = mtCs[mTi];
-            var mtArr = D.index[mtC];
+            var mtArr = idxArr(mtC);
             if (!mtArr) continue;
             var mtMv = rollingMA(mtArr, i, mtW);
             if (isNaN(mtMv)) continue;
@@ -2670,9 +2677,11 @@ function buildChips() {
       scheduleRun();
     };
   }
-  // 大盘择时可选指数列表：主块展示指数 + 沪深300全收益（默认）
+  // 大盘择时可选指数列表：优先用内嵌指数块清单 RDIDX.pool（全部 94 条，含全部宽基），RDIDX 未就绪时回退主块展示指数；始终补沪深300全收益（默认）
   function mtIdxList() {
-    var l = (D && D.indexNames ? D.indexNames : []).map(function (it) { return { code: it.code, name: it.name }; });
+    var l = (RDIDX && RDIDX.pool && RDIDX.pool.length)
+      ? RDIDX.pool.map(function (p) { return { code: p.code, name: p.name }; })
+      : (D && D.indexNames ? D.indexNames.map(function (it) { return { code: it.code, name: it.name }; }) : []);
     var hasH = false;
     l.forEach(function (x) { if (x.code === "H00300.CSI") hasH = true; });
     if (!hasH) l.push({ code: "H00300.CSI", name: "沪深300全收益" });
@@ -4530,7 +4539,7 @@ function buildChips() {
     (function tryIdxLoad() {
       ensureRDIDX(function () {
         if (!RDIDX) setTimeout(tryIdxLoad, 1500);
-        else { fillIdxSelects(); if (D) { renderPool(); scheduleRun(); } }
+        else { fillIdxSelects(); if (D) { renderPool(); renderIdxChips($("mtIdxChips"), mtIdxSel, "timing"); scheduleRun(); } }
       });
     })();
   })();
