@@ -76,9 +76,9 @@ select{width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--line);bo
 .grp .itm input{accent-color:var(--acc)}
 .grp .itm .rot input{accent-color:#F59E0B;margin:0}
 .runbar{padding:12px 14px;background:#1E293B;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
-.runbar button{flex:1;background:var(--acc);border:none;color:#fff;font-size:14px;font-weight:700;padding:9px 0;border-radius:8px;cursor:pointer;transition:filter .15s}
+.runbar button{flex:0 0 auto;min-width:96px;padding:9px 12px;background:var(--acc);border:none;color:#fff;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;transition:filter .15s}
 .runbar button:hover{filter:brightness(1.1)}
-.runbar .st{font-size:11px;color:var(--mut);white-space:nowrap}
+.runbar .st{font-size:11px;color:var(--mut);white-space:nowrap;flex:0 0 auto}
 .notice{font-size:11px;color:#FBBF24;background:#3A2A12;border-radius:6px;padding:4px 8px;margin-top:6px;display:none}
 /* ---------- 结果区 ---------- */
 main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
@@ -518,7 +518,7 @@ footer b{color:#94A3B8}
       </div><!-- /sfold mgmt -->
       <div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8;white-space:nowrap;flex:0 0 auto">基准<select id="benchSel" title="自定义基准（默认沪深300全收益）" style="max-width:180px;font-size:11px;padding:3px 4px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益</option></select></label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8;white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden" title="自定义基准（默认沪深300全收益）">基准<select id="benchSel" style="flex:1;min-width:0;max-width:100%;text-overflow:ellipsis;font-size:11px;padding:3px 4px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益</option></select></label>
         <span class="st" id="runState">就绪</span>
       </div>
       <div class="notice" id="notice"></div>
@@ -3072,7 +3072,11 @@ function buildChips() {
       for (var bi2 = 0; bi2 < RDIDX.pool.length; bi2++) if (RDIDX.pool[bi2].code === benchSelVal()) return RDIDX.pool[bi2].name + " " + RDIDX.pool[bi2].code;
     }
     return benchSelVal();
-  }
+
+  function benchLabelShort() {
+    var n = benchLabel();
+    return n.length > 14 ? n.slice(0, 12) + "…" : n;
+  }  }
 
   // ---------- 策略保存 / 加载（localStorage 策略库 + 导出/导入 JSON） ----------
   var ST_KEY = "wufu_strategies_v1";
@@ -3589,7 +3593,7 @@ function buildChips() {
     var m = r.metrics;
     var excess = m.total_return - m.benchmark.total;
     var cards = [
-      { t: "累计收益", v: FMT.pct(m.total_return), s: "超额 " + (excess * 100 >= 0 ? "+" : "") + (excess * 100).toFixed(1) + "pp vs " + benchLabel(), cls: m.total_return >= 0 ? "up" : "down" },
+      { t: "累计收益", v: FMT.pct(m.total_return), s: "超额 " + (excess * 100 >= 0 ? "+" : "") + (excess * 100).toFixed(1) + "pp vs " + benchLabelShort(), cls: m.total_return >= 0 ? "up" : "down" },
       { t: "基准相关性", v: (m.bench_corr !== undefined && !isNaN(m.bench_corr)) ? m.bench_corr.toFixed(2) : "—", s: "与所选基准日收益", cls: "" },
       { t: "年化收益", v: FMT.pct(m.cagr), s: "CAGR", cls: m.cagr >= 0 ? "up" : "down" },
       { t: "最大回撤", v: FMT.pct(m.max_dd), s: "基准 " + FMT.pct(m.benchmark.max_dd), cls: "down" },
