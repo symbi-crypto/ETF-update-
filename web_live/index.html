@@ -1772,6 +1772,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         // P1-5c 最低佣金（元/笔）：佣金部分不足最低额时按最低额计（占组合净值比例 = 最低佣金/当前组合净值×初始资金）
         var minCommPct = (params.min_commission > 0) ? params.min_commission / (nav * (params.initial_capital || 1000000)) : 0;
         function legCost(dw6, c6) {
+          // 货币ETF/短融等现金等价兜底腿：现金管理操作，免佣金/滑点（否则每次换仓到货币再换回的佣金会吞掉货币收益，使持有货币反而不如空仓）
+          if (CASH_LIKE[c6]) return 0;
           var comm = Math.abs(dw6) * params.commission_rate;
           if (minCommPct > 0 && comm < minCommPct) comm = minCommPct;
           return comm + Math.abs(dw6) * (tiered ? slippageFor(c6, i) : params.slippage_rate);
