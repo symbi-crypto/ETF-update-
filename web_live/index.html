@@ -398,17 +398,8 @@ footer b{color:#94A3B8}
         </label>
         <label class="row"><span>走弱期叠加均线过滤</span><input id="weakMa" type="checkbox"></label>
       </div>
-      <div class="psec" id="psecTiming">
-        <h3>大盘择时</h3>
-        <label class="row"><span>启用指数均线择时</span><input id="tmSw" type="checkbox"></label>
-        <label class="row">均线窗口(MA,日) <span class="v" id="tmV" style="display:none">200</span>
-          <input id="tmNIn" type="number" min="20" max="400" step="5" value="200" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时指数（全部站上 MA 才开仓，可多选）</div>
-        <div class="chips" id="tmIdxChips"></div>
-      </div>
       <div class="psec" id="psecMt">
-        <h3>大盘择时·均线仓位控制 <span class="tip">独立开关，与上方「指数均线择时」执行细节分开</span></h3>
+        <h3>大盘择时</h3>
         <label class="row"><span>启用均线仓位控制</span><input id="mtOn" type="checkbox"></label>
         <label class="row"><span>择时基准指数</span>
           <select id="mtBenchSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益 H00300.CSI</option></select>
@@ -1651,18 +1642,6 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             return false;
           }
 
-          // 大盘择时：所选指数全部站上 N 日均线才允许开仓，否则不买入（默认关闭）
-          var timingOk = true;
-          if (params.use_timing) {
-            var nT = +(params.timing_ma_window) || 200;
-            var tms = params.timing_indices || [];
-            for (var ti2 = 0; ti2 < tms.length; ti2++) {
-              if (REGIME_SINCE[tms[ti2]] && cal[i] < REGIME_SINCE[tms[ti2]]) continue;   // 同上：未发布指数不参与择时
-              var mvT = rollingMA(idxClose[tms[ti2]], i, nT);
-              if (isNaN(mvT) || idxClose[tms[ti2]][i] <= mvT) { timingOk = false; break; }
-            }
-          }
-
           // 卖出判定：轮动卖出基线（跌出排名区间）+ 卖出条件（任一命中）− 不卖条件（任一命中豁免）
           var wTarget = {};          // code -> 1（占位，权重随后统一）
           var soldNow = {};          // 本次已卖出的标的（同一决策日不再买入）
@@ -1689,8 +1668,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             }
           }
 
-          // 买入候选：排名区间内 + 非仅轮动 + 非本次卖出 + 全部买入附加条件满足（择时失败则不买入）
-          if (timingOk) {
+          // 买入候选：排名区间内 + 非仅轮动 + 非本次卖出 + 全部买入附加条件满足
+          {
             for (var bj = 0; bj < scored.length; bj++) {
               var bc = scored[bj].code;
               var brk = rankMap[bc];
@@ -2664,7 +2643,7 @@ function buildChips() {
   $("weakMode").addEventListener("change", scheduleRun);
   $("weakMa").addEventListener("change", scheduleRun);
   // ---------- 走弱期指数选择（可多选，默认全选 4 宽基） ----------
-  var regIdxSel = {}, tmIdxSel = {}, tmUse = false, tmN = 200;
+  var regIdxSel = {};
   // 功能1/3：大盘择时（独立）、自定义基准
   var mtOn = false, mtWin = 20, mtMinPos = 0, mtBench = "H00300.CSI";
   var stOn = false, stWin = 20, stSmallIdx = "000852.SH", stLargeIdx = "H00300.CSI";
@@ -2693,12 +2672,8 @@ function buildChips() {
   }
   function buildIdxChips() {
     D.indexNames.forEach(function (it) { regIdxSel[it.code] = true; });
-    D.indexNames.forEach(function (it) { tmIdxSel[it.code] = it.code === "index_000300.SH"; });
     renderIdxChips($("regIdxChips"), regIdxSel, "reg");
-    renderIdxChips($("tmIdxChips"), tmIdxSel, "timing");
   }
-  $("tmSw").addEventListener("change", function () { tmUse = this.checked; scheduleRun(); });
-  $("tmNIn").addEventListener("input", function () { tmN = +this.value || 200; $("tmV").textContent = tmN; scheduleRun(); });
   $("startSel").addEventListener("change", function () {
     startDate = this.value;
     if (startDate > endDate) { endDate = startDate; if ($("endSel")) $("endSel").value = endDate; }
@@ -2908,9 +2883,6 @@ function buildChips() {
       use_regime_filter: $("regSw").checked,
       regime_ma_window: +$("maIn").value,
       regime_indices: (D ? D.indexNames : []).filter(function (it) { return regIdxSel[it.code]; }).map(function (it) { return it.code; }),
-      use_timing: tmUse,
-      timing_ma_window: tmN,
-      timing_indices: (D ? D.indexNames : []).filter(function (it) { return tmIdxSel[it.code]; }).map(function (it) { return it.code; }),
       regime_require_below: 3,
       regime_require_above: 3,
       weak_period_mode: $("weakMode").value,
@@ -3049,15 +3021,6 @@ function buildChips() {
     var regIdxWant = p.regime_indices || [];
     (D ? D.indexNames : []).forEach(function (it) { regIdxSel[it.code] = regIdxWant.indexOf(it.code) >= 0; });
     renderIdxChips($("regIdxChips"), regIdxSel, "reg");
-    // 大盘择时
-    tmUse = !!p.use_timing;
-    if ($("tmSw")) $("tmSw").checked = tmUse;
-    tmN = +(p.timing_ma_window) || 200;
-    var tmIn = $("tmNIn");
-    if (tmIn) { tmIn.value = tmN; $("tmV").textContent = tmN; }
-    var tmWant = p.timing_indices || ["index_000300.SH"];
-    (D ? D.indexNames : []).forEach(function (it) { tmIdxSel[it.code] = tmWant.indexOf(it.code) >= 0; });
-    renderIdxChips($("tmIdxChips"), tmIdxSel, "timing");
     $("weakMode").value = p.weak_period_mode || "overseas_pool";
     if ($("idleSel")) $("idleSel").value = p.fallback_when_no_signal || "cash";
     $("weakMa").checked = !!p.weak_period_use_ma_filter;
