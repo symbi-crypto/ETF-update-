@@ -407,7 +407,8 @@ footer b{color:#94A3B8}
             <option value="all">全部跌破：全部跌破MA才降仓，任一站上即恢复</option>
           </select>
         </label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时基准指数（可多选，默认沪深300全收益；各指数共用同一 MA 窗口）</div>
+        <label class="row" style="margin-top:4px"><input id="mtSearchIn" type="text" placeholder="搜索指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时基准指数（可多选，默认沪深300全收益；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
         <div class="chips" id="mtIdxChips"></div>
         <label class="row">均线窗口(MA,日) <span class="v" id="mtV" style="display:none">20</span>
           <input id="mtWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
@@ -2664,8 +2665,10 @@ function buildChips() {
   $("weakMa").addEventListener("change", scheduleRun);
   // ---------- 走弱期指数选择（可多选，默认全选 4 宽基） ----------
   var regIdxSel = {};
-  // 功能1/3：大盘择时（独立）、自定义基准（择时指数多选 + 触发模式 any/all）
-  var mtOn = false, mtWin = 20, mtMinPos = 0, mtMode = "any", mtIdxSel = {};
+  // 功能1/3：大盘择时（独立）、自定义基准（择时指数多选 + 触发模式 any/all；分组折叠 + 搜索）
+  var mtOn = false, mtWin = 20, mtMinPos = 0, mtMode = "any", mtIdxSel = {}, mtCollapsed = {}, mtSearch = "";
+  // 默认只展开「宽基」组，其余组收起（已勾选组自动展开，不受此状态限制）
+  ["风格", "行业主题", "海外", "商品债券", "其他"].forEach(function (g) { mtCollapsed[g] = true; });
   var stOn = false, stWin = 20, stSmallIdx = "000852.SH", stLargeIdx = "H00300.CSI";
   var RDIDX = null, RDIDXBusy = false;
   var STYLE_SMALL_CODES = ["512100.SH", "563300.SH", "8841431.WI"];
@@ -2677,20 +2680,66 @@ function buildChips() {
       scheduleRun();
     };
   }
-  // 大盘择时可选指数列表：优先用内嵌指数块清单 RDIDX.pool（全部 94 条，含全部宽基），RDIDX 未就绪时回退主块展示指数；始终补沪深300全收益（默认）
+  // 大盘择时可选指数列表：优先用内嵌指数块清单 RDIDX.pool（全部 94 条，含 group 分组），RDIDX 未就绪时回退主块展示指数；始终补沪深300全收益（默认）
   function mtIdxList() {
     var l = (RDIDX && RDIDX.pool && RDIDX.pool.length)
-      ? RDIDX.pool.map(function (p) { return { code: p.code, name: p.name }; })
-      : (D && D.indexNames ? D.indexNames.map(function (it) { return { code: it.code, name: it.name }; }) : []);
+      ? RDIDX.pool.map(function (p) { return { code: p.code, name: p.name, group: p.group }; })
+      : (D && D.indexNames ? D.indexNames.map(function (it) { return { code: it.code, name: it.name, group: "宽基" }; }) : []);
     var hasH = false;
     l.forEach(function (x) { if (x.code === "H00300.CSI") hasH = true; });
-    if (!hasH) l.push({ code: "H00300.CSI", name: "沪深300全收益" });
+    if (!hasH) l.push({ code: "H00300.CSI", name: "沪深300全收益", group: "宽基" });
     return l;
+  }
+  // 择时指数分组折叠渲染（timing 分支专用）：按 group 分组，组标题可点击折叠/展开；默认只展开宽基；已勾选组自动展开；搜索时命中组展开、未命中组隐藏
+  function renderMtChips() {
+    var box = $("mtIdxChips");
+    if (!box) return;
+    box.innerHTML = "";
+    var list = mtIdxList();
+    var groups = ["宽基", "风格", "行业主题", "海外", "商品债券", "其他"];
+    var byG = {};
+    groups.forEach(function (g) { byG[g] = []; });
+    list.forEach(function (it) { var g = byG[it.group] !== undefined ? it.group : "其他"; byG[g].push(it); });
+    var q = mtSearch;
+    groups.forEach(function (g) {
+      if (!byG[g].length) return;
+      var items = byG[g];
+      var vis;
+      if (q) { vis = items.filter(function (x) { return (x.name || "").toLowerCase().indexOf(q) >= 0 || (x.code || "").toLowerCase().indexOf(q) >= 0; }); if (!vis.length) return; }
+      else vis = items;
+      var anyOn = items.some(function (x) { return mtIdxSel[x.code]; });
+      var collapsed = !q && !anyOn && mtCollapsed[g];
+      var hd = document.createElement("div");
+      hd.style.cssText = "font-size:12px;color:#94A3B8;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #334155;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
+      var caret = document.createElement("span");
+      caret.textContent = collapsed ? "▶" : "▼";
+      caret.style.cssText = "font-size:9px;color:#64748B";
+      var tt = document.createElement("span");
+      tt.textContent = g + "（" + items.length + "）";
+      hd.appendChild(caret); hd.appendChild(tt);
+      (function (g2, anyOn2) { hd.addEventListener("click", function () { if (mtSearch) return; mtCollapsed[g2] = !mtCollapsed[g2]; renderMtChips(); }); })(g, anyOn);
+      box.appendChild(hd);
+      if (!collapsed) {
+        var wr = document.createElement("div");
+        wr.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;padding:2px 0 2px 10px";
+        vis.forEach(function (it) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = it.name + " " + it.code;
+          b.className = mtIdxSel[it.code] ? "chip on" : "chip";
+          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #334155;border-radius:12px;background:" + (mtIdxSel[it.code] ? "#3B82F6" : "#1E293B") + ";color:#E2E8F0";
+          b.addEventListener("click", chipToggle(box, mtIdxSel, it.code));
+          wr.appendChild(b);
+        });
+        box.appendChild(wr);
+      }
+    });
   }
   function renderIdxChips(box, sel, kind) {
     if (!box) return;
+    if (kind === "timing" || box.id === "mtIdxChips") { renderMtChips(); return; }
     box.innerHTML = "";
-    var list = kind === "timing" ? mtIdxList() : (D && D.indexNames ? D.indexNames : []);
+    var list = D && D.indexNames ? D.indexNames : [];
     list.forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
@@ -4528,6 +4577,7 @@ function buildChips() {
   (function bindRound4() {
     var mts = $("mtOn"); if (mts) mts.addEventListener("change", function () { mtOn = this.checked; scheduleRun(); });
     var mms = $("mtModeSel"); if (mms) mms.addEventListener("change", function () { mtMode = this.value; scheduleRun(); });
+    var msr = $("mtSearchIn"); if (msr) msr.addEventListener("input", function () { mtSearch = this.value.trim().toLowerCase(); renderMtChips(); });
     var mwi = $("mtWinIn"); if (mwi) mwi.addEventListener("input", function () { mtWin = +this.value || 20; $("mtV").textContent = mtWin; scheduleRun(); });
     var mpi = $("mtMinIn"); if (mpi) mpi.addEventListener("input", function () { mtMinPos = Math.max(0, Math.min(1, +this.value || 0)); $("mtPV").textContent = mtMinPos; scheduleRun(); });
     var sts = $("stOn"); if (sts) sts.addEventListener("change", function () { stOn = this.checked; scheduleRun(); });
