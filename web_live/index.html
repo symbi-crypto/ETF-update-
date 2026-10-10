@@ -391,7 +391,7 @@ footer b{color:#94A3B8}
           </select>
         </label>
         <label class="row" style="margin-top:4px"><input id="mmSearchIn" type="text" placeholder="搜索状态判定指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">状态判定指数（可多选，默认沪深300全收益；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">状态判定指数（可多选，分组折叠+搜索；未选择判定指数时风控不生效；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
         <div class="chips" id="mmIdxChips"></div>
         <label class="row">均线窗口(MA,日) <span class="v" id="mmWV" style="display:none">20</span>
           <input id="mmWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
@@ -414,7 +414,7 @@ footer b{color:#94A3B8}
         </label>
         <div id="mmHedgeBox" style="display:none">
           <label class="row" style="margin-top:4px"><input id="mmHedgeSearchIn" type="text" placeholder="搜索避险标的名称或代码（如 黄金 / 511990）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
-          <div style="font-size:12px;color:#64748B;margin:4px 0 2px">避险标的池（走弱期换入的轮动标的，可多选；默认预选海外资产组 19 只，可增删）</div>
+          <div style="font-size:12px;color:#64748B;margin:4px 0 2px">避险标的池（走弱期换入的轮动标的，可多选，分组折叠+搜索；未选择任何标的时，走弱期候选为空→空仓）</div>
           <div class="chips" id="mmHedgeChips"></div>
         </div>
         <label class="row"><span>走弱期内叠加标的均线过滤</span><input id="mmWeakMa" type="checkbox"></label>
@@ -1456,7 +1456,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         if (params.mm_on) {
           var mmW = Math.max(1, +(params.mm_window) || 20);
           var mmCs = params.mm_bench;
-          if (Object.prototype.toString.call(mmCs) !== "[object Array]" || !mmCs.length) mmCs = ["H00300.CSI"];
+          if (Object.prototype.toString.call(mmCs) !== "[object Array]" || !mmCs.length) mmCs = [];
           var mmMode = params.mm_mode === "all" ? "all" : "any";
           var mmBelow = 0, mmValid = 0;
           for (var mmTi = 0; mmTi < mmCs.length; mmTi++) {
@@ -1487,7 +1487,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         var candidates, ci;
         if (mmAction === "switch") {
           var mmPool = params.mm_hedge_pool;
-          if (Object.prototype.toString.call(mmPool) !== "[object Array]" || !mmPool.length) mmPool = D.overseas || [];
+          if (Object.prototype.toString.call(mmPool) !== "[object Array]" || !mmPool.length) mmPool = [];
           var mmSet = {};
           mmPool.forEach(function (c) { mmSet[c] = 1; });
           candidates = codes.filter(function (c) { return mmSet[c]; });
@@ -2710,7 +2710,6 @@ function buildChips() {
   function renderMmChips() {
     var box = $("mmIdxChips");
     if (!box) return;
-    if (!mmIdxTouched && !Object.keys(mmIdxSel).length) mmIdxSel["H00300.CSI"] = true;
     box.innerHTML = "";
     var list = mmIdxList();
     var groups = ["宽基", "风格", "行业主题", "海外", "商品债券", "其他"];
@@ -2759,9 +2758,6 @@ function buildChips() {
   function renderHedgeChips() {
     var box = $("mmHedgeChips");
     if (!box) return;
-    if (!mmHedgeTouched && !Object.keys(mmHedgeSel).length && D && D.overseas) {
-      D.overseas.forEach(function (c) { mmHedgeSel[c] = true; });
-    }
     box.innerHTML = "";
     var list = hedgePoolList();
     var groups = [];
@@ -2822,11 +2818,8 @@ function buildChips() {
   }
   function buildIdxChips() {
     mmIdxTouched = true; mmHedgeTouched = true;
-    mmIdxList().forEach(function (it) { mmIdxSel[it.code] = it.code === "H00300.CSI"; });
+    mmIdxList().forEach(function (it) { mmIdxSel[it.code] = false; });
     renderIdxChips($("mmIdxChips"), mmIdxSel, "timing");
-    // 避险池默认预选海外资产组 19 只，可增删（D.overseas），用户可增删
-    var hw = (D && D.overseas) ? D.overseas : [];
-    hedgePoolList().forEach(function (it) { mmHedgeSel[it.code] = hw.indexOf(it.code) >= 0; });
     renderHedgeChips();
     applyMmActionUI();
   }
@@ -3037,14 +3030,14 @@ function buildChips() {
       score_floor: 0,
       r2_filter_mode: "normal_only",
       mm_on: $("mmOn").checked,
-      mm_bench: (function () { var r = []; Object.keys(mmIdxSel).forEach(function (k) { if (mmIdxSel[k]) r.push(k); }); if (!r.length) r = ["H00300.CSI"]; return r; })(),
+      mm_bench: (function () { var r = []; Object.keys(mmIdxSel).forEach(function (k) { if (mmIdxSel[k]) r.push(k); }); return r; })(),
       mm_mode: $("mmModeSel") ? $("mmModeSel").value : "any",
       mm_window: +($("mmWinIn") ? $("mmWinIn").value : 20) || 20,
       mm_enter_days: +($("mmNIn") ? $("mmNIn").value : 3) || 3,
       mm_exit_days: +($("mmMIn") ? $("mmMIn").value : 3) || 3,
       mm_action: $("mmActionSel") ? $("mmActionSel").value : "cut",
       mm_cut_pct: +($("mmCutIn") ? $("mmCutIn").value : 50) || 0,
-      mm_hedge_pool: (function () { var r = []; Object.keys(mmHedgeSel).forEach(function (k) { if (mmHedgeSel[k]) r.push(k); }); if (!r.length && D) r = D.overseas.slice(); return r; })(),
+      mm_hedge_pool: (function () { var r = []; Object.keys(mmHedgeSel).forEach(function (k) { if (mmHedgeSel[k]) r.push(k); }); return r; })(),
       mm_weak_ma: $("mmWeakMa") ? $("mmWeakMa").checked : false,
       fallback_when_no_signal: $("idleSel") ? $("idleSel").value : "cash",
       commission_rate: (+$("cmIn").value) / 10000,
