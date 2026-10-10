@@ -401,16 +401,21 @@ footer b{color:#94A3B8}
       <div class="psec" id="psecMt">
         <h3>大盘择时</h3>
         <label class="row"><span>启用均线仓位控制</span><input id="mtOn" type="checkbox"></label>
-        <label class="row"><span>择时基准指数</span>
-          <select id="mtBenchSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益 H00300.CSI</option></select>
+        <label class="row"><span>触发模式</span>
+          <select id="mtModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827">
+            <option value="any" selected>任一跌破（默认）：任一指数跌破MA即降仓，全部站上才恢复</option>
+            <option value="all">全部跌破：全部跌破MA才降仓，任一站上即恢复</option>
+          </select>
         </label>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">择时基准指数（可多选，默认沪深300全收益；各指数共用同一 MA 窗口）</div>
+        <div class="chips" id="mtIdxChips"></div>
         <label class="row">均线窗口(MA,日) <span class="v" id="mtV" style="display:none">20</span>
           <input id="mtWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
         </label>
         <label class="row">跌破均线仓位降至(0~1) <span class="v" id="mtPV" style="display:none">0</span>
           <input id="mtMinIn" type="number" min="0" max="1" step="0.05" value="0" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
         </label>
-        <div style="font-size:11px;color:#64748B;margin:2px 0">基准收盘跌破 N 日均线 → 目标仓位整体乘以该比例（0=全部持现金/货币兜底），站上恢复；指数未发布日前不生效</div>
+        <div style="font-size:11px;color:#64748B;margin:2px 0">任一跌破：所选指数中任一收盘跌破其 N 日均线 → 目标仓位整体乘以该比例（0=全部持现金/货币兜底），全部站上才恢复满仓；全部跌破：所有指数都跌破才降仓，任一站上即恢复。指数未发布日前不生效</div>
       </div>
       <div class="psec" id="psecSt">
         <h3>大盘择时·风格切换（相对强弱） <span class="tip">小盘 vs 大盘 N 日动量差</span></h3>
@@ -1724,20 +1729,28 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           });
         }
 
-        // 大盘择时-均线仓位控制（独立开关）：所选基准指数收盘跌破 N 日均线 → 目标仓位整体降至 mt_min_pos（其余持现金），站上恢复
+        // 大盘择时-均线仓位控制（独立开关）：择时指数多选，各指数独立算 rollingMA 并与自身 MA 比较；
+        // 触发模式 mt_mode：any=任一跌破→整体降仓（全部站上才恢复满仓）；all=全部跌破才降仓（任一站上即恢复）；指数未发布日前不生效
         if (params.mt_on) {
           var mtW = Math.max(1, +(params.mt_window) || 20);
-          var mtC = params.mt_bench || "H00300.CSI";
-          var mtArr = D.index[mtC];
-          var mtCut = 1;
-          if (mtArr) {
+          var mtCs = params.mt_bench;
+          if (Object.prototype.toString.call(mtCs) !== "[object Array]" || !mtCs.length) mtCs = ["H00300.CSI"];
+          var mtMode = params.mt_mode === "all" ? "all" : "any";
+          var mtCut = 1, mtBelow = 0, mtValid = 0;
+          for (var mTi = 0; mTi < mtCs.length; mTi++) {
+            var mtC = mtCs[mTi];
+            var mtArr = D.index[mtC];
+            if (!mtArr) continue;
             var mtMv = rollingMA(mtArr, i, mtW);
-            if (!isNaN(mtMv)) {
-              var mtPub = REGIME_SINCE[mtC];
-              if (!(mtPub && cal[i] < mtPub)) {
-                if (isMiss(mtArr[i]) || mtArr[i] <= 0 || mtArr[i] < mtMv) mtCut = Math.max(0, Math.min(1, +(params.mt_min_pos) || 0));
-              }
-            }
+            if (isNaN(mtMv)) continue;
+            var mtPub = REGIME_SINCE[mtC];
+            if (mtPub && cal[i] < mtPub) continue;
+            mtValid++;
+            if (isMiss(mtArr[i]) || mtArr[i] <= 0 || mtArr[i] < mtMv) mtBelow++;
+          }
+          if (mtValid > 0) {
+            var mtTrigger = (mtMode === "all") ? (mtBelow === mtValid) : (mtBelow >= 1);
+            if (mtTrigger) mtCut = Math.max(0, Math.min(1, +(params.mt_min_pos) || 0));
           }
           if (mtCut < 1) { for (var mK = 0; mK < nAssets; mK++) wNew2[mK] *= mtCut; }
         }
@@ -2644,8 +2657,8 @@ function buildChips() {
   $("weakMa").addEventListener("change", scheduleRun);
   // ---------- 走弱期指数选择（可多选，默认全选 4 宽基） ----------
   var regIdxSel = {};
-  // 功能1/3：大盘择时（独立）、自定义基准
-  var mtOn = false, mtWin = 20, mtMinPos = 0, mtBench = "H00300.CSI";
+  // 功能1/3：大盘择时（独立）、自定义基准（择时指数多选 + 触发模式 any/all）
+  var mtOn = false, mtWin = 20, mtMinPos = 0, mtMode = "any", mtIdxSel = {};
   var stOn = false, stWin = 20, stSmallIdx = "000852.SH", stLargeIdx = "H00300.CSI";
   var RDIDX = null, RDIDXBusy = false;
   var STYLE_SMALL_CODES = ["512100.SH", "563300.SH", "8841431.WI"];
@@ -2657,10 +2670,19 @@ function buildChips() {
       scheduleRun();
     };
   }
+  // 大盘择时可选指数列表：主块展示指数 + 沪深300全收益（默认）
+  function mtIdxList() {
+    var l = (D && D.indexNames ? D.indexNames : []).map(function (it) { return { code: it.code, name: it.name }; });
+    var hasH = false;
+    l.forEach(function (x) { if (x.code === "H00300.CSI") hasH = true; });
+    if (!hasH) l.push({ code: "H00300.CSI", name: "沪深300全收益" });
+    return l;
+  }
   function renderIdxChips(box, sel, kind) {
     if (!box) return;
     box.innerHTML = "";
-    (D && D.indexNames ? D.indexNames : []).forEach(function (it) {
+    var list = kind === "timing" ? mtIdxList() : (D && D.indexNames ? D.indexNames : []);
+    list.forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
       b.textContent = it.name;
@@ -2672,7 +2694,9 @@ function buildChips() {
   }
   function buildIdxChips() {
     D.indexNames.forEach(function (it) { regIdxSel[it.code] = true; });
+    mtIdxList().forEach(function (it) { mtIdxSel[it.code] = it.code === "H00300.CSI"; });
     renderIdxChips($("regIdxChips"), regIdxSel, "reg");
+    renderIdxChips($("mtIdxChips"), mtIdxSel, "timing");
   }
   $("startSel").addEventListener("change", function () {
     startDate = this.value;
@@ -2899,9 +2923,10 @@ function buildChips() {
       initial_capital: Math.max(1000, +$("stInvIn").value || 1000000),
       risk_free_rate: 0.02,
       overseas_codes: D ? D.overseas : [],
-      // 功能1：大盘择时（独立开关）
+      // 功能1：大盘择时（独立开关；mt_bench 为数组多选，mt_mode any/all）
       mt_on: $("mtOn") ? $("mtOn").checked : false,
-      mt_bench: $("mtBenchSel") ? $("mtBenchSel").value : "H00300.CSI",
+      mt_bench: (function () { var r = []; Object.keys(mtIdxSel).forEach(function (k) { if (mtIdxSel[k]) r.push(k); }); if (!r.length) r = ["H00300.CSI"]; return r; })(),
+      mt_mode: $("mtModeSel") ? $("mtModeSel").value : "any",
       mt_window: +($("mtWinIn") ? $("mtWinIn").value : 20) || 20,
       mt_min_pos: +($("mtMinIn") ? $("mtMinIn").value : 0) || 0,
       st_on: $("stOn") ? $("stOn").checked : false,
@@ -3024,9 +3049,15 @@ function buildChips() {
     $("weakMode").value = p.weak_period_mode || "overseas_pool";
     if ($("idleSel")) $("idleSel").value = p.fallback_when_no_signal || "cash";
     $("weakMa").checked = !!p.weak_period_use_ma_filter;
-    // 功能1/2/3 参数恢复
+    // 功能1/3 参数恢复（mt_bench 数组多选；老策略 mt_bench 为字符串时转单元素数组；无 mt_mode 默认 any）
     if ($("mtOn")) $("mtOn").checked = !!p.mt_on;
-    if ($("mtBenchSel") && p.mt_bench) $("mtBenchSel").value = p.mt_bench;
+    var mtWant = [];
+    if (Object.prototype.toString.call(p.mt_bench) === "[object Array]") mtWant = p.mt_bench.slice();
+    else if (typeof p.mt_bench === "string" && p.mt_bench) mtWant = [p.mt_bench];
+    if (!mtWant.length) mtWant = ["H00300.CSI"];
+    mtIdxList().forEach(function (it) { mtIdxSel[it.code] = mtWant.indexOf(it.code) >= 0; });
+    renderIdxChips($("mtIdxChips"), mtIdxSel, "timing");
+    if ($("mtModeSel")) $("mtModeSel").value = p.mt_mode === "all" ? "all" : "any";
     if ($("mtWinIn")) { $("mtWinIn").value = +(p.mt_window) || 20; $("mtV").textContent = $("mtWinIn").value; }
     if ($("mtMinIn")) { $("mtMinIn").value = +(p.mt_min_pos) || 0; $("mtPV").textContent = $("mtMinIn").value; }
     if ($("stOn")) $("stOn").checked = !!p.st_on;
@@ -4471,7 +4502,7 @@ function buildChips() {
   }
   function fillIdxSelects() {
     if (!RDIDX || !RDIDX.pool) return;
-    [["benchSel", benchSelVal()], ["mtBenchSel", mtBench], ["stSmallSel", stSmallIdx], ["stLargeSel", stLargeIdx]].forEach(function (pair) {
+    [["benchSel", benchSelVal()], ["stSmallSel", stSmallIdx], ["stLargeSel", stLargeIdx]].forEach(function (pair) {
       var sel = $(pair[0]); if (!sel) return;
       var cur = pair[1];
       sel.innerHTML = "";
@@ -4487,7 +4518,7 @@ function buildChips() {
   // 事件绑定（新控件）
   (function bindRound4() {
     var mts = $("mtOn"); if (mts) mts.addEventListener("change", function () { mtOn = this.checked; scheduleRun(); });
-    var mbs = $("mtBenchSel"); if (mbs) mbs.addEventListener("change", function () { mtBench = this.value; scheduleRun(); });
+    var mms = $("mtModeSel"); if (mms) mms.addEventListener("change", function () { mtMode = this.value; scheduleRun(); });
     var mwi = $("mtWinIn"); if (mwi) mwi.addEventListener("input", function () { mtWin = +this.value || 20; $("mtV").textContent = mtWin; scheduleRun(); });
     var mpi = $("mtMinIn"); if (mpi) mpi.addEventListener("input", function () { mtMinPos = Math.max(0, Math.min(1, +this.value || 0)); $("mtPV").textContent = mtMinPos; scheduleRun(); });
     var sts = $("stOn"); if (sts) sts.addEventListener("change", function () { stOn = this.checked; scheduleRun(); });
