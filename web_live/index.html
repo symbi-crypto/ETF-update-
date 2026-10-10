@@ -362,7 +362,6 @@ footer b{color:#94A3B8}
           <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
         </label>
         <label class="row" style="margin-top:4px"><input id="realPoolSw" type="checkbox" checked style="width:auto;margin:0"> <span>真实可得池 <span class="tip">按各标的上市日动态过滤，消除幸存者偏差（未上市标的早期不参与候选/排名）</span></span></label>
-        <label class="row" style="margin-top:4px"><input id="idxDataSw" type="checkbox" style="width:auto;margin:0"> <span>用指数数据回测 <span class="tip">有对应跟踪指数的标的改用指数行情（历史更长、与择时/基准同口径），名称显示为指数名；无映射标的仍用 ETF。指数行情无涨跌停，自动跳过一字板检查</span></span></label>
       </div>
       <div class="psec">
         <h3>交易成本</h3>
@@ -1398,9 +1397,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           executed = false;
         } else {
           // P1-5b 一字涨跌停（未复权口径）：开盘封板且收盘仍在板价 → 对应买卖腿标记不可成交
-          // 指数数据源（用指数数据回测）skip_limit_check=true：指数无个股涨跌停物理约束，跳过一字板检查
           var blocked = {};
-          if (!params.skip_limit_check) {
           for (k2 = 0; k2 < nAssets; k2++) {
             if (!(wOld[k2] > 0 || wNew[k2] > 0)) continue;
             code2 = codes[k2];
@@ -1409,10 +1406,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             var rcT = rawCloses && rawCloses[code2] ? rawCloses[code2][i] : null;
             if (!(ro0 > 0) || !(rc0 > 0) || !(rcT > 0)) continue;
             var LIM20 = {"588": 1, "589": 1, "159915.SZ": 1, "159949.SZ": 1, "159516.SZ": 1};
-              var limR = (LIM20[code2.slice(0, 3)] || LIM20[code2]) ? 1.195 : 1.095;
+            var limR = (LIM20[code2.slice(0, 3)] || LIM20[code2]) ? 1.195 : 1.095;
             if (ro0 >= rc0 * limR - 1e-9 && rcT >= ro0 * 0.999) blocked[code2] = "buy";            // 一字涨停：买不进
             else if (ro0 <= rc0 * (2 - limR) + 1e-9 && rcT <= ro0 * 1.001) blocked[code2] = "sell";  // 一字跌停：卖不出
-          }
           }
           cumCost += nav * params.initial_capital * costPct;
           var rLegs = 0;
@@ -2096,7 +2092,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       l.className = "corr-item";
       l.style.flexWrap = "wrap";
       l.innerHTML = '<input type="checkbox" class="pick" data-c="' + p.code + '">' +
-        '<span class="corr-nm">' + nmOf(p) + "</span><span class='corr-cd'>" + p.code + "</span>" +
+        '<span class="corr-nm">' + p.name + "</span><span class='corr-cd'>" + p.code + "</span>" +
         "<label class='rot'><input type='checkbox' class='rotc'>仅轮动</label>" +
         "<label class='wlab'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;text-align:right'>%</label>";
       if (poolChecked[p.code]) l.querySelector(".pick").checked = true;
@@ -2669,40 +2665,12 @@ function buildChips() {
   $("weakMa").addEventListener("change", scheduleRun);
   // ---------- 走弱期指数选择（可多选，默认全选 4 宽基） ----------
   var regIdxSel = {}, tmIdxSel = {}, tmUse = false, tmN = 200;
-  // 功能1/2/3：大盘择时（独立）、指数数据源切换、自定义基准
+  // 功能1/3：大盘择时（独立）、自定义基准
   var mtOn = false, mtWin = 20, mtMinPos = 0, mtBench = "H00300.CSI";
   var stOn = false, stWin = 20, stSmallIdx = "000852.SH", stLargeIdx = "H00300.CSI";
-  var idxDataOn = false;
   var RDIDX = null, RDIDXBusy = false;
   var STYLE_SMALL_CODES = ["512100.SH", "563300.SH", "8841431.WI"];
   var STYLE_LARGE_CODES = ["510050.SH", "510300.SH", "159901.SZ", "512550.SH", "563350.SH", "512050.SH"];
-  // ETF 代码 -> 跟踪指数代码（round3 对照表：A30 + B30 + C28）
-  var FUND_IDX = {
-    "510210.SH":"000001.SH","510180.SH":"000010.SH","510880.SH":"000015.SH","510050.SH":"000016.SH",
-    "589000.SH":"000680.SH","588200.SH":"000685.SH","588000.SH":"000688.SH","588190.SH":"000698.SH",
-    "515170.SH":"000815.CSI","512400.SH":"000819.SH","512580.SH":"000827.SH","512100.SH":"000852.SH",
-    "512330.SH":"000858.SH","515110.SH":"000859.CSI","515900.SH":"000861.CSI","510500.SH":"000905.SH",
-    "515800.SH":"000906.SH","512010.SH":"000913.SH","515080.SH":"000922.CSI","512750.SH":"000925.CSI",
-    "159928.SZ":"000932.SH","159825.SZ":"000949.CSI","159790.SZ":"000977.CSI","159943.SZ":"399001.SZ",
-    "159902.SZ":"399005.SZ","159905.SZ":"399324.SZ","159906.SZ":"399326.SZ","159901.SZ":"399330.SZ",
-    "159949.SZ":"399673.SZ","516160.SH":"399808.SZ",
-    "512680.SH":"399967.SZ","512660.SH":"399967.SZ","512980.SH":"399971.SZ","512670.SH":"399973.SZ",
-    "512880.SH":"399975.SZ","515030.SH":"399976.SZ","512800.SH":"399986.SZ","512690.SH":"399987.SZ",
-    "512170.SH":"399989.SZ","515220.SH":"399998.SZ","515910.SH":"707717L.MI","512380.SH":"718711L.MI",
-    "159601.SZ":"746059.MI","512550.SH":"830009.XI","563350.SH":"930050.CSI","516150.SH":"930598.CSI",
-    "515210.SH":"930606.CSI","516950.SH":"930608.CSI","159766.SZ":"930633.CSI","512720.SH":"930651.CSI",
-    "159997.SZ":"930652.CSI","159996.SZ":"930697.CSI","159867.SZ":"930707.CSI","159865.SZ":"930707.CSI",
-    "513090.SH":"930709.CSI","159819.SZ":"930713.CSI","512290.SH":"930726.CSI","516510.SH":"930851.CSI",
-    "159869.SZ":"930901.CSI","513530.SH":"930915.CSI","516860.SH":"930986.CSI","511380.SH":"931078.CSI",
-    "515050.SH":"931079.CSI","515000.SH":"931087.CSI","515790.SH":"931151.CSI","159992.SZ":"931152.CSI",
-    "515880.SH":"931160.CSI","515750.SH":"931186.CSI","159562.SZ":"931238.CSI","159811.SZ":"931406.CSI",
-    "588330.SH":"931643.CSI","159516.SZ":"931743.CSI","512200.SH":"931775.CSI","563300.SH":"932000.CSI",
-    "159995.SZ":"980017.CNI","159755.SZ":"980032.CNI","159201.SZ":"980092.CNI",
-    "513060.SH":"HSHCI.HI","159920.SZ":"HSI.HI","513330.SH":"HSIII.HI","513180.SH":"HSTECH.HI",
-    "515450.SH":"SPCLLHCP.SPI","516110.SH":"h30015.CSI","512070.SH":"h30035.CSI","512480.SH":"h30184.CSI",
-    "159611.SZ":"h30199.CSI","159883.SZ":"h30217.CSI","512890.SH":"h30269.CSI","513050.SH":"h30533.CSI",
-    "562500.SH":"h30590.CSI"
-  };
   function chipToggle(box, sel, code) {
     return function () {
       sel[code] = !sel[code];
@@ -2971,7 +2939,6 @@ function buildChips() {
       st_small_codes: STYLE_SMALL_CODES,
       st_large_codes: STYLE_LARGE_CODES,
       // 功能2：指数数据源切换 / 功能3：自定义基准
-      use_idx_data: idxDataOn,
       benchmark: benchSelVal()
     };
   }
@@ -3103,7 +3070,6 @@ function buildChips() {
     if ($("stSmallSel") && p.st_small_idx) $("stSmallSel").value = p.st_small_idx;
     if ($("stLargeSel") && p.st_large_idx) $("stLargeSel").value = p.st_large_idx;
     if ($("stWinIn")) { $("stWinIn").value = +(p.st_window) || 20; $("stV").textContent = $("stWinIn").value; }
-    if ($("idxDataSw")) $("idxDataSw").checked = !!p.use_idx_data;
     if ($("benchSel") && p.benchmark) $("benchSel").value = p.benchmark;
     // 回测区间
     if (p.start_date && $("startSel").value !== p.start_date) {
@@ -3296,9 +3262,7 @@ function buildChips() {
     var res;
     try {
       params.benchmark = benchSelVal();
-      var bd = buildBacktestData();
-      if (bd !== D) { params.skip_limit_check = true; params._idx_override = bd._idx_override; }
-      res = engine.backtest(bd, params);
+      res = engine.backtest(D, params);
     } catch (e) {
       showNotice("回测失败：" + e.message);
       $("runState").textContent = "失败";
@@ -4557,38 +4521,6 @@ function buildChips() {
       if (!sel.value && sel.options.length) sel.value = sel.options[0].value;
     });
   }
-  function idxNameOf(code) {
-    if (!idxDataOn || !RDIDX || !RDIDX.pool || !FUND_IDX[code]) return "";
-    var ic = FUND_IDX[code];
-    for (var ni = 0; ni < RDIDX.pool.length; ni++) if (RDIDX.pool[ni].code === ic) return RDIDX.pool[ni].name;
-    return ic;
-  }
-  function nmOf(p) {
-    var ix = idxNameOf(p.code);
-    return ix ? ix : p.name;
-  }
-  function buildBacktestData() {
-    if (!idxDataOn || !RDIDX || !RDIDX.series) return D;
-    var series = {}, over = 0;
-    Object.keys(D.series).forEach(function (c) { series[c] = D.series[c]; });
-    Object.keys(FUND_IDX).forEach(function (fc) {
-      var ic = FUND_IDX[fc];
-      if (!D.series[fc] || !RDIDX.series[ic]) return;
-      series[fc] = RDIDX.series[ic];
-      over++;
-    });
-    if (!over) return D;
-    var idx = {};
-    Object.keys(D.index || {}).forEach(function (k) { idx[k] = D.index[k]; });
-    if (RDIDX.index) Object.keys(RDIDX.index).forEach(function (k) { idx[k] = RDIDX.index[k]; });
-    var D2 = { calendar: D.calendar, pool: D.pool, overseas: D.overseas, regime: D.regime, indexNames: D.indexNames, benchmark: D.benchmark, series: series, index: idx };
-    D2._idx_override = over;
-    return D2;
-  }
-  function syncIdxDataUI() {
-    idxDataOn = $("idxDataSw") ? $("idxDataSw").checked : false;
-    if (D) { renderPool(); updatePoolCount(); scheduleRun(); }
-  }
   // 事件绑定（新控件）
   (function bindRound4() {
     var mts = $("mtOn"); if (mts) mts.addEventListener("change", function () { mtOn = this.checked; scheduleRun(); });
@@ -4599,7 +4531,6 @@ function buildChips() {
     var sss = $("stSmallSel"); if (sss) sss.addEventListener("change", function () { stSmallIdx = this.value; scheduleRun(); });
     var sls = $("stLargeSel"); if (sls) sls.addEventListener("change", function () { stLargeIdx = this.value; scheduleRun(); });
     var swi = $("stWinIn"); if (swi) swi.addEventListener("input", function () { stWin = +this.value || 20; $("stV").textContent = stWin; scheduleRun(); });
-    var ids = $("idxDataSw"); if (ids) ids.addEventListener("change", syncIdxDataUI);
     var bsel = $("benchSel"); if (bsel) bsel.addEventListener("change", function () { scheduleRun(); });
     // wufuIdxGz 数据块位于本脚本块之后，需等 DOM 完整后再解析；重试直至成功（成功后自动填充基准/择时指数下拉）
     (function tryIdxLoad() {
