@@ -1177,7 +1177,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         var sd = Math.sqrt(v2 / rets.length);
         var vol = sd * Math.sqrt(annf);
         if (kind === "vol") return vol;
-        return vol > 0 ? (seg3[seg3.length - 1] / seg3[0] - 1) / vol : 0;
+        // 修复：年化波动率 <0.5% 的现金等价类（货币ETF/短融等价格恒平）波动率趋零，risk_adj=收益/波动率会爆炸虚高、挤入轮动排名
+        return vol > 0.005 ? (seg3[seg3.length - 1] / seg3[0] - 1) / vol : 0;
       }
       if (kind === "amount") return sumAt(amts[code], i, w1) / w1;
       if (kind === "volume") return sumAt(vols[code], i, w1) / w1;
@@ -1468,6 +1469,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         }
         // fallback 标的仅作兜底持仓，不参与候选/排名/筛选
         if (idleC) candidates = candidates.filter(function (c) { return c !== idleC; });
+        // 修复：货币ETF/短融等现金等价标的（价格恒平、波动率≈0、成交额虚高）仅作兜底持仓，不得作为轮动进攻标的（否则 risk_adj/amount 因子下得分虚高被误买入）
+        var CASH_LIKE = {"511990.SH": 1, "511810.SH": 1};
+        candidates = candidates.filter(function (c) { return !CASH_LIKE[c]; });
         // P1-4 幸存者偏差修正（开关）：只保留决策日已上市（已有行情）的标的
         if (params.use_real_pool) candidates = candidates.filter(function (c) { return firstValid[c] >= 0 && firstValid[c] <= i; });
         // 大盘择时-风格切换（相对强弱，独立开关）：小盘指数与大盘指数 N 日动量差 > 0 → 候选剔除大盘风格组（偏小盘）；< 0 → 剔除小盘风格组（偏大盘）
@@ -3835,9 +3839,15 @@ function buildChips() {
     var html = '<table class="trades" style="margin-top:4px;table-layout:fixed;width:100%"><colgroup><col style="width:36%"><col style="width:21%"><col style="width:21%"><col style="width:22%"></colgroup><thead><tr><th class="fc">买入标的</th><th>买入金额</th><th>最新未复权价</th><th>买入份额</th></tr></thead><tbody>';
     if (!holds.length) {
       var cashAll = base;
+      // 修复口径：空仓（未持任何标的）时仅当兜底为货币ETF 才按 511990 份额展示；否则显示「现金（不持有）」，与引擎空仓收益=0 一致
+      var fb3 = (m[name] && m[name].fallback_when_no_signal) || "cash";
       var cpx0 = lastRawClose("511990.SH");
       var cs0 = lotShares(cashAll, cpx0);
-      html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAll) + "</td><td>" + (cpx0 ? cpx0.toFixed(4) : "—") + "</td><td>" + (cs0 ? fmtN(cs0) : "—") + "</td></tr>";
+      if (fb3 === "money") {
+        html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAll) + "</td><td>" + (cpx0 ? cpx0.toFixed(4) : "—") + "</td><td>" + (cs0 ? fmtN(cs0) : "—") + "</td></tr>";
+      } else {
+        html += "<tr><td class='fc'>现金（不持有）</td><td>" + fmtN(cashAll) + "</td><td>—</td><td>—</td></tr>";
+      }
     } else if (isReb) {
       var sw = 0;
       holds.forEach(function (c) { sw += (rwM[c] || 0); });
@@ -3865,9 +3875,14 @@ function buildChips() {
       });
       if (holds.length < nHold) {
         var cashAmt = (nHold - holds.length) * per;
-        var cpx = lastRawClose("511990.SH");
-        var cs = lotShares(cashAmt, cpx);
-        html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAmt) + "</td><td>" + (cpx ? cpx.toFixed(4) : "—") + "</td><td>" + (cs ? fmtN(cs) : "—") + "</td></tr>";
+        var fb4 = (m[name] && m[name].fallback_when_no_signal) || "cash";
+        if (fb4 === "money") {
+          var cpx = lastRawClose("511990.SH");
+          var cs = lotShares(cashAmt, cpx);
+          html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAmt) + "</td><td>" + (cpx ? cpx.toFixed(4) : "—") + "</td><td>" + (cs ? fmtN(cs) : "—") + "</td></tr>";
+        } else {
+          html += "<tr><td class='fc'>现金（未持有）</td><td>" + fmtN(cashAmt) + "</td><td>—</td><td>—</td></tr>";
+        }
       }
     }
     html += "</tbody></table>";
