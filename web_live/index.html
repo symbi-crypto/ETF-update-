@@ -1421,22 +1421,24 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             else if (ro0 <= rc0 * (2 - limR) + 1e-9 && rcT <= ro0 * 1.001) blocked[code2] = "sell";  // 一字跌停：卖不出
           }
           cumCost += nav * params.initial_capital * costPct;
-          var rLegs = 1;
-          for (k2 = 0; k2 < nAssets; k2++) {          // 卖出腿：昨收 -> 今开（一字跌停腿跳过）
-            if (wOld[k2] > 0 && blocked[codes[k2]] !== "sell") {
-              code2 = codes[k2];
-              c0b = closes[code2][i - 1]; o1 = opens[code2][i];
-              if (!isMiss(c0b) && !isMiss(o1) && c0b > 0 && o1 > 0) rLegs *= (1 + wOld[k2] * (o1 / c0b - 1));
-            }
+          // 组合日收益 = 三分解加权加法（资金并行，非串行复利）：
+          //   保留腿 min(wOld,wNew) 按全天收益 C_i/C_{i-1}；卖出腿 max(wOld-wNew,0) 按隔夜 O_i/C_{i-1}（卖后现金）；
+          //   买入腿 max(wNew-wOld,0) 按当日 C_i/O_i（开盘买入）。一字板不可成交腿贡献 0（资金留现金/持仓不计）。
+          var rLegs = 0;
+          for (k2 = 0; k2 < nAssets; k2++) {
+            if (!(wOld[k2] > 0 || wNew[k2] > 0)) continue;
+            code2 = codes[k2];
+            c0b = closes[code2][i - 1]; o1 = opens[code2][i]; c1b = closes[code2][i];
+            var okC0 = !isMiss(c0b) && c0b > 0, okO = !isMiss(o1) && o1 > 0, okC1 = !isMiss(c1b) && c1b > 0;
+            var blk2 = blocked[code2];
+            var wKeep = Math.min(wOld[k2], wNew[k2]);
+            var wSell = Math.max(wOld[k2] - wNew[k2], 0);
+            var wBuy = Math.max(wNew[k2] - wOld[k2], 0);
+            if (wKeep > 0 && blk2 !== "sell" && blk2 !== "buy" && okC0 && okC1) rLegs += wKeep * (c1b / c0b - 1);
+            if (wSell > 0 && blk2 !== "sell" && okC0 && okO) rLegs += wSell * (o1 / c0b - 1);
+            if (wBuy > 0 && blk2 !== "buy" && okO && okC1) rLegs += wBuy * (c1b / o1 - 1);
           }
-          for (k2 = 0; k2 < nAssets; k2++) {          // 买入腿：今开 -> 今收（一字涨停腿跳过）
-            if (wNew[k2] > 0 && blocked[codes[k2]] !== "buy") {
-              code2 = codes[k2];
-              o1 = opens[code2][i]; c1b = closes[code2][i];
-              if (!isMiss(o1) && !isMiss(c1b) && o1 > 0) rLegs *= (1 + wNew[k2] * (c1b / o1 - 1));
-            }
-          }
-          r = (1 - costPct) * rLegs - 1;              // 成本开盘扣减，并入当日收益（连续交易乘法合成，杜绝高开低走加法高估）
+          r = (1 - costPct) * (1 + rLegs) - 1;        // 成本开盘扣减，并入当日收益
           wOld = wNew;
           pending = null;
           executed = true;
@@ -1608,6 +1610,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
               var wrR = rwM[codes[ckR]] || 0;
               if (wrR > 0 && codesH2.indexOf(codes[ckR]) >= 0) { wNew2[ckR] = wrR; holding.push(codes[ckR]); }
             }
+            // 防御：比例权重归一化（导入老策略/手改总和≠1 时禁止杠杆；总和=1 时无变化）
+            var swR = 0;
+            for (ckR = 0; ckR < nAssets; ckR++) swR += wNew2[ckR];
+            if (swR > 1e-9 && Math.abs(swR - 1) > 1e-9) { for (ckR = 0; ckR < nAssets; ckR++) wNew2[ckR] /= swR; }
           }
         } else {
           // ---- 轮动策略：持有排名区间 [N, M] + 三组附加交易条件 ----
