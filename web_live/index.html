@@ -1376,7 +1376,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         }
         if (stdMode !== "none") {
           if (Math.abs(score) < 1e-12) score = 0;   // 浮点噪声归零（与 Python 同构；none 模式保留原始尺度不归零）
-          if (!(score > scoreFloor)) continue;
+          // 修复：候选仅 1 个时无横向可比（robust 标准化得分为 0），不得按 score_floor 过滤为全程空仓
+          if (keys.length > 1 && !(score > scoreFloor)) continue;
         }
         if (params.mm_weak_ma && regime === "weak") {
           var mv2 = rollingMA(closes[code], i, params.mm_window || 20);
@@ -1420,22 +1421,22 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             else if (ro0 <= rc0 * (2 - limR) + 1e-9 && rcT <= ro0 * 1.001) blocked[code2] = "sell";  // 一字跌停：卖不出
           }
           cumCost += nav * params.initial_capital * costPct;
-          var rLegs = 0;
+          var rLegs = 1;
           for (k2 = 0; k2 < nAssets; k2++) {          // 卖出腿：昨收 -> 今开（一字跌停腿跳过）
             if (wOld[k2] > 0 && blocked[codes[k2]] !== "sell") {
               code2 = codes[k2];
               c0b = closes[code2][i - 1]; o1 = opens[code2][i];
-              if (!isMiss(c0b) && !isMiss(o1) && c0b > 0 && o1 > 0) rLegs += wOld[k2] * (o1 / c0b - 1);
+              if (!isMiss(c0b) && !isMiss(o1) && c0b > 0 && o1 > 0) rLegs *= (1 + wOld[k2] * (o1 / c0b - 1));
             }
           }
           for (k2 = 0; k2 < nAssets; k2++) {          // 买入腿：今开 -> 今收（一字涨停腿跳过）
             if (wNew[k2] > 0 && blocked[codes[k2]] !== "buy") {
               code2 = codes[k2];
               o1 = opens[code2][i]; c1b = closes[code2][i];
-              if (!isMiss(o1) && !isMiss(c1b) && o1 > 0) rLegs += wNew[k2] * (c1b / o1 - 1);
+              if (!isMiss(o1) && !isMiss(c1b) && o1 > 0) rLegs *= (1 + wNew[k2] * (c1b / o1 - 1));
             }
           }
-          r = (1 - costPct) * (1 + rLegs) - 1;        // 成本开盘扣减，并入当日收益
+          r = (1 - costPct) * rLegs - 1;              // 成本开盘扣减，并入当日收益（连续交易乘法合成，杜绝高开低走加法高估）
           wOld = wNew;
           pending = null;
           executed = true;
