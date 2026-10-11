@@ -1,0 +1,1 @@
+513400.SH: adj data returned inline, incomplete rows
