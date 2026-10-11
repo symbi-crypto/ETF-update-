@@ -1,0 +1,4 @@
+{"data": {"columns": [{"name": "TIME", "type": "string"}, {"name": "OPEN", "type": "string"}, {"name": "MATCH", "type": "string"}, {"name": "HIGH", "type": "string"}, {"name": "LOW", "type": "string"}, {"name": "TURNOVER", "type": "string"}, {"name": "VOLUME", "type": "string"}, {"name": "CHANGEHANDRATE", "type": "string"}, {"name": "AVPRICE", "type": "string"}], "rows": [
+["2024-01-22T00:00:00.000+08:00", "0.980", "0.939", "0.988", "0.901", "114276914", "117710226", "52.054", "0.971"],
+["2024-01-23T00:00:00.000+08:00", "0.939", "0.958", "0.959", "0.921", "30748206", "32511195", "23.708", "0.946"]
+]}, "unit": {"TURNOVER 单位：": "元"}, "error": null}
