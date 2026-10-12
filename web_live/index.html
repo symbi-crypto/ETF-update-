@@ -573,9 +573,10 @@ footer b{color:#94A3B8}
     <div class="s1card">
       <h2>网格交易回测</h2>
       <div class="notice" id="gridNotice"></div>
-      <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">独立网格引擎：区间下沿分批买入、上沿分批卖出（当日 high/low 穿越格位触发，次日开盘成交；A股 T+1：当日买入不可当日卖出）。触发/成交均为后复权口径（与轮动引擎一致）。价位线、份额、现金流全部后复权，可手动覆盖推荐参数。</div>
+      <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">两步式：① 选标的（轻量秒开，评分时才加载行情）→ ② 回测设置并运行。独立网格引擎：档位穿越触发（当日 high/low 穿越格位，次日开盘成交；A股 T+1：当日买入不可当日卖出）；触发/成交均为后复权口径；价位线以「触发基准价」为中心对称铺开（默认=当前价）。</div>
+      <div id="gridStep1">
       <div class="psec">
-        <h3>① 标的池与适配度评分</h3>
+        <h3>① 选标的与适配度评分</h3>
         <div class="row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
           <input id="gridPoolSearch" type="text" placeholder="搜索标的（名称/代码）" style="flex:1;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
           <button type="button" id="gridPoolAll" style="font-size:11px;padding:2px 8px">全选</button>
@@ -587,14 +588,28 @@ footer b{color:#94A3B8}
           <button type="button" id="gridScoreBtn" style="font-size:12px;padding:3px 12px">计算适配度评分</button>
           <span style="font-size:12px;color:#94A3B8">组合标的数 Top N</span>
           <input id="gridTopN" type="number" min="1" max="20" value="10" style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-          <span style="font-size:12px;color:#94A3B8">（评分=震荡度30%+波动空间25%+区间覆盖20%+触发频率15%+成本流动性10%；硬门槛：波动<8%或>55%、上市<250天剔除）</span>
+          <span style="font-size:12px;color:#94A3B8">达标阈值</span>
+          <input id="gridThr" type="number" min="0" max="100" value="60" style="width:44px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <label style="display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#CBD5E1;cursor:pointer"><input type="checkbox" id="gridFilterOn" style="margin:0;accent-color:#F59E0B;cursor:pointer">过滤不合格</label>
+          <span id="gridStat" style="font-size:12px;color:#94A3B8"></span>
         </div>
         <div id="gridScoreTable" style="margin-top:6px"></div>
+        <div style="margin-top:8px">
+          <button type="button" id="gridNextBtn" style="font-size:13px;padding:5px 18px">下一步 → 回测设置</button>
+          <span style="font-size:11px;color:#64748B;margin-left:8px">评分后才可进入下一步（评分触发行情加载）</span>
+        </div>
       </div>
+      </div><!-- /gridStep1 -->
+      <div id="gridStep2" style="display:none">
       <div class="psec">
         <h3>② 网格参数（推荐值，可手动覆盖）</h3>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#CBD5E1">波动统计区间</span>
+          <input id="gridVolWin" type="number" min="20" max="250" value="60" title="收盘涨跌幅σ/日内振幅均值的统计窗口，改动后自动重算格距与警告" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+          <span style="font-size:12px;color:#94A3B8">（默认60日：σ/振幅统计窗口，改动后重算格距）</span>
+        </div>
         <div id="gridParamTable"></div>
-        <div style="font-size:11px;color:#94A3B8;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；每格金额=投入÷格数；底仓=投入×(上限−当前价)/(上限−下限)。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；底仓=投入×(上限−当前价)/(上限−下限)；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
       </div>
       <div class="psec">
         <h3>③ 回测设置</h3>
@@ -621,7 +636,8 @@ footer b{color:#94A3B8}
           <span style="font-size:12px;color:#CBD5E1">最低佣金(元)</span>
           <input id="gridMinComm" type="number" step="0.1" value="0" style="width:64px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
         </div>
-        <div class="row" style="margin-top:6px">
+        <div class="row" style="margin-top:6px;gap:8px">
+          <button type="button" id="gridPrevBtn" style="font-size:12px;padding:4px 12px">← 上一步（改标的）</button>
           <button type="button" id="gridRunBtn" style="font-size:13px;padding:5px 20px">运行网格回测</button>
           <span id="gridRunState" style="font-size:12px;color:#94A3B8;margin-left:8px"></span>
         </div>
@@ -631,6 +647,7 @@ footer b{color:#94A3B8}
           <span style="font-size:11px;color:#64748B;flex-basis:100%">保存勾选标的 / TopN / 参数覆盖 / 回测设置，可在「我的策略」一键应用</span>
         </div>
       </div>
+      </div><!-- /gridStep2 -->
     </div>
     <div id="gridResult" style="display:none;margin-top:12px">
       <div class="s2top"><button type="button" id="gridBackBtn">← 修改设置</button><span class="s2tip">网格回测结果</span></div>
@@ -1051,7 +1068,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     return out;
   }
   // ---------- 网格参数推荐：区间=[P10,P90]（替代极值）、格距=max(收盘涨跌幅σ, 日内波幅均值)、格数=区间宽÷格距（clamp 5~10）、每格=投入/格数/中间价、底仓=投入×(上限-当前价)/(上限-下限) ----------
-  function gridParams(code, i, invest, costRt) {
+  function gridParams(code, i, invest, costRt, volWin) {
+    volWin = Math.max(20, volWin || 60);
     var D = gridData();
     var sArr = D.series[code];
     var cArr = sArr.close, hArr = sArr.high, lArr = sArr.low;
@@ -1060,9 +1078,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var cur = cArr[i];
     if (isNaN(p10) || isNaN(p90) || !(p90 > p10) || isMiss(cur)) return null;
     var mid = (p10 + p90) / 2;
-    var sig = gridStd(cArr, Math.max(1, i - 59), i);
+    var sig = gridStd(cArr, Math.max(1, i - (volWin - 1)), i);
     var ampSum = 0, ampN = 0, j;
-    for (j = Math.max(0, i - 59); j <= i; j++) { if (!isMiss(hArr[j]) && !isMiss(lArr[j]) && !isMiss(cArr[j]) && cArr[j] > 0) { ampSum += (hArr[j] - lArr[j]) / cArr[j]; ampN++; } }
+    for (j = Math.max(0, i - (volWin - 1)); j <= i; j++) { if (!isMiss(hArr[j]) && !isMiss(lArr[j]) && !isMiss(cArr[j]) && cArr[j] > 0) { ampSum += (hArr[j] - lArr[j]) / cArr[j]; ampN++; } }
     var amp = ampN ? ampSum / ampN : sig;
     var stepRatio = Math.max(isNaN(sig) ? 0 : sig, isNaN(amp) ? 0 : amp);
     if (!(stepRatio > 0)) stepRatio = 0.02;
@@ -1099,11 +1117,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var mgmt = params.mgmt || "B";
     var periodN = Math.max(1, params.period_n || 12), unitD = gridUnitDays(params.period_unit || "周");
     var periodDays = periodN * unitD;
+    var volWin = Math.max(20, +params.vol_win || 60);
     var TOPN = codes.length;   // 组合规模恒定（Top N），体检退出后补位回到 N
     var st = {};
     codes.forEach(function (c2) {
       var sArr = Dd.series[c2];
-      var g = gridParams(c2, startIdx, nInv, comm + slip);
+      var g = gridParams(c2, startIdx, nInv, comm + slip, volWin);
       if (g && params.gridOverrides && params.gridOverrides[c2]) {
         var ov = params.gridOverrides[c2];
         if (ov.lower !== undefined && ov.upper !== undefined && ov.upper > ov.lower) {
@@ -1117,7 +1136,13 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       if (!g || !(g.upper > g.lower)) { st[c2] = { active: false, ca: sArr.close, oa: sArr.open, ha: sArr.high, la: sArr.low, pos: 0, cash: 0 }; return; }
       var levels = [], li;
-      for (li = 1; li <= g.nLevels - 1; li++) levels.push(g.lower + li * g.step);
+      var tb = (params.gridOverrides && params.gridOverrides[c2] && +params.gridOverrides[c2].triggerBase > 0) ? +params.gridOverrides[c2].triggerBase : (g.cur > 0 ? g.cur : (g.lower + g.upper) / 2);
+      if (tb > 0 && g.nLevels > 1) {
+        var nD = Math.floor((g.nLevels - 1) / 2);
+        for (li = 0; li < g.nLevels; li++) levels.push(tb + (li - nD) * g.step);
+      } else {
+        for (li = 1; li <= g.nLevels - 1; li++) levels.push(g.lower + li * g.step);
+      }
       st[c2] = { lower: g.lower, upper: g.upper, step: g.step, levels: levels, perLevelAmt: g.perLevelAmt,
         pos: 0, cash: 0, buyDay: -1, todayBuy: 0, sellOnly: false, active: true, baseShares: 0, _pending: [],
         ca: sArr.close, oa: sArr.open, ha: sArr.high, la: sArr.low, _exit: null };
@@ -1129,7 +1154,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     if (initI > startIdx) {
       codes.forEach(function (c2) {
         var s = st[c2]; if (!s || !s.active) return;
-        var g0 = gridParams(c2, startIdx, nInv, comm + slip); if (!g0) return;
+        var g0 = gridParams(c2, startIdx, nInv, comm + slip, volWin); if (!g0) return;
         var px = s.oa[initI];
         if (isMiss(px) || !(px > 0)) px = s.ca[initI];
         if (!(px > 0) || isNaN(px)) return;
@@ -1208,7 +1233,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           if (adx2 > 25 && lastADX[c2] > 25) ok = false;
           lastADX[c2] = adx2;
           if (ok) {
-            var g2 = gridParams(c2, ii, s.pos * s.ca[ii] + s.cash, comm + slip);
+            var g2 = gridParams(c2, ii, s.pos * s.ca[ii] + s.cash, comm + slip, volWin), volWin;
             if (g2 && g2.upper > g2.lower) {
               var lv2 = [];
               for (var li2 = 1; li2 <= g2.nLevels - 1; li2++) lv2.push(g2.lower + li2 * g2.step);
@@ -1277,7 +1302,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             var alloc = Math.max(0, freeCash / need);   // 释放资金均分给空位
             var nc = scored[addIdx].code;
             if (!st[nc] || !st[nc].active) {   // 被撤换退出（inactive）的标的可重新入选重建网格
-              var g3 = gridParams(nc, ii, nInv, comm + slip);
+              var g3 = gridParams(nc, ii, nInv, comm + slip, volWin);
               if (g3 && g3.upper > g3.lower) {
                 var lv3 = [];
                 for (var li3 = 1; li3 <= g3.nLevels - 1; li3++) lv3.push(g3.lower + li3 * g3.step);
@@ -4555,7 +4580,7 @@ function buildChips() {
         try {
           if (m[k2] && m[k2].type === "grid") {
             var g = m[k2].grid || {}, gs = g.settings || {};
-            res = stRes[k2] || WufuEngine.backtestGrid(D, { codes: (g.codes || []).slice(), initial_capital: gs.capital || 1000000, mgmt: gs.mgmt || "B", period_n: gs.period_n || 12, period_unit: gs.period_unit || "周", commission_rate: gs.comm || 0.00025, slippage_rate: gs.slip || 0.0005, min_commission: gs.min_comm || 0 });
+            res = stRes[k2] || WufuEngine.backtestGrid(D, { codes: (g.codes || []).slice(), initial_capital: gs.capital || 1000000, mgmt: gs.mgmt || "B", period_n: gs.period_n || 12, period_unit: gs.period_unit || "周", commission_rate: gs.comm || 0.00025, slippage_rate: gs.slip || 0.0005, min_commission: gs.min_comm || 0, vol_win: g.vol_win || 60, gridOverrides: g.overrides || {} });
             stRes[k2] = res;
           } else { res = stRes[k2] || engine.backtest(D, m[k2]); stRes[k2] = res; }
         } catch (e) { res = null; }
@@ -4925,6 +4950,10 @@ function buildChips() {
       $("gridPoolNone").addEventListener("click", function () { self.setAll(false); });
       $("gridScoreBtn").addEventListener("click", function () { self.computeScores(); });
       $("gridRunBtn").addEventListener("click", function () { self.run(); });
+      var nB = $("gridNextBtn"); if (nB) nB.addEventListener("click", function () { self.nextStep(); });
+      var pB = $("gridPrevBtn"); if (pB) pB.addEventListener("click", function () { self.prevStep(); });
+      var fOn = $("gridFilterOn"); if (fOn) fOn.addEventListener("change", function () { self.filterOn = this.checked; self.renderPoolBox(); });
+      var vW = $("gridVolWin"); if (vW) vW.addEventListener("change", function () { self.applyVolWin(); });
       $("gridBackBtn").addEventListener("click", function () { $("gridResult").style.display = "none"; });
       this.initDone = true;
     },
@@ -4962,11 +4991,21 @@ function buildChips() {
         });
         box.appendChild(head);
         items.forEach(function (p) {
+          var sc = self.allScores ? self.allScores[p.code] : null;
+          var bad = sc && (sc.gate && sc.gate.length);
+          var low = sc && !bad && sc.score < self.thr;
+          var dis = self.filterOn && (bad || low);
           var l = document.createElement("label");
-          l.style.cssText = "display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#CBD5E1;background:#111827;border:1px solid #1E293B;border-radius:4px;padding:1px 6px;cursor:pointer;white-space:nowrap";
-          l.innerHTML = '<input type="checkbox" style="margin:0;accent-color:#F59E0B;cursor:pointer">' + p.name + ' <span style="color:#64748B">' + p.code + "</span>";
+          l.style.cssText = "display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#CBD5E1;background:#111827;border:1px solid #1E293B;border-radius:4px;padding:1px 6px;cursor:pointer;white-space:nowrap" + (dis ? ";opacity:.45" : "");
+          var tag = "";
+          if (sc) {
+            if (bad) tag = ' <span style="color:#F87171;font-size:10px">✗' + sc.gate[0] + '</span>';
+            else if (low) tag = ' <span style="color:#FBBF24;font-size:10px">' + sc.score.toFixed(0) + '分·低</span>';
+            else tag = ' <span style="color:#34D399;font-size:10px">' + sc.score.toFixed(0) + '分</span>';
+          }
+          l.innerHTML = '<input type="checkbox" style="margin:0;accent-color:#F59E0B;cursor:pointer"' + (dis ? " disabled" : "") + '>' + p.name + ' <span style="color:#64748B">' + p.code + "</span>" + tag;
           if (self.checked[p.code]) l.querySelector("input").checked = true;
-          l.querySelector("input").addEventListener("change", function () { self.checked[p.code] = this.checked; });
+          l.querySelector("input").addEventListener("change", function () { self.checked[p.code] = this.checked; self.refreshStat(); });
           box.appendChild(l);
         });
       });
@@ -4987,6 +5026,7 @@ function buildChips() {
         var op2 = self._needOp; self._needOp = null;
         if (op2 === "scores") self.computeScores();
         else if (op2 === "run") self.run();
+        else if (op2 === "next") self.nextStep();
       });
     },
     computeScores: function () {
@@ -4995,21 +5035,31 @@ function buildChips() {
       window.__GRID_D = D;
       var i = D.calendar.length - 1;
       var n = Math.max(1, +($("gridTopN").value) || 10);
+      var thr = Math.max(0, Math.min(100, +($("gridThr").value) || 60));
+      self.thr = thr;
       var sel = POOL.filter(function (p) { return self.checked[p.code]; });
-      if (!sel.length) { showNotice("请先在①中勾选至少 1 只标的"); return; }
-      var scores = sel.map(function (p) { return WufuEngine.gridScore(p.code, i); })
-        .filter(function (s) { return s && !s.gate.length; })
+      if (!sel.length) { showNotice("请先勾选至少 1 只标的"); return; }
+      var costRt = (+($("gridComm").value) || 0.00025) + (+($("gridSlip").value) || 0.0005);
+      var volWin = Math.max(20, +($("gridVolWin").value) || 60);
+      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
+      // 全池评分（供列表标注/过滤），Top N 只取勾选中合格的
+      var all = {};
+      POOL.forEach(function (p) { all[p.code] = WufuEngine.gridScore(p.code, i); });
+      self.allScores = all;
+      self.allParams = {};
+      var scores = sel.map(function (p) { return all[p.code]; })
+        .filter(function (s) { return s && !s.gate.length && s.score >= thr; })
         .sort(function (a, b) { return b.score - a.score; });
       var top = scores.slice(0, n);
       this.lastScores = top;
-      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
       var perCode = invest / Math.max(1, top.length);
-      var costRt = (+($("gridComm").value) || 0.00025) + (+($("gridSlip").value) || 0.0005);
+      this.lastParams = {};
       var html = '<table class="trades" style="width:100%"><thead><tr>' +
         "<th>代码</th><th>名称</th><th>综合分</th><th>震荡度</th><th>波动空间</th><th>区间覆盖</th><th>触发频率</th><th>流动性</th><th>年化波动</th><th>ADX</th><th>ER</th><th>年触发</th></tr></thead><tbody>";
       top.forEach(function (s) {
-        var p0 = WufuEngine.gridParams(s.code, i, perCode, costRt);
+        var p0 = WufuEngine.gridParams(s.code, i, perCode, costRt, volWin);
         self.lastParams[s.code] = p0;
+        self.allParams[s.code] = p0;
         var warns = p0 && p0.warns ? p0.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
         html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td><td data-label='综合分' style='color:#60A5FA;font-weight:600'>" + s.score.toFixed(1) +
           "</td><td data-label='震荡度'>" + s.parts.osc.toFixed(0) + "</td><td data-label='波动空间'>" + s.parts.vol.toFixed(0) + "</td><td data-label='区间覆盖'>" + s.parts.cov.toFixed(0) +
@@ -5021,40 +5071,83 @@ function buildChips() {
       });
       html += "</tbody></table>";
       var el = $("gridScoreTable");
-      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#CBD5E1;margin:4px 0">适配度评分 · Top ' + top.length + "（勾选 " + sel.length + " 只，通过硬门槛 " + scores.length + " 只）</div>" + html + "</div>";
-      this.renderParamsTable();
+      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#CBD5E1;margin:4px 0">适配度评分 · Top ' + top.length + "（勾选 " + sel.length + " 只，达标≥" + thr + " 分 " + scores.length + " 只）</div>" + html + "</div>";
+      self.renderPoolBox();
+      self.refreshStat();
+    },
+    refreshStat: function () {
+      var self = this;
+      var el = $("gridStat"); if (!el) return;
+      if (!self.allScores) { el.textContent = ""; return; }
+      var thr = self.thr;
+      var ok = 0;
+      POOL.forEach(function (p) { var s = self.allScores[p.code]; if (s && !s.gate.length && s.score >= thr) ok++; });
+      var selN = POOL.filter(function (p) { return self.checked[p.code]; }).length;
+      el.textContent = "达标 " + ok + " 只 / 已选 " + selN + " 只";
+    },
+    nextStep: function () {
+      var self = this;
+      if (!D) { self._ensureD("next"); return; }
+      if (!self.lastScores || !self.lastScores.length) { showNotice("请先计算适配度评分（勾选标的后点「计算适配度评分」）"); return; }
+      $("gridStep1").style.display = "none";
+      $("gridStep2").style.display = "";
+      self.renderParamsTable();
+    },
+    prevStep: function () {
+      $("gridStep2").style.display = "none";
+      $("gridStep1").style.display = "";
     },
     renderParamsTable: function () {
       var self = this;
       var el = $("gridParamTable"); if (!el) return;
       if (!this.lastScores || !this.lastScores.length) { el.innerHTML = '<div style="font-size:12px;color:#64748B">先执行适配度评分，自动生成每标的网格参数</div>'; return; }
-      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
-      var perCode = invest / this.lastScores.length;
       var html = '<table class="trades" style="width:100%"><thead><tr>' +
-        "<th>代码</th><th>名称</th><th>区间下限</th><th>区间上限</th><th>格距</th><th>格数</th><th>每格金额</th><th>底仓金额</th></tr></thead><tbody>";
+        "<th>代码</th><th>名称</th><th>区间下限</th><th>区间上限</th><th>格距</th><th>格数</th><th>底仓资金</th><th>每格资金</th><th>触发基准价</th><th>档位预览</th></tr></thead><tbody>";
       this.lastScores.forEach(function (s) {
         var p = self.lastParams[s.code];
         if (!p) return;
-        html += "<tr><td>" + s.code + "</td><td>" + gName(s.code) + "</td>" +
-          "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='格距'><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:66px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='每格金额'><input type='number' step='100' data-k='perLevelAmt' data-c='" + s.code + "' value='" + p.perLevelAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='底仓金额'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td></tr>";
+        var nL = Math.max(1, Math.round(p.nLevels || 5));
+        var perL = p.baseAmt / nL;
+        var tb = p.triggerBase !== undefined && +p.triggerBase > 0 ? +p.triggerBase : p.cur;
+        var nD = Math.floor((nL - 1) / 2);
+        var loL = tb + (0 - nD) * p.step, hiL = tb + (nL - 1 - nD) * p.step;
+        var warns = p.warns ? p.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
+        html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td>" +
+          "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='格距'><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:62px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:48px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='底仓资金'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:76px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='每格资金'><span data-k='perL' data-c='" + s.code + "' style='color:#CBD5E1;font-size:12px'>" + perL.toFixed(0) + " 元</span></td>" +
+          "<td data-label='触发基准价'><input type='number' step='0.001' data-k='triggerBase' data-c='" + s.code + "' value='" + tb.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='档位预览'><span data-k='lvlPrev' data-c='" + s.code + "' style='color:#64748B;font-size:11px'>" + loL.toFixed(3) + " ~ " + hiL.toFixed(3) + "</span></td></tr>" +
+          (warns ? "<tr><td colspan='10' data-label='' style='color:#FBBF24;font-size:11px'>" + warns + "</td></tr>" : "");
       });
       html += "</tbody></table>";
       el.innerHTML = '<div style="overflow-x:auto">' + html + "</div>";
-      el.querySelectorAll("input").forEach(function (inp) {
+      function refreshRow(c) {
+        var p = self.lastParams[c]; if (!p) return;
+        var nL = Math.max(1, Math.round(p.nLevels || 5));
+        p.perLevelAmt = p.baseAmt / nL;
+        var per = el.querySelector("span[data-k='perL'][data-c='" + c + "']");
+        if (per) per.textContent = p.perLevelAmt.toFixed(0) + " 元";
+        var tb = p.triggerBase !== undefined && +p.triggerBase > 0 ? +p.triggerBase : p.cur;
+        var nD = Math.floor((nL - 1) / 2);
+        var lv = el.querySelector("span[data-k='lvlPrev'][data-c='" + c + "']");
+        if (lv) lv.textContent = (tb + (0 - nD) * p.step).toFixed(3) + " ~ " + (tb + (nL - 1 - nD) * p.step).toFixed(3);
+        self.lastParams[c] = p;
+      }
+      el.querySelectorAll("input[data-k]").forEach(function (inp) {
         inp.addEventListener("change", function () {
           var c = inp.getAttribute("data-c"), k = inp.getAttribute("data-k");
           var p = self.lastParams[c]; if (!p) return;
-          p[k] = +inp.value || p[k];
           if (k === "lower" || k === "upper" || k === "nLevels") {
             var nL = Math.max(1, Math.round(p.nLevels || 5));
             p.step = (p.upper - p.lower) / nL;
+          } else {
+            p[k] = +inp.value || p[k];
           }
-          self.lastParams[c] = p;
+          refreshRow(c);
         });
       });
     },
@@ -5069,7 +5162,7 @@ function buildChips() {
       this.lastScores.forEach(function (s) {
         var p = self.lastParams[s.code];
         if (!p) return;
-        overrides[s.code] = { lower: p.lower, upper: p.upper, step: p.step, nLevels: p.nLevels, perLevelAmt: p.perLevelAmt, baseAmt: p.baseAmt };
+        overrides[s.code] = { lower: p.lower, upper: p.upper, step: p.step, nLevels: p.nLevels, perLevelAmt: p.perLevelAmt, baseAmt: p.baseAmt, triggerBase: p.triggerBase !== undefined && +p.triggerBase > 0 ? +p.triggerBase : p.cur };
       });
       this.lastCapital = Math.max(1, +($("gridCapital").value) || 1000000);
       var params = {
@@ -5080,6 +5173,7 @@ function buildChips() {
         commission_rate: +($("gridComm").value) || 0.00025,
         slippage_rate: +($("gridSlip").value) || 0.0005,
         min_commission: +($("gridMinComm").value) || 0,
+        vol_win: Math.max(20, +($("gridVolWin").value) || 60),
         gridOverrides: overrides
       };
       var stEl = $("gridRunState"); stEl.textContent = "计算中…";
@@ -5162,6 +5256,21 @@ function buildChips() {
       });
       this._charts[id] = c;
     },
+    applyVolWin: function () {
+      var self = this;
+      if (!D || !self.lastScores || !self.lastScores.length) return;
+      var i = D.calendar.length - 1;
+      var volWin = Math.max(20, +($("gridVolWin").value) || 60);
+      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
+      var perCode = invest / Math.max(1, self.lastScores.length);
+      var costRt = (+($("gridComm").value) || 0.00025) + (+($("gridSlip").value) || 0.0005);
+      self.lastScores.forEach(function (s) {
+        var p = WufuEngine.gridParams(s.code, i, perCode, costRt, volWin);
+        if (p) { var old = self.lastParams[s.code]; if (old) { p.triggerBase = old.triggerBase; p.baseAmt = old.baseAmt; p.perLevelAmt = old.baseAmt / Math.max(1, p.nLevels); } self.lastParams[s.code] = p; self.allParams[s.code] = p; }
+      });
+      self.renderParamsTable();
+      showNotice("波动统计区间已改为 " + volWin + " 日，格距已重算");
+    },
     collectCfg: function () {
       var self = this;
       var codes = POOL.filter(function (p) { return self.checked[p.code]; }).map(function (p) { return p.code; });
@@ -5169,6 +5278,7 @@ function buildChips() {
         codes: codes,
         top_n: Math.max(1, +($("gridTopN").value) || 10),
         overrides: self.lastParams || {},
+        vol_win: Math.max(20, +($("gridVolWin").value) || 60),
         settings: {
           period_n: Math.max(1, +($("gridPeriodN").value) || 12),
           period_unit: $("gridPeriodUnit") ? $("gridPeriodUnit").value : "周",
@@ -5208,6 +5318,7 @@ function buildChips() {
       self.lastParams = {};
       var ov = cfg.overrides || {};
       Object.keys(ov).forEach(function (c) { self.lastParams[c] = ov[c]; });
+      if ($("gridVolWin") && cfg.vol_win) $("gridVolWin").value = cfg.vol_win;
       if ($("gridPoolSearch")) $("gridPoolSearch").value = "";
       self.renderPoolBox();
       var i = D ? D.calendar.length - 1 : -1;
