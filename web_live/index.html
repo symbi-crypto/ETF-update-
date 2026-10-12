@@ -560,6 +560,7 @@ footer b{color:#94A3B8}
   <div style="max-width:1280px;margin:0 auto;padding:14px">
     <div class="s1card">
       <h2>网格交易回测</h2>
+      <div class="notice" id="gridNotice"></div>
       <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">独立网格引擎：区间下沿分批买入、上沿分批卖出（当日 high/low 穿越格位触发，次日开盘成交；A股 T+1：当日买入不可当日卖出）。触发/成交均为后复权口径（与轮动引擎一致）。价位线、份额、现金流全部后复权，可手动覆盖推荐参数。</div>
       <div class="psec">
         <h3>① 标的池与适配度评分</h3>
@@ -1532,6 +1533,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     // 指数序列统一取数：主块 D.index 优先，其次内嵌指数块 wufuIdxGz（RDIDX.index，异步加载后可用）——择时/基准/风格切换均支持全部 94 条内嵌指数
     function idxArr(code) {
     var D = gridData();
+      if (!D) return null;
       var a = D.index[code];
       if (!a && RDIDX && RDIDX.index && RDIDX.index[code]) a = RDIDX.index[code];
       if (!a && typeof window !== "undefined" && window.RDIDX && window.RDIDX.index && window.RDIDX.index[code]) a = window.RDIDX.index[code];
@@ -4037,24 +4039,25 @@ function buildChips() {
 
     var t0 = Date.now();
     $("runState").textContent = "计算中…";
-    ensureRDIDX(function () { });
-    var res;
-    try {
-      params.benchmark = benchSelVal();
-      res = engine.backtest(D, params);
-    } catch (e) {
-      showNotice("回测失败：" + e.message);
-      $("runState").textContent = "失败";
-      return;
-    }
-    $("runState").textContent = "已更新 · " + (Date.now() - t0) + "ms · " + res.metrics.n_days + "个交易日";
-    renderKpis(res);
-    renderNav(res);
-    renderDD(res);
-    renderYear(res);
-    renderMonth(res);
-    renderTrades(res, getParams());
-    renderCompositeIC(res, getParams(), D);
+    ensureRDIDX(function () {
+      var res;
+      try {
+        params.benchmark = benchSelVal();
+        res = engine.backtest(D, params);
+      } catch (e) {
+        showNotice("回测失败：" + e.message);
+        $("runState").textContent = "失败";
+        return;
+      }
+      $("runState").textContent = "已更新 · " + (Date.now() - t0) + "ms · " + res.metrics.n_days + "个交易日";
+      renderKpis(res);
+      renderNav(res);
+      renderDD(res);
+      renderYear(res);
+      renderMonth(res);
+      renderTrades(res, getParams());
+      renderCompositeIC(res, getParams(), D);
+    });
   }
 
   function renderCompositeIC(res, params, D) {
@@ -4212,6 +4215,7 @@ function buildChips() {
 
   function showNotice(msg) {
     var el = $("notice");
+    if (!el) return;
     el.textContent = msg;
     el.style.display = msg ? "block" : "none";
   }
@@ -4927,10 +4931,28 @@ function buildChips() {
         });
       });
     },
-    computeScores: function () {
-      if (!D) { showNotice("行情数据加载中，请稍候…"); return; }
-      window.__GRID_D = D;
+    _ensureD: function (op) {
       var self = this;
+      if (self._loadingD) { self._needOp = op; return; }
+      self._loadingD = true;
+      self._needOp = op;
+      var gN = $("gridNotice");
+      if (gN) { gN.textContent = "行情数据加载中，加载完成后自动继续…"; gN.style.display = "block"; }
+      var btns = [$("gridScoreBtn"), $("gridRunBtn")];
+      btns.forEach(function (b) { if (b) { b.disabled = true; b.dataset.orig = b.textContent; b.textContent = "加载中…"; } });
+      ensureData(function () {
+        self._loadingD = false;
+        if (gN) gN.textContent = "";
+        btns.forEach(function (b) { if (b) { b.disabled = false; b.textContent = b.dataset.orig; } });
+        var op2 = self._needOp; self._needOp = null;
+        if (op2 === "scores") self.computeScores();
+        else if (op2 === "run") self.run();
+      });
+    },
+    computeScores: function () {
+      var self = this;
+      if (!D) { self._ensureD("scores"); return; }
+      window.__GRID_D = D;
       var i = D.calendar.length - 1;
       var n = Math.max(1, +($("gridTopN").value) || 10);
       var sel = POOL.filter(function (p) { return self.checked[p.code]; });
@@ -4997,7 +5019,8 @@ function buildChips() {
       });
     },
     run: function () {
-      if (!D) { showNotice("行情数据加载中，请稍候…"); return; }
+      var self = this;
+      if (!D) { self._ensureD("run"); return; }
       window.__GRID_D = D;
       if (!this.lastScores || !this.lastScores.length) { showNotice("请先计算适配度评分"); return; }
       var self = this;
@@ -5389,6 +5412,7 @@ function buildChips() {
       new Response(stream).text().then(function (t) {
         try {
           D = JSON.parse(t);
+          try { globalThis.D = D; } catch (e) { }
           if (D && D.pool) POOL = D.pool;   // 统一标的池：权威源=数据块，解析后全局池同步
           var q = _dataWait; _dataWait = [];
           cb();
