@@ -1439,6 +1439,21 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             if (wBuy > 0 && blk2 !== "buy" && okO && okC1) rLegs += wBuy * (c1b / o1 - 1);
           }
           r = (1 - costPct) * (1 + rLegs) - 1;        // 成本开盘扣减，并入当日收益
+          // P1-2 修复：buy_i/buy_px 以实际成交日为准（执行段落定；顺延时 i 即真正成交日；保留腿不动）
+          for (var k2 = 0; k2 < nAssets; k2++) {
+            if (!(wNew[k2] > 0)) continue;
+            var ec2 = codes[k2];
+            var em2 = posMeta[ec2];
+            if (!em2) continue;
+            if (em2.buy_i === undefined) {
+              var ebp = (opens[ec2] && !isMiss(opens[ec2][i])) ? opens[ec2][i] : closes[ec2][i];
+              if (ebp > 0 && !isNaN(ebp)) {
+                em2.buy_i = i;
+                em2.buy_px = ebp;
+                if (!(em2.hi > 0) || isNaN(em2.hi) || em2.hi < ebp) em2.hi = ebp;
+              }
+            }
+          }
           wOld = wNew;
           pending = null;
           executed = true;
@@ -1448,6 +1463,18 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           }
         }
       }
+
+        // ---- 持仓最高点每日更新（非调仓日不交易、仅记录数据：用当日 high，无前视）----
+        var dk;
+        for (dk = 0; dk < nAssets; dk++) {
+          if (!(wOld[dk] > 0)) continue;
+          var dhc = codes[dk];
+          var dm = posMeta[dhc];
+          if (!dm) continue;
+          var dhi = (highs[dhc] && !isMiss(highs[dhc][i])) ? highs[dhc][i] : (closes[dhc][i] || 0);
+          if (!(dhi > 0) || isNaN(dhi)) continue;
+          dm.hi = Math.max(dm.hi !== undefined ? dm.hi : dhi, dhi);
+        }
 
       // ---- 1) 收盘后决策（次日开盘执行，杜绝前视）----
       if (decisionIdx[i] && i + 1 < n) {
@@ -1749,15 +1776,16 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             }
           }
 
-          // 持仓状态更新（新买入用执行日 i+1 开盘价/高点；继续持有更新高点）
+          // 持仓状态更新（决策日预置/更新 hi：继续持有并入执行日高点；新买入预置执行日高点初值；buy_i/buy_px 由执行段在真实成交日落定）
           holding.forEach(function (hc) {
+            var hn = (highs[hc] && !isMiss(highs[hc][i + 1])) ? highs[hc][i + 1] : closes[hc][i];
+            if (isNaN(hn) || !(hn > 0)) hn = closes[hc][i];
             if (posMeta[hc]) {
-              var hn = (highs[hc] && !isMiss(highs[hc][i + 1])) ? highs[hc][i + 1] : closes[hc][i];
-              if (!isNaN(hn)) posMeta[hc].hi = Math.max(posMeta[hc].hi !== undefined ? posMeta[hc].hi : hn, hn);
+              posMeta[hc].hi = Math.max(posMeta[hc].hi !== undefined ? posMeta[hc].hi : hn, hn);
             } else {
-              var bp = (opens[hc] && !isMiss(opens[hc][i + 1])) ? opens[hc][i + 1] : closes[hc][i];
-              var hn2 = (highs[hc] && !isMiss(highs[hc][i + 1])) ? highs[hc][i + 1] : closes[hc][i];
-              posMeta[hc] = { buy_i: i, buy_px: bp, hi: isNaN(hn2) ? bp : hn2 };
+              var hp0 = (opens[hc] && !isMiss(opens[hc][i + 1])) ? opens[hc][i + 1] : closes[hc][i];
+              if (isNaN(hp0) || !(hp0 > 0)) hp0 = hn;
+              posMeta[hc] = { hi: Math.max(hn, hp0) };
             }
           });
           Object.keys(posMeta).forEach(function (pc) {
