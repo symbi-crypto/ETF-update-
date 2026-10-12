@@ -90,6 +90,18 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
 .kpi .s{font-size:11px;color:var(--mut);margin-top:2px}
 #gridScoreTable th,#gridScoreTable td,#gridParamTable th,#gridParamTable td{white-space:nowrap;padding:5px 6px;font-size:11px}
 @media (max-width:640px){#gridScoreTable th,#gridScoreTable td,#gridParamTable th,#gridParamTable td{font-size:10px;padding:3px 4px}}
+    #viewGrid input,#viewGrid select,#viewGrid option{color:#E2E8F0}
+    #viewGrid input::placeholder{color:#64748B}
+    @media (max-width:640px){
+      #gridScoreTable thead,#gridParamTable thead{display:none}
+      #gridScoreTable,#gridParamTable,#gridScoreTable tbody,#gridParamTable tbody{display:block;width:100%}
+      #gridScoreTable tr,#gridParamTable tr{display:block;background:#111827;border:1px solid #1E293B;border-radius:8px;margin:8px 0;padding:5px 8px;white-space:normal}
+      #gridScoreTable td,#gridParamTable td{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;border:none;white-space:normal;font-size:11px;color:#CBD5E1}
+      #gridScoreTable td:before,#gridParamTable td:before{content:attr(data-label);color:#64748B;flex:0 0 auto;margin-right:8px;font-size:11px}
+      #gridScoreTable td input,#gridParamTable td input{width:70%;min-width:0;background:#0B1220}
+      #gridScoreTable tr+tr td{display:block;border-top:1px dashed #1E293B;margin-top:3px;padding-top:4px}
+      #gridScoreTable tr+tr td:before{content:"参数推荐";color:#64748B;display:block;margin-bottom:2px}
+    }
 .up{color:var(--up)} .down{color:var(--down)}
 .cards{display:flex;flex-direction:column;gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
@@ -612,6 +624,11 @@ footer b{color:#94A3B8}
         <div class="row" style="margin-top:6px">
           <button type="button" id="gridRunBtn" style="font-size:13px;padding:5px 20px">运行网格回测</button>
           <span id="gridRunState" style="font-size:12px;color:#94A3B8;margin-left:8px"></span>
+        </div>
+        <div class="row" style="margin-top:6px;gap:4px;flex-wrap:wrap">
+          <input id="gridStName" type="text" placeholder="网格策略名（留空自动命名）" style="flex:1;min-width:130px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+          <button type="button" id="gridSaveBtn" style="font-size:12px;padding:3px 8px;border-radius:4px;border:1px solid #334155;background:#111827;color:#E2E8F0;cursor:pointer">保存网格策略</button>
+          <span style="font-size:11px;color:#64748B;flex-basis:100%">保存勾选标的 / TopN / 参数覆盖 / 回测设置，可在「我的策略」一键应用</span>
         </div>
       </div>
     </div>
@@ -3880,6 +3897,7 @@ function buildChips() {
     var name = $("stList").value; if (!name) return;
     var m = loadStored();
     if (!m[name]) return;
+    if (m[name].type === "grid") { applyGridStrategy(name); return; }
     applyParams(m[name]);
     $("stName").value = name;
     showNotice("已加载策略：" + name);
@@ -4520,10 +4538,11 @@ function buildChips() {
     keys.forEach(function (k) {
       var row = document.createElement("div");
       row.className = "srow";
-      row.innerHTML = '<div class="nm">' + k.replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }) +
+      var tag = m[k].type === "grid" ? '<span class="tag" style="color:#FBBF24;border:1px solid #FBBF24;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">网格</span>' : "";
+      row.innerHTML = '<div class="nm">' + k.replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }) + tag +
         '</div><div class="meta"><span>创建：' + fmtDate(m[k]._saved_at) + '</span><span class="ld">计算中…</span></div>' +
-        '<div class="pos">持仓回测中…</div>';
-      row.addEventListener("click", function () { showStrategyDetail(k); });
+        '<div class="pos">回测中…</div>';
+      row.addEventListener("click", function () { if (m[k].type === "grid") applyGridStrategy(k); else showStrategyDetail(k); });
       rows[k] = row;
       box.appendChild(row);
     });
@@ -4533,12 +4552,22 @@ function buildChips() {
       var k2 = queue.shift();
       setTimeout(function () {
         var res = null;
-        try { res = stRes[k2] || engine.backtest(D, m[k2]); stRes[k2] = res; } catch (e) { res = null; }
+        try {
+          if (m[k2] && m[k2].type === "grid") {
+            var g = m[k2].grid || {}, gs = g.settings || {};
+            res = stRes[k2] || WufuEngine.backtestGrid(D, { codes: (g.codes || []).slice(), initial_capital: gs.capital || 1000000, mgmt: gs.mgmt || "B", period_n: gs.period_n || 12, period_unit: gs.period_unit || "周", commission_rate: gs.comm || 0.00025, slippage_rate: gs.slip || 0.0005, min_commission: gs.min_comm || 0 });
+            stRes[k2] = res;
+          } else { res = stRes[k2] || engine.backtest(D, m[k2]); stRes[k2] = res; }
+        } catch (e) { res = null; }
         var row = rows[k2];
         if (!row) { next(); return; }
         if (res) {
-          var lt = lastTradeLine(res);
           var line;
+          if (m[k2] && m[k2].type === "grid") {
+            var gm = res.metrics || {};
+            line = '<span class="buy">网格策略 · 共 ' + (res.trades ? res.trades.length : (gm.n_trades || 0)) + ' 笔成交</span>（周期 ' + (m[k2].grid ? m[k2].grid.settings.period_n : 12) + (m[k2].grid ? m[k2].grid.settings.period_unit : "周") + ' · 管理' + (m[k2].grid ? (m[k2].grid.settings.mgmt === "A" ? "长持" : "体检轮动") : "B") + '）';
+          } else {
+            var lt = lastTradeLine(res);
           if (!lt.buy.length) {
             var why = lt.regime === "weak" ? "走弱期" : "无信号";
             line = '<span class="sell">空仓（现金 · ' + why + '）</span>，最近决策 <b>' + lt.decision + '</b>';
@@ -4550,6 +4579,7 @@ function buildChips() {
             var buyTxt = lt.buy.map(codeName).join("、");
             line = '卖出 <b class="sell">' + sellTxt + '</b>，买入 <b class="buy">' + buyTxt + '</b>（决策 ' + lt.decision + '）';
           }
+          }
           row.querySelector(".ld").textContent = "总收益 " + (isFinite(res.metrics.total_return) ? (res.metrics.total_return * 100).toFixed(2) + "%" : "—") +
             " · 夏普 " + (isFinite(res.metrics.sharpe) ? res.metrics.sharpe.toFixed(2) : "—");
           row.querySelector(".pos").innerHTML = line;
@@ -4560,6 +4590,14 @@ function buildChips() {
         next();
       }, 20);
     })();
+  }
+  function applyGridStrategy(name) {
+    var m = loadStored();
+    if (!m[name] || !m[name].grid) return;
+    showView("grid");
+    location.hash = "#/grid";
+    if (window.GridView) GridView.applySaved(m[name].grid);
+    showNotice("已应用网格策略：" + name + "（已恢复标的/TopN/参数/设置，可直接运行回测）");
   }
   var stCurName = "";
   // 当前持仓 · 买入份额（全部持仓标的含继续持有；按最新投资额 ÷ TopN 等权；份额向下取整 100 份/手；现金部分买入货币ETF 511990.SH；价格=最新未复权收盘）
@@ -4859,6 +4897,8 @@ function buildChips() {
   }
   $("tabBacktest").addEventListener("click", function () { location.hash = "#/backtest"; });
   $("tabGrid").addEventListener("click", function () { location.hash = "#/grid"; });
+   var gsBtn = $("gridSaveBtn");
+   if (gsBtn) gsBtn.addEventListener("click", function () { if (window.GridView) GridView.gridSave(); });
   $("tabStrategies").addEventListener("click", function () { location.hash = "#/strategies"; });
   $("tabCorr").addEventListener("click", function () { location.hash = "#/correlation"; });
   $("tabCombo").addEventListener("click", function () { location.hash = "#/combo"; });
@@ -4971,11 +5011,11 @@ function buildChips() {
         var p0 = WufuEngine.gridParams(s.code, i, perCode, costRt);
         self.lastParams[s.code] = p0;
         var warns = p0 && p0.warns ? p0.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
-        html += "<tr><td>" + s.code + "</td><td>" + gName(s.code) + "</td><td style='color:#60A5FA;font-weight:600'>" + s.score.toFixed(1) +
-          "</td><td>" + s.parts.osc.toFixed(0) + "</td><td>" + s.parts.vol.toFixed(0) + "</td><td>" + s.parts.cov.toFixed(0) +
-          "</td><td>" + s.parts.trig.toFixed(0) + "</td><td>" + s.parts.liq.toFixed(0) + "</td><td>" + (s.vol * 100).toFixed(1) +
-          "%</td><td>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td>" +
-          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' style='color:#94A3B8;font-size:11px'>" +
+        html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td><td data-label='综合分' style='color:#60A5FA;font-weight:600'>" + s.score.toFixed(1) +
+          "</td><td data-label='震荡度'>" + s.parts.osc.toFixed(0) + "</td><td data-label='波动空间'>" + s.parts.vol.toFixed(0) + "</td><td data-label='区间覆盖'>" + s.parts.cov.toFixed(0) +
+          "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='流动性'>" + s.parts.liq.toFixed(0) + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
+          "%</td><td data-label='ADX'>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td data-label='ER'>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td data-label='年触发'>" +
+          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#94A3B8;font-size:11px'>" +
           "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
           " 格 · 每格 " + p0.perLevelAmt.toFixed(0) + " 元 · 底仓 " + p0.baseAmt.toFixed(0) + " 元 " + warns + "</td></tr>";
       });
@@ -4996,12 +5036,12 @@ function buildChips() {
         var p = self.lastParams[s.code];
         if (!p) return;
         html += "<tr><td>" + s.code + "</td><td>" + gName(s.code) + "</td>" +
-          "<td><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
-          "<td><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
-          "<td><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:66px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
-          "<td><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
-          "<td><input type='number' step='100' data-k='perLevelAmt' data-c='" + s.code + "' value='" + p.perLevelAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
-          "<td><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td></tr>";
+          "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='格距'><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:66px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='每格金额'><input type='number' step='100' data-k='perLevelAmt' data-c='" + s.code + "' value='" + p.perLevelAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='底仓金额'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td></tr>";
       });
       html += "</tbody></table>";
       el.innerHTML = '<div style="overflow-x:auto">' + html + "</div>";
@@ -5121,6 +5161,57 @@ function buildChips() {
         series: [{ name: name, type: "line", data: y, showSymbol: false, lineStyle: { width: 1.2, color: color }, areaStyle: { opacity: 0.12, color: color } }]
       });
       this._charts[id] = c;
+    },
+    collectCfg: function () {
+      var self = this;
+      var codes = POOL.filter(function (p) { return self.checked[p.code]; }).map(function (p) { return p.code; });
+      return {
+        codes: codes,
+        top_n: Math.max(1, +($("gridTopN").value) || 10),
+        overrides: self.lastParams || {},
+        settings: {
+          period_n: Math.max(1, +($("gridPeriodN").value) || 12),
+          period_unit: $("gridPeriodUnit") ? $("gridPeriodUnit").value : "周",
+          mgmt: $("gridMgmt") ? $("gridMgmt").value : "B",
+          capital: Math.max(1000, +($("gridCapital").value) || 1000000),
+          comm: +($("gridComm").value) || 0.00025,
+          slip: +($("gridSlip").value) || 0.0005,
+          min_comm: +($("gridMinComm").value) || 0
+        }
+      };
+    },
+    gridSave: function () {
+      var self = this;
+      var cfg = self.collectCfg();
+      if (!cfg.codes.length) { showNotice("请先勾选至少 1 只标的"); return; }
+      if (!self.lastScores || !self.lastScores.length) { showNotice("请先计算适配度评分（保存参数覆盖需评分后的网格参数）"); return; }
+      var name = ($("gridStName").value || "").trim() || ("网格·" + cfg.codes.length + "标的·Top" + cfg.top_n + "·" + new Date().toLocaleDateString());
+      var m = loadStored();
+      m[name] = { type: "grid", _saved_at: new Date().toISOString(), grid: cfg };
+      storeAll(m); refreshStList(); renderStrategyList();
+      showNotice("网格策略已保存：" + name);
+    },
+    applySaved: function (cfg) {
+      var self = this;
+      if (!cfg) return;
+      self.checked = {};
+      (cfg.codes || []).forEach(function (c) { self.checked[c] = true; });
+      if ($("gridTopN")) $("gridTopN").value = cfg.top_n || 10;
+      var s = cfg.settings || {};
+      if ($("gridPeriodN")) $("gridPeriodN").value = s.period_n || 12;
+      if ($("gridPeriodUnit") && s.period_unit) $("gridPeriodUnit").value = s.period_unit;
+      if ($("gridMgmt") && s.mgmt) $("gridMgmt").value = s.mgmt;
+      if ($("gridCapital")) $("gridCapital").value = s.capital || 1000000;
+      if ($("gridComm") && s.comm !== undefined) $("gridComm").value = s.comm;
+      if ($("gridSlip") && s.slip !== undefined) $("gridSlip").value = s.slip;
+      if ($("gridMinComm") && s.min_comm !== undefined) $("gridMinComm").value = s.min_comm;
+      self.lastParams = {};
+      var ov = cfg.overrides || {};
+      Object.keys(ov).forEach(function (c) { self.lastParams[c] = ov[c]; });
+      if ($("gridPoolSearch")) $("gridPoolSearch").value = "";
+      self.renderPoolBox();
+      var i = D ? D.calendar.length - 1 : -1;
+      if (D && Object.keys(self.checked).length) self.computeScores();
     }
   };
   function gPct(v) { return (v * 100).toFixed(2) + "%"; }
