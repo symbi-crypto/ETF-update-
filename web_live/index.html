@@ -88,6 +88,8 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
 .kpi .t{font-size:11px;color:var(--mut);margin-bottom:3px}
 .kpi .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
 .kpi .s{font-size:11px;color:var(--mut);margin-top:2px}
+#gridScoreTable th,#gridScoreTable td,#gridParamTable th,#gridParamTable td{white-space:nowrap;padding:5px 6px;font-size:11px}
+@media (max-width:640px){#gridScoreTable th,#gridScoreTable td,#gridParamTable th,#gridParamTable td{font-size:10px;padding:3px 4px}}
 .up{color:var(--up)} .down{color:var(--down)}
 .cards{display:flex;flex-direction:column;gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
@@ -166,6 +168,7 @@ footer b{color:#94A3B8}
 <div class="nav">
   <button type="button" id="tabCorr">相关性</button>
   <button type="button" id="tabBacktest" class="on">回测</button>
+  <button type="button" id="tabGrid">网格回测</button>
   <button type="button" id="tabStrategies">我的策略</button>
   <button type="button" id="tabCombo">策略组合</button>
   <button type="button" id="tabIc">因子IC</button>
@@ -553,6 +556,89 @@ footer b{color:#94A3B8}
 </div>
 </div>
 </div>
+<div id="viewGrid" style="display:none">
+  <div style="max-width:1280px;margin:0 auto;padding:14px">
+    <div class="s1card">
+      <h2>网格交易回测</h2>
+      <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">独立网格引擎：区间下沿分批买入、上沿分批卖出（当日 high/low 穿越格位触发，次日开盘成交；A股 T+1：当日买入不可当日卖出）。触发/成交均为后复权口径（与轮动引擎一致）。价位线、份额、现金流全部后复权，可手动覆盖推荐参数。</div>
+      <div class="psec">
+        <h3>① 标的池与适配度评分</h3>
+        <div class="row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          <input id="gridPoolSearch" type="text" placeholder="搜索标的（名称/代码）" style="flex:1;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <button type="button" id="gridPoolAll" style="font-size:11px;padding:2px 8px">全选</button>
+          <button type="button" id="gridPoolNone" style="font-size:11px;padding:2px 8px">清空</button>
+        </div>
+        <div id="gridPoolBox" style="display:flex;flex-wrap:wrap;gap:4px;max-height:220px;overflow:auto"></div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap">
+          <span style="font-size:12px;color:#CBD5E1">适配度评分：</span>
+          <button type="button" id="gridScoreBtn" style="font-size:12px;padding:3px 12px">计算适配度评分</button>
+          <span style="font-size:12px;color:#94A3B8">组合标的数 Top N</span>
+          <input id="gridTopN" type="number" min="1" max="20" value="10" style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#94A3B8">（评分=震荡度30%+波动空间25%+区间覆盖20%+触发频率15%+成本流动性10%；硬门槛：波动<8%或>55%、上市<250天剔除）</span>
+        </div>
+        <div id="gridScoreTable" style="margin-top:6px"></div>
+      </div>
+      <div class="psec">
+        <h3>② 网格参数（推荐值，可手动覆盖）</h3>
+        <div id="gridParamTable"></div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；每格金额=投入÷格数；底仓=投入×(上限−当前价)/(上限−下限)。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
+      </div>
+      <div class="psec">
+        <h3>③ 回测设置</h3>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#CBD5E1">体检/轮动周期</span>
+          <input id="gridPeriodN" type="number" min="1" value="12" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <select id="gridPeriodUnit" style="font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+            <option value="日">日</option><option value="周" selected>周</option><option value="月">月</option><option value="季">季</option><option value="年">年</option>
+          </select>
+          <span style="font-size:12px;color:#94A3B8">（默认12周：周末看信号调仓习惯；体检日=周期末收盘后判定，次日开盘执行，无前视）</span>
+          <span style="font-size:12px;color:#CBD5E1;margin-left:10px">管理模式</span>
+          <select id="gridMgmt" style="font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+            <option value="B" selected>B 体检式轮动（默认）</option>
+            <option value="A">A 长持网格（仅重锚定）</option>
+          </select>
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#CBD5E1">初始资金</span>
+          <input id="gridCapital" type="number" value="1000000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#CBD5E1">佣金率</span>
+          <input id="gridComm" type="number" step="0.0001" value="0.00025" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#CBD5E1">滑点</span>
+          <input id="gridSlip" type="number" step="0.0001" value="0.0005" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#CBD5E1">最低佣金(元)</span>
+          <input id="gridMinComm" type="number" step="0.1" value="0" style="width:64px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button type="button" id="gridRunBtn" style="font-size:13px;padding:5px 20px">运行网格回测</button>
+          <span id="gridRunState" style="font-size:12px;color:#94A3B8;margin-left:8px"></span>
+        </div>
+      </div>
+    </div>
+    <div id="gridResult" style="display:none;margin-top:12px">
+      <div class="s2top"><button type="button" id="gridBackBtn">← 修改设置</button><span class="s2tip">网格回测结果</span></div>
+      <div id="gridKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <div style="flex:2;min-width:320px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px">
+          <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">组合净值（网格组合，起点=回测预热后首日）</div>
+          <div id="gridNavChart" style="width:100%;height:300px"></div>
+        </div>
+        <div style="flex:1;min-width:240px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px">
+          <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">回撤</div>
+          <div id="gridDdChart" style="width:100%;height:300px"></div>
+        </div>
+      </div>
+      <div style="background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px;margin-top:8px">
+        <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">每格成交记录（前 300 条）</div>
+        <div style="max-height:260px;overflow:auto"><table class="trades" id="gridTradeTable" style="width:100%"><thead></thead><tbody></tbody></table></div>
+      </div>
+      <div style="background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px;margin-top:8px">
+        <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">体检撤换记录（时间 + 标的 + 动作 + 原因）</div>
+        <div style="max-height:220px;overflow:auto"><table class="trades" id="gridHealthTable" style="width:100%"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="viewStrategies" style="display:none">
   <div style="max-width:1280px;margin:0 auto;padding:14px 16px 40px;box-sizing:border-box">
     <div class="card">
@@ -758,6 +844,13 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 // ============================================================
 (function (global) {
   "use strict";
+  // 数据源统一入口：浏览器由 UI 块把已解析的数据挂到 global.__GRID_D；
+  // node 独立测试设 global.D。gridScore/backtestGrid 等内部一律经此取数。
+  function gridData() {
+    return (typeof globalThis !== "undefined" && (globalThis.__GRID_D || globalThis.D)) || null;
+  }
+  // 标的池元信息（补位只补真实 ETF）：浏览器 window.WUFU_POOL；node 测试 global.POOL
+  var POOL = (typeof globalThis !== "undefined" && (globalThis.WUFU_POOL || globalThis.POOL)) || [];
 
   // ---------- 工具 ----------
   function isMiss(v) { return v === null || v === undefined || (typeof v === "number" && (isNaN(v) || v < 0)); }
@@ -812,6 +905,434 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     return s / n;
   }
 
+  // ==================== 网格交易策略回测模块（独立于轮动/再平衡引擎；复用数据块 D 后复权序列与日历；无前视：当日 high/low 触发→次日开盘成交；A股 T+1：当日买入次日才可卖） ====================
+  // ---------- 指标工具 ----------
+  function gridER(cArr, i, n) {
+    if (i + 1 < n) return NaN;
+    var net = Math.abs(cArr[i] - cArr[i - n]), sum = 0, j;
+    for (j = i - n + 1; j <= i; j++) { if (isMiss(cArr[j]) || isMiss(cArr[j - 1])) return NaN; sum += Math.abs(cArr[j] - cArr[j - 1]); }
+    return sum > 0 ? net / sum : 0;
+  }
+  function gridAnnVol(cArr, i, n) {
+    n = n || 60;
+    if (i + 1 < n) return NaN;
+    var rets = [], t, mu = 0;
+    for (t = i - n + 1; t <= i; t++) { if (isMiss(cArr[t]) || isMiss(cArr[t - 1])) return NaN; rets.push(cArr[t] / cArr[t - 1] - 1); }
+    for (t = 0; t < rets.length; t++) mu += rets[t];
+    mu /= rets.length;
+    var v2 = 0;
+    for (t = 0; t < rets.length; t++) v2 += (rets[t] - mu) * (rets[t] - mu);
+    return Math.sqrt(v2 / rets.length) * Math.sqrt(252);
+  }
+  function gridADX(hArr, lArr, cArr, i, n) {
+    n = n || 14;
+    var need = n * 2 + 1;
+    if (i + 1 < need) return NaN;
+    var j, tr = [], dmP = [], dmM = [], dxs = [];
+    var prevC = cArr[i - need];
+    for (j = i - need + 1; j <= i; j++) {
+      if (isMiss(hArr[j]) || isMiss(lArr[j]) || isMiss(cArr[j]) || isMiss(prevC)) return NaN;
+      var h = hArr[j], l = lArr[j], pc = prevC;
+      var up = h - hArr[j - 1], dn = lArr[j - 1] - l;
+      var dP = (up > dn && up > 0) ? up : 0;
+      var dM = (dn > up && dn > 0) ? dn : 0;
+      tr.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+      dmP.push(dP); dmM.push(dM);
+      prevC = cArr[j];
+    }
+    var smTr = 0, smP = 0, smM = 0, k;
+    for (k = 0; k < n; k++) { smTr += tr[k]; smP += dmP[k]; smM += dmM[k]; }
+    var dIP = 100 * smP / smTr, dIM = 100 * smM / smTr;
+    dxs.push(smTr > 0 ? 100 * Math.abs(dIP - dIM) / (dIP + dIM) : 0);
+    for (k = n; k < tr.length; k++) {
+      smTr = (smTr * (n - 1) + tr[k]) / n;
+      smP = (smP * (n - 1) + dmP[k]) / n;
+      smM = (smM * (n - 1) + dmM[k]) / n;
+      var a = smTr > 0 ? 100 * Math.abs(smP - smM) / (smP + smM) : 0;
+      dxs.push(a);
+    }
+    var adx = 0;
+    for (k = 0; k < n; k++) adx += dxs[k];
+    adx /= n;
+    for (k = n; k < dxs.length; k++) adx = (adx * (n - 1) + dxs[k]) / n;
+    return adx;
+  }
+  function gridQuantile(arr, lo, hi, p) {
+    var vals = [], j;
+    for (j = Math.max(0, lo); j <= hi; j++) { if (!isMiss(arr[j])) vals.push(arr[j]); }
+    if (!vals.length) return NaN;
+    vals.sort(function (a, b) { return a - b; });
+    var pos = p * (vals.length - 1), i0 = Math.floor(pos), i1 = Math.ceil(pos);
+    if (i0 === i1) return vals[i0];
+    return vals[i0] + (vals[i1] - vals[i0]) * (pos - i0);
+  }
+  function gridMean(arr, lo, hi) {
+    var s = 0, c = 0, j;
+    for (j = Math.max(0, lo); j <= hi; j++) { if (!isMiss(arr[j])) { s += arr[j]; c++; } }
+    return c ? s / c : NaN;
+  }
+  function gridStd(cArr, lo, hi) {
+    var vals = [], j, mu = 0;
+    for (j = Math.max(1, lo); j <= hi; j++) { if (isMiss(cArr[j]) || isMiss(cArr[j - 1])) return NaN; vals.push(cArr[j] / cArr[j - 1] - 1); }
+    if (vals.length < 2) return NaN;
+    for (j = 0; j < vals.length; j++) mu += vals[j];
+    mu /= vals.length;
+    var v2 = 0;
+    for (j = 0; j < vals.length; j++) v2 += (vals[j] - mu) * (vals[j] - mu);
+    return Math.sqrt(v2 / (vals.length - 1));
+  }
+  // ---------- 网格适配度评分（加权：震荡度30 / 波动空间25 / 区间覆盖20 / 触发频率15 / 成本流动性10；硬门槛：波动<8%或>55%、上市<250天剔除） ----------
+  var GRID_LOOK = 250;
+  var GRID_T0 = /^(511|513|518)/;   // 货币/债券/海外/黄金类 T+0，流动性加分
+  function gridScore(code, i) {
+    var D = gridData();
+    var sArr = D.series[code];
+    var cArr = sArr.close, hArr = sArr.high, lArr = sArr.low, aArr = sArr.amount;
+    var lo = Math.max(0, i - GRID_LOOK + 1);
+    var valid = 0, j;
+    for (j = lo; j <= i; j++) if (!isMiss(cArr[j])) valid++;
+    var vol = gridAnnVol(cArr, i, 60);
+    var out = { code: code, gate: [], score: 0, parts: {}, vol: isNaN(vol) ? NaN : vol, adx: NaN, er: NaN, mom20: NaN, amtAvg: NaN, validDays: valid };
+    if (valid < GRID_LOOK || isNaN(vol)) { out.gate.push(valid < GRID_LOOK ? "上市<250天" : "数据不足"); return out; }
+    if (vol < 0.08 || vol > 0.55) { out.gate.push(vol < 0.08 ? "波动<8%" : "波动>55%"); out.parts.vol = 0; return out; }
+    var er20 = gridER(cArr, i, 20), er60 = gridER(cArr, i, 60), erM = (er20 + er60) / 2;
+    var adx = gridADX(hArr, lArr, cArr, i, 14);
+    var mom20 = Math.abs(cArr[i] / cArr[i - 20] - 1) * 100;
+    var sEr = Math.max(0, Math.min(100, (1 - erM) * 100));
+    var sAdx = isNaN(adx) ? 40 : Math.max(0, Math.min(100, 100 - adx * 2.5));
+    var sMom = Math.max(0, Math.min(100, 100 - mom20 * 12));
+    var osc = 0.34 * sEr + 0.33 * sAdx + 0.33 * sMom;
+    var vP;
+    if (vol >= 0.15 && vol <= 0.30) vP = 100;
+    else if (vol >= 0.10 && vol < 0.15) vP = 40 + (vol - 0.10) / 0.05 * 60;
+    else if (vol > 0.30 && vol <= 0.40) vP = 100 - (vol - 0.30) / 0.10 * 60;
+    else if (vol < 0.10) vP = Math.max(0, (vol - 0.08) / 0.02 * 40);
+    else vP = Math.max(0, (0.55 - vol) / 0.15 * 40);
+    var p10 = gridQuantile(cArr, lo, i, 0.10), p90 = gridQuantile(cArr, lo, i, 0.90);
+    var cov = 0;
+    if (p90 > p10) { for (j = lo; j <= i; j++) if (!isMiss(cArr[j]) && cArr[j] >= p10 && cArr[j] <= p90) cov++; cov = cov / valid * 100; }
+    var step5 = (p90 - p10) / 20, cross = 0;
+    if (step5 > 0) {
+      for (j = Math.max(1, lo); j <= i; j++) {
+        if (isMiss(cArr[j]) || isMiss(cArr[j - 1])) continue;
+        var pv = cArr[j - 1], cv = cArr[j], line;
+        for (line = p10 + step5; line < p90; line += step5) {
+          if (pv > line && cv <= line) cross++;
+          if (pv < line && cv >= line) cross++;
+        }
+      }
+    }
+    var perY = cross / valid * 252;
+    var sTr = perY >= 15 && perY <= 60 ? 100 : (perY < 15 ? Math.max(0, perY / 15 * 100) : Math.max(0, 100 - (perY - 60) / 40 * 100));
+    var amtAvg = gridMean(aArr, lo, i) / 10000;
+    var sLiq = Math.max(0, Math.min(100, amtAvg / 2 * 100));
+    if (GRID_T0.test(code)) sLiq = Math.min(100, sLiq + 10);
+    var score = 0.30 * osc + 0.25 * vP + 0.20 * cov + 0.15 * sTr + 0.10 * sLiq;
+    out.score = score; out.parts = { osc: osc, vol: vP, cov: cov, trig: sTr, liq: sLiq, erM: erM, sEr: sEr, sAdx: sAdx, sMom: sMom, perY: perY };
+    out.adx = adx; out.er = erM; out.mom20 = mom20; out.amtAvg = amtAvg;
+    return out;
+  }
+  // ---------- 网格参数推荐：区间=[P10,P90]（替代极值）、格距=max(收盘涨跌幅σ, 日内波幅均值)、格数=区间宽÷格距（clamp 5~10）、每格=投入/格数/中间价、底仓=投入×(上限-当前价)/(上限-下限) ----------
+  function gridParams(code, i, invest, costRt) {
+    var D = gridData();
+    var sArr = D.series[code];
+    var cArr = sArr.close, hArr = sArr.high, lArr = sArr.low;
+    var lo = Math.max(0, i - GRID_LOOK + 1);
+    var p10 = gridQuantile(cArr, lo, i, 0.10), p90 = gridQuantile(cArr, lo, i, 0.90);
+    var cur = cArr[i];
+    if (isNaN(p10) || isNaN(p90) || !(p90 > p10) || isMiss(cur)) return null;
+    var mid = (p10 + p90) / 2;
+    var sig = gridStd(cArr, Math.max(1, i - 59), i);
+    var ampSum = 0, ampN = 0, j;
+    for (j = Math.max(0, i - 59); j <= i; j++) { if (!isMiss(hArr[j]) && !isMiss(lArr[j]) && !isMiss(cArr[j]) && cArr[j] > 0) { ampSum += (hArr[j] - lArr[j]) / cArr[j]; ampN++; } }
+    var amp = ampN ? ampSum / ampN : sig;
+    var stepRatio = Math.max(isNaN(sig) ? 0 : sig, isNaN(amp) ? 0 : amp);
+    if (!(stepRatio > 0)) stepRatio = 0.02;
+    var step = stepRatio * mid;
+    var nLev = Math.max(5, Math.min(10, Math.round((p90 - p10) / step)));
+    step = (p90 - p10) / nLev;
+    var perLevelAmt = invest / nLev;
+    var baseRatio = (p90 - cur) / (p90 - p10);
+    baseRatio = Math.max(0, Math.min(1, baseRatio));
+    var baseAmt = invest * baseRatio;
+    var p = { code: code, lower: p10, upper: p90, mid: mid, step: step, nLevels: nLev, perLevelAmt: perLevelAmt, baseAmt: baseAmt, cur: cur, stepRatio: stepRatio };
+    p.warns = [];
+    var adx = gridADX(hArr, lArr, cArr, i, 14);
+    if (adx > 25) p.warns.push("ADX=" + adx.toFixed(1) + ">25，趋势过强，网格可能长期单边套牢");
+    if (costRt === undefined) costRt = 0.00075;
+    var grRt = step / mid;
+    if (grRt > 0) { var costShare = (costRt * 2) / grRt; if (costShare > 0.30) p.warns.push("成本占格收益约" + (costShare * 100).toFixed(0) + "%>30%，格距偏密"); }
+    return p;
+  }
+  // ---------- 网格回测引擎 ----------
+  // params: { codes, initial_capital, mgmt("A"长持|"B"体检), period_n, period_unit(日/周/月/季/年), commission_rate, slippage_rate, min_commission }
+  function gridUnitDays(u) { return u === "日" ? 1 : u === "周" ? 5 : u === "月" ? 21 : u === "季" ? 63 : u === "年" ? 250 : 5; }
+  function backtestGrid(Dd, params) {
+    var codes = params.codes.slice();
+    if (!codes.length) return null;
+    var cal = Dd.calendar, n = cal.length;
+    // 预热：需要 GRID_LOOK+60 日窗口计算评分/参数（默认起点=第310个交易日，约2017年中）
+    var startIdx = params.start_idx !== undefined ? params.start_idx : GRID_LOOK + 60;
+    var endIdx = params.end_idx !== undefined ? params.end_idx : n - 1;
+    var invest = params.initial_capital || 1000000;
+    var nInv = invest / codes.length;
+    var comm = params.commission_rate || 0.00025, slip = params.slippage_rate || 0.0005;
+    var minComm = params.min_commission || 0;
+    var mgmt = params.mgmt || "B";
+    var periodN = Math.max(1, params.period_n || 12), unitD = gridUnitDays(params.period_unit || "周");
+    var periodDays = periodN * unitD;
+    var TOPN = codes.length;   // 组合规模恒定（Top N），体检退出后补位回到 N
+    var st = {};
+    codes.forEach(function (c2) {
+      var sArr = Dd.series[c2];
+      var g = gridParams(c2, startIdx, nInv, comm + slip);
+      if (g && params.gridOverrides && params.gridOverrides[c2]) {
+        var ov = params.gridOverrides[c2];
+        if (ov.lower !== undefined && ov.upper !== undefined && ov.upper > ov.lower) {
+          g.lower = +ov.lower; g.upper = +ov.upper;
+          if (ov.step !== undefined && +ov.step > 0) g.step = +ov.step;
+          if (ov.nLevels !== undefined && +ov.nLevels >= 1) g.nLevels = Math.max(1, Math.round(+ov.nLevels));
+          if (ov.perLevelAmt !== undefined && +ov.perLevelAmt > 0) g.perLevelAmt = +ov.perLevelAmt;
+          if (ov.baseAmt !== undefined && +ov.baseAmt >= 0) g.baseAmt = +ov.baseAmt;
+          g.step = (g.upper - g.lower) / g.nLevels;
+        }
+      }
+      if (!g || !(g.upper > g.lower)) { st[c2] = { active: false, ca: sArr.close, oa: sArr.open, ha: sArr.high, la: sArr.low, pos: 0, cash: 0 }; return; }
+      var levels = [], li;
+      for (li = 1; li <= g.nLevels - 1; li++) levels.push(g.lower + li * g.step);
+      st[c2] = { lower: g.lower, upper: g.upper, step: g.step, levels: levels, perLevelAmt: g.perLevelAmt,
+        pos: 0, cash: 0, buyDay: -1, todayBuy: 0, sellOnly: false, active: true, baseShares: 0, _pending: [],
+        ca: sArr.close, oa: sArr.open, ha: sArr.high, la: sArr.low, _exit: null };
+    });
+    var navArr = new Array(endIdx - startIdx);   // 估值日 = startIdx+1 … endIdx（建仓日在循环前）
+    var trades = [], health = [];
+    var freeCash = 0;   // 组合级自由现金池：撤换清仓释放的资金，补位时用于重建网格
+    var initI = Math.min(startIdx + 1, endIdx);
+    if (initI > startIdx) {
+      codes.forEach(function (c2) {
+        var s = st[c2]; if (!s || !s.active) return;
+        var g0 = gridParams(c2, startIdx, nInv, comm + slip); if (!g0) return;
+        var px = s.oa[initI];
+        if (isMiss(px) || !(px > 0)) px = s.ca[initI];
+        if (!(px > 0) || isNaN(px)) return;
+        var sh = g0.baseAmt / px;
+        if (!(sh > 0)) { s.pos = 0; s.baseShares = 0; s.cash = nInv; return; }   // 价格高于区间上限时底仓=0（不追高），持现金等网格下沿买入
+        var costPct = (comm + slip) * sh * px;
+        if (minComm > 0 && (comm * sh * px) > 0 && (comm * sh * px) < minComm) costPct = minComm + slip * sh * px;
+        if (sh * px + costPct > nInv) sh = Math.max(0, (nInv - Math.min(costPct, nInv * 0.01)) / px);
+        if (!(sh > 0)) { s.pos = 0; s.baseShares = 0; s.cash = nInv; return; }
+        s.pos = sh; s.baseShares = sh; s.cash = Math.max(0, nInv - sh * px - costPct); s.buyDay = initI;
+        trades.push({ d: cal[initI], code: c2, side: "BUY", level: px, px: px, sh: Math.round(sh * 100) / 100, amt: Math.round(sh * px * 100) / 100, tag: "底仓" });
+      });
+    }
+    var lastADX = {};
+    for (var ii = startIdx + 1; ii <= endIdx; ii++) {
+      var i0 = ii - 1;
+      codes.forEach(function (c2) { var s = st[c2]; if (s && s.active) s.todayBuy = 0; });
+      // 1) 执行昨日触发单（今日开盘成交；T+1：今日买入份额当日不可卖）
+      codes.forEach(function (c2) {
+        var s = st[c2]; if (!s || !s.active) return;
+        var pd = s._pending || []; s._pending = [];
+        pd.forEach(function (ord) {
+          var px = s.oa[ii];
+          if (isMiss(px) || !(px > 0)) px = s.ca[ii];
+          if (!(px > 0) || isNaN(px)) return;
+          if (ord.side === "SELL") {
+            var sellSh = Math.min(ord.sh, s.pos - s.todayBuy);
+            if (sellSh > 0) {
+              var c1 = comm * sellSh * px;
+              if (minComm > 0 && c1 > 0 && c1 < minComm) c1 = minComm;
+              var amt = sellSh * px * (1 - slip) - c1;
+              s.pos -= sellSh; if (amt > 0) s.cash += amt;
+              if (s.sellOnly && s.pos <= 0.0001) { s.active = false; s.sellOnly = false; freeCash += s.cash; s.cash = 0; }
+              trades.push({ d: cal[ii], code: c2, side: "SELL", level: ord.level, px: px, sh: Math.round(sellSh * 100) / 100, amt: Math.round(sellSh * px * 100) / 100, tag: "网格" });
+            }
+          } else if (ord.side === "BUY") {
+            var buySh = ord.sh;
+            var need = buySh * px * (1 + slip + comm);
+            if (minComm > 0 && comm * buySh * px > 0 && comm * buySh * px < minComm) need = buySh * px * (1 + slip) + minComm;
+            if (need > s.cash) buySh = s.cash / (px * (1 + slip + comm));
+            if (buySh > 0 && s.cash > 0) {
+              var costB = buySh * px * (slip + comm);
+              if (minComm > 0 && comm * buySh * px > 0 && comm * buySh * px < minComm) costB = buySh * px * slip + minComm;
+              if (buySh * px + costB <= s.cash) {
+                s.pos += buySh; s.cash -= buySh * px + costB; s.buyDay = ii; s.todayBuy += buySh;
+                trades.push({ d: cal[ii], code: c2, side: "BUY", level: ord.level, px: px, sh: Math.round(buySh * 100) / 100, amt: Math.round(buySh * px * 100) / 100, tag: "网格" });
+              }
+            }
+          }
+        });
+      });
+      // 2) 今日触发判定（今日 high/low 穿越格位 vs 昨收；只出不进时停买入格）
+      codes.forEach(function (c2) {
+        var s = st[c2]; if (!s || !s.active) return;
+        var hh = s.ha[ii], ll = s.la[ii], pc2 = s.ca[i0];
+        if (isMiss(hh) || isMiss(ll) || isMiss(pc2) || isNaN(hh) || isNaN(ll) || isNaN(pc2)) return;
+        s.levels.forEach(function (lv) {
+          // 前收比较判定（无记忆状态）：下穿→买入（只出不进时停买），上穿→卖出；来回穿越可多次触发
+          if (pc2 > lv && ll <= lv) {
+            if (!s.sellOnly && s.cash > 0) s._pending.push({ side: "BUY", level: lv, sh: s.perLevelAmt / lv });
+          } else if (pc2 < lv && hh >= lv) {
+            var sellSh = s.pos / (s.levels.length + 1);
+            s._pending.push({ side: "SELL", level: lv, sh: sellSh });
+          }
+        });
+      });
+      // 3) 体检式轮动：周期末用今日数据判定（无前视），合格保留+重锚定 / 不合格退出（区间内清仓撤换 / 套牢只出不进，绝不在低位强制割肉）
+      var stepFromStart = ii - startIdx + 1;
+      var isPeriodEnd = mgmt === "B" && periodDays > 0 && stepFromStart % periodDays === 0 && ii < endIdx;
+      if (isPeriodEnd) {
+        codes.forEach(function (c2) {
+          var s = st[c2]; if (!s || !s.active || s.pos <= 0) return;
+          var sc = gridScore(c2, ii);
+          var vol2 = sc.vol, adx2 = sc.adx, er2 = sc.er, perY = sc.parts.perY;
+          var ok = !sc.gate.length && sc.score >= 60 && vol2 >= 0.10 && vol2 <= 0.50 && er2 < 0.45 && perY >= 15;
+          if (adx2 > 25 && lastADX[c2] > 25) ok = false;
+          lastADX[c2] = adx2;
+          if (ok) {
+            var g2 = gridParams(c2, ii, s.pos * s.ca[ii] + s.cash, comm + slip);
+            if (g2 && g2.upper > g2.lower) {
+              var lv2 = [];
+              for (var li2 = 1; li2 <= g2.nLevels - 1; li2++) lv2.push(g2.lower + li2 * g2.step);
+              s.lower = g2.lower; s.upper = g2.upper; s.step = g2.step; s.levels = lv2; s.perLevelAmt = g2.perLevelAmt;
+              s.sellOnly = false;
+              health.push({ d: cal[ii], code: c2, action: "重锚定", reason: "体检合格·区间重算（评分" + sc.score.toFixed(0) + "）" });
+            }
+          } else {
+            var price = s.ca[ii];
+            var inRange = price >= s.lower && price <= s.upper;
+            var reason = [];
+            if (sc.gate.length) reason = reason.concat(sc.gate);
+            if (sc.score < 60) reason.push("综合分" + sc.score.toFixed(0) + "<60");
+            if (vol2 < 0.10 || vol2 > 0.50) reason.push("波动" + (vol2 * 100).toFixed(0) + "%");
+            if (er2 >= 0.45) reason.push("ER" + er2.toFixed(2));
+            if (perY < 15) reason.push("年触发" + perY.toFixed(0));
+            if (adx2 > 25 && lastADX[c2] > 25) reason.push("ADX连续>25");
+            if (inRange) {
+              s._exit = "clear"; s.exitReason = reason.join("；");
+              health.push({ d: cal[ii], code: c2, action: "撤换·清仓", reason: reason.join("；") });
+            } else {
+              s.sellOnly = true; s._exit = "sellonly"; s.exitReason = reason.join("；");
+              health.push({ d: cal[ii], code: c2, action: "只出不进", reason: reason.join("；") });
+            }
+          }
+        });
+      }
+      // 4) 撤换执行（昨日决策，今日开盘执行；仅 clear 清仓释放资金，sellonly 只出不进、绝不在低位强制割肉）
+      codes.forEach(function (c2) {
+        var s = st[c2]; if (!s || !s.active || !s._exit) return;
+        if (s._exit === "clear") {
+          var px = s.oa[ii];
+          if (isMiss(px) || !(px > 0)) px = s.ca[ii];
+          if (px > 0 && !isNaN(px) && s.pos > 0) {
+            var c1 = comm * s.pos * px;
+            if (minComm > 0 && c1 > 0 && c1 < minComm) c1 = minComm;
+            var amt = s.pos * px * (1 - slip) - c1;
+            if (amt > 0) { s.cash += amt; trades.push({ d: cal[ii], code: c2, side: "SELL", level: px, px: px, sh: Math.round(s.pos * 100) / 100, amt: Math.round(amt * 100) / 100, tag: "撤换清仓" }); }
+            s.pos = 0;
+          }
+          if (s.pos <= 0) { s.active = false; s._exit = null; s.sellOnly = false; freeCash += s.cash; s.cash = 0; }
+        } else {
+          s._exit = null;   // sellonly：不清仓，保留 sellOnly 标志继续只出不进（卖格继续卖）
+        }
+      });
+      // 5) 补位（体检决策后次日开盘建仓；参数/评分用决策日数据，无前视）
+      if (isPeriodEnd) {
+        // 补位数 = 组合规模 N - 当前持仓标的数（只补退出空位，组合恒为 Top N）
+        var heldN = 0;
+        codes.forEach(function (c2) { var s = st[c2]; if (s && s.active && s.pos > 0) heldN++; });
+        var need = Math.max(0, TOPN - heldN);
+        if (need > 0) {
+          if (freeCash <= 0) { need = 0; }   // 无释放资金则不补位
+          var scored = [], c3;
+          for (c3 = 0; c3 < POOL.length; c3++) {
+            var pc3 = POOL[c3].code;
+            if (!/^[0-9]{6}\.(SH|SZ)$/.test(pc3)) continue;   // 只补真实 ETF，排除指数类（如 8841431.WI）
+            if (codes.indexOf(pc3) >= 0 && st[pc3] && st[pc3].active && st[pc3].pos > 0) continue;
+            if (st[pc3] && st[pc3].active && (st[pc3]._exit || st[pc3].sellOnly)) continue;   // 仅 active 标的尊重退出状态；inactive 可重新入选
+            var sc3 = gridScore(pc3, ii);
+            if (!sc3.gate.length && sc3.score >= 60) scored.push({ code: pc3, score: sc3.score });
+          }
+          scored.sort(function (a, b) { return b.score - a.score; });
+          var addIdx = 0;
+          while (need > 0 && addIdx < scored.length) {
+            var alloc = Math.max(0, freeCash / need);   // 释放资金均分给空位
+            var nc = scored[addIdx].code;
+            if (!st[nc] || !st[nc].active) {   // 被撤换退出（inactive）的标的可重新入选重建网格
+              var g3 = gridParams(nc, ii, nInv, comm + slip);
+              if (g3 && g3.upper > g3.lower) {
+                var lv3 = [];
+                for (var li3 = 1; li3 <= g3.nLevels - 1; li3++) lv3.push(g3.lower + li3 * g3.step);
+                st[nc] = { lower: g3.lower, upper: g3.upper, step: g3.step, levels: lv3, perLevelAmt: g3.perLevelAmt,
+                  pos: 0, cash: 0, buyDay: -1, todayBuy: 0, sellOnly: false, active: true, baseShares: 0, _pending: [],
+                  ca: Dd.series[nc].close, oa: Dd.series[nc].open, ha: Dd.series[nc].high, la: Dd.series[nc].low, _exit: null };
+                codes.push(nc);
+                var pxN = st[nc].oa[ii + 1];
+                if (isMiss(pxN) || !(pxN > 0)) pxN = st[nc].ca[ii + 1];
+                if (pxN > 0 && !isNaN(pxN)) {
+                  var shN = g3.baseAmt / pxN;
+                  if (!(shN > 0)) { st[nc].pos = 0; st[nc].cash = alloc; freeCash -= alloc; need--; addIdx++; continue; }   // 价格高于上限，底仓0→现金待网格
+                  var costN = (comm + slip) * shN * pxN;
+                  if (minComm > 0 && (comm * shN * pxN) > 0 && (comm * shN * pxN) < minComm) costN = minComm + slip * shN * pxN;
+                  if (shN * pxN + costN > alloc) shN = Math.max(0, (alloc - Math.min(costN, alloc * 0.01)) / pxN);
+                  st[nc].pos = shN; st[nc].baseShares = shN; st[nc].cash = Math.max(0, alloc - shN * pxN - costN); st[nc].buyDay = ii + 1; freeCash -= alloc;
+                  trades.push({ d: cal[ii + 1], code: nc, side: "BUY", level: pxN, px: pxN, sh: Math.round(shN * 100) / 100, amt: Math.round(shN * pxN * 100) / 100, tag: "补位底仓" });
+                } else { st[nc].pos = 0; st[nc].cash = alloc; freeCash -= alloc; }
+                need--;
+              }
+            }
+            addIdx++;
+          }
+        }
+      }
+      // 6) 组合估值（含自由现金池）
+      var navV = freeCash;
+      codes.forEach(function (c2) {
+        var s = st[c2]; if (!s || !s.active) return;
+        var px2 = s.ca[ii];
+        if (!isMiss(px2) && !isNaN(px2)) navV += s.pos * px2;
+        navV += s.cash;
+      });
+      navArr[ii - startIdx - 1] = navV;
+    }
+    var finalNav = navArr[navArr.length - 1];
+    if (!(finalNav > 0)) finalNav = invest;
+    var total = finalNav / invest - 1;
+    var years = (endIdx - startIdx) / 252;
+    var cagr = years > 0 ? Math.pow(finalNav / invest, 1 / years) - 1 : 0;
+    var peak = invest, maxDD = 0, curDD = 0;
+    var drawdown = new Array(navArr.length);
+    var qq;
+    for (qq = 0; qq < navArr.length; qq++) {
+      var vv = navArr[qq] || invest;
+      if (vv > peak) peak = vv;
+      curDD = vv / peak - 1;
+      drawdown[qq] = curDD;
+      if (curDD < maxDD) maxDD = curDD;
+    }
+    var rets = [], sharpe = 0, win = 0, tot = 0, rr;
+    for (rr = 1; rr < navArr.length; rr++) {
+      if (!(navArr[rr] > 0) || !(navArr[rr - 1] > 0)) continue;
+      var rv = navArr[rr] / navArr[rr - 1] - 1;
+      rets.push(rv); if (rv > 0) win++; tot++;
+    }
+    var volA = 0;
+    if (rets.length > 1) {
+      var mu = 0, vi = 0;
+      for (rr = 0; rr < rets.length; rr++) mu += rets[rr];
+      mu /= rets.length;
+      for (rr = 0; rr < rets.length; rr++) vi += (rets[rr] - mu) * (rets[rr] - mu);
+      var sd = Math.sqrt(vi / (rets.length - 1));
+      if (sd > 0) sharpe = mu / sd * Math.sqrt(252);
+      volA = sd * Math.sqrt(252);
+    }
+    return {
+      metrics: { total_return: total, cagr: cagr, max_dd: maxDD, sharpe: sharpe, win_rate: tot ? win / tot : 0, vol: volA, n_trades: trades.length },
+      nav: navArr, drawdown: drawdown, trades: trades, health: health, codes: codes,
+      dates: cal.slice(startIdx + 1, endIdx + 1)   // 与 nav 对齐（估值从建仓日次日/startIdx+1 起）
+    };
+  }
+
   // ---------- 主回测 ----------
   // D: 导出数据对象；params: 参数对象（见 README / UI）
   function backtest(D, params) {
@@ -843,7 +1364,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var tiered = !!params.tiered_slippage;      // 按标的流动性分档滑点（近20日均成交额，万元）
     var baseSlip = params.slippage_rate;
     function slippageFor(code, i) {
+    var D = (typeof gridData === "function" && gridData()) || null;
       if (!tiered) return baseSlip;
+      if (!D) return baseSlip;   // 数据未就绪：按基础滑点降级，不抛错
       var aArr = D.series[code] ? D.series[code].amount : null;
       if (!aArr) return baseSlip;
       var s = 0, cnt = 0, kk;
@@ -1008,6 +1531,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
     // 指数序列统一取数：主块 D.index 优先，其次内嵌指数块 wufuIdxGz（RDIDX.index，异步加载后可用）——择时/基准/风格切换均支持全部 94 条内嵌指数
     function idxArr(code) {
+    var D = gridData();
       var a = D.index[code];
       if (!a && RDIDX && RDIDX.index && RDIDX.index[code]) a = RDIDX.index[code];
       if (!a && typeof window !== "undefined" && window.RDIDX && window.RDIDX.index && window.RDIDX.index[code]) a = window.RDIDX.index[code];
@@ -2016,7 +2540,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     };
   }
 
-  var api = { backtest: backtest, momentumMetrics: momentumMetrics, rollingMA: rollingMA };
+  var api = { backtest: backtest, momentumMetrics: momentumMetrics, rollingMA: rollingMA, gridER: gridER, gridAnnVol: gridAnnVol, gridADX: gridADX, gridQuantile: gridQuantile, gridMean: gridMean, gridStd: gridStd, gridScore: gridScore, gridParams: gridParams, backtestGrid: backtestGrid, gridUnitDays: gridUnitDays, GRID_LOOK: GRID_LOOK };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.WufuEngine = api;
 })(this);
@@ -4303,22 +4827,26 @@ function buildChips() {
   // ---------- 四视图导航（回测 / 已保存策略 / 相关性 / 策略组合） ----------
   function showView(v) {
     $("viewBacktest").style.display = v === "backtest" ? "" : "none";
+    $("viewGrid").style.display = v === "grid" ? "" : "none";
     $("viewStrategies").style.display = v === "strategies" ? "" : "none";
     $("viewCorr").style.display = v === "correlation" ? "" : "none";
     $("viewCombo").style.display = v === "combo" ? "" : "none";
     $("viewIc").style.display = v === "ic" ? "" : "none";
     $("tabBacktest").className = v === "backtest" ? "on" : "";
+    $("tabGrid").className = v === "grid" ? "on" : "";
     $("tabStrategies").className = v === "strategies" ? "on" : "";
     $("tabCorr").className = v === "correlation" ? "on" : "";
     $("tabCombo").className = v === "combo" ? "on" : "";
     $("tabIc").className = v === "ic" ? "on" : "";
     if (v === "strategies") renderStrategyList();
+    if (v === "grid" && window.GridView) GridView.render();
     if (v === "correlation" && window.CorrView) CorrView.render();
     if (v === "combo") renderComboSetup();
     if (v === "ic" && window.ICView) ICView.render();
   }
   function hashView() {
     var h = location.hash || "";
+    if (h.indexOf("grid") >= 0 || h.indexOf("wangge") >= 0) return "grid";
     if (h.indexOf("strategies") >= 0) return "strategies";
     if (h.indexOf("correlation") >= 0 || h.indexOf("corr") >= 0) return "correlation";
     if (h.indexOf("combo") >= 0) return "combo";
@@ -4326,11 +4854,253 @@ function buildChips() {
     return "backtest";
   }
   $("tabBacktest").addEventListener("click", function () { location.hash = "#/backtest"; });
+  $("tabGrid").addEventListener("click", function () { location.hash = "#/grid"; });
   $("tabStrategies").addEventListener("click", function () { location.hash = "#/strategies"; });
   $("tabCorr").addEventListener("click", function () { location.hash = "#/correlation"; });
   $("tabCombo").addEventListener("click", function () { location.hash = "#/combo"; });
   $("tabIc").addEventListener("click", function () { location.hash = "#/ic"; });
   window.addEventListener("hashchange", function () { showView(hashView()); });
+
+  // ==================== 网格回测视图（GridView） ====================
+  function gName(code) {
+    var i2, arr = (typeof POOL !== "undefined" ? POOL : (D && D.pool) || []);
+    for (i2 = 0; i2 < arr.length; i2++) { if (arr[i2].code === code) return arr[i2].name; }
+    return code;
+  }
+  window.GridView = {
+    checked: {},
+    initDone: false,
+    lastScores: null,
+    lastParams: {},
+    _charts: {},
+    init: function () {
+      var self = this;
+      this.renderPoolBox();
+      $("gridPoolSearch").addEventListener("input", function () { self.renderPoolBox(); });
+      $("gridPoolAll").addEventListener("click", function () { self.setAll(true); });
+      $("gridPoolNone").addEventListener("click", function () { self.setAll(false); });
+      $("gridScoreBtn").addEventListener("click", function () { self.computeScores(); });
+      $("gridRunBtn").addEventListener("click", function () { self.run(); });
+      $("gridBackBtn").addEventListener("click", function () { $("gridResult").style.display = "none"; });
+      this.initDone = true;
+    },
+    render: function () {
+      if (!this.initDone) this.init();
+    },
+    setAll: function (on) {
+      var self = this;
+      POOL.forEach(function (p) { if (/^[0-9]{6}\.(SH|SZ)$/.test(p.code)) self.checked[p.code] = on; });
+      this.renderPoolBox();
+    },
+    renderPoolBox: function () {
+      var box = $("gridPoolBox"); if (!box) return;
+      box.innerHTML = "";
+      var kw = ($("gridPoolSearch").value || "").trim().toLowerCase();
+      var groups = [], self = this;
+      POOL.forEach(function (p) { if (groups.indexOf(p.group) < 0) groups.push(p.group); });
+      groups.forEach(function (g) {
+        var allItems = POOL.filter(function (p) { return p.group === g; });
+        var items = allItems.filter(function (p) {
+          if (!kw) return true;
+          return (p.name + " " + p.code).toLowerCase().indexOf(kw) >= 0;
+        });
+        if (!items.length) return;
+        var head = document.createElement("div");
+        head.style.cssText = "width:100%;font-size:12px;color:#94A3B8;margin:3px 0 1px";
+        var allOn = true;
+        allItems.forEach(function (p) { if (!self.checked[p.code]) allOn = false; });
+        head.innerHTML = '<label style="cursor:pointer"><input type="checkbox" style="margin:0 4px 0 0;accent-color:#F59E0B;cursor:pointer">' + g + "（" + items.length + "）</label>";
+        head.querySelector("input").checked = allOn;
+        head.querySelector("input").addEventListener("change", function () {
+          var on = this.checked;
+          allItems.forEach(function (p) { self.checked[p.code] = on; });
+          self.renderPoolBox();
+        });
+        box.appendChild(head);
+        items.forEach(function (p) {
+          var l = document.createElement("label");
+          l.style.cssText = "display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#CBD5E1;background:#111827;border:1px solid #1E293B;border-radius:4px;padding:1px 6px;cursor:pointer;white-space:nowrap";
+          l.innerHTML = '<input type="checkbox" style="margin:0;accent-color:#F59E0B;cursor:pointer">' + p.name + ' <span style="color:#64748B">' + p.code + "</span>";
+          if (self.checked[p.code]) l.querySelector("input").checked = true;
+          l.querySelector("input").addEventListener("change", function () { self.checked[p.code] = this.checked; });
+          box.appendChild(l);
+        });
+      });
+    },
+    computeScores: function () {
+      if (!D) { showNotice("行情数据加载中，请稍候…"); return; }
+      window.__GRID_D = D;
+      var self = this;
+      var i = D.calendar.length - 1;
+      var n = Math.max(1, +($("gridTopN").value) || 10);
+      var sel = POOL.filter(function (p) { return self.checked[p.code]; });
+      if (!sel.length) { showNotice("请先在①中勾选至少 1 只标的"); return; }
+      var scores = sel.map(function (p) { return WufuEngine.gridScore(p.code, i); })
+        .filter(function (s) { return s && !s.gate.length; })
+        .sort(function (a, b) { return b.score - a.score; });
+      var top = scores.slice(0, n);
+      this.lastScores = top;
+      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
+      var perCode = invest / Math.max(1, top.length);
+      var costRt = (+($("gridComm").value) || 0.00025) + (+($("gridSlip").value) || 0.0005);
+      var html = '<table class="trades" style="width:100%"><thead><tr>' +
+        "<th>代码</th><th>名称</th><th>综合分</th><th>震荡度</th><th>波动空间</th><th>区间覆盖</th><th>触发频率</th><th>流动性</th><th>年化波动</th><th>ADX</th><th>ER</th><th>年触发</th></tr></thead><tbody>";
+      top.forEach(function (s) {
+        var p0 = WufuEngine.gridParams(s.code, i, perCode, costRt);
+        self.lastParams[s.code] = p0;
+        var warns = p0 && p0.warns ? p0.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
+        html += "<tr><td>" + s.code + "</td><td>" + gName(s.code) + "</td><td style='color:#60A5FA;font-weight:600'>" + s.score.toFixed(1) +
+          "</td><td>" + s.parts.osc.toFixed(0) + "</td><td>" + s.parts.vol.toFixed(0) + "</td><td>" + s.parts.cov.toFixed(0) +
+          "</td><td>" + s.parts.trig.toFixed(0) + "</td><td>" + s.parts.liq.toFixed(0) + "</td><td>" + (s.vol * 100).toFixed(1) +
+          "%</td><td>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td>" +
+          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' style='color:#94A3B8;font-size:11px'>" +
+          "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
+          " 格 · 每格 " + p0.perLevelAmt.toFixed(0) + " 元 · 底仓 " + p0.baseAmt.toFixed(0) + " 元 " + warns + "</td></tr>";
+      });
+      html += "</tbody></table>";
+      var el = $("gridScoreTable");
+      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#CBD5E1;margin:4px 0">适配度评分 · Top ' + top.length + "（勾选 " + sel.length + " 只，通过硬门槛 " + scores.length + " 只）</div>" + html + "</div>";
+      this.renderParamsTable();
+    },
+    renderParamsTable: function () {
+      var self = this;
+      var el = $("gridParamTable"); if (!el) return;
+      if (!this.lastScores || !this.lastScores.length) { el.innerHTML = '<div style="font-size:12px;color:#64748B">先执行适配度评分，自动生成每标的网格参数</div>'; return; }
+      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
+      var perCode = invest / this.lastScores.length;
+      var html = '<table class="trades" style="width:100%"><thead><tr>' +
+        "<th>代码</th><th>名称</th><th>区间下限</th><th>区间上限</th><th>格距</th><th>格数</th><th>每格金额</th><th>底仓金额</th></tr></thead><tbody>";
+      this.lastScores.forEach(function (s) {
+        var p = self.lastParams[s.code];
+        if (!p) return;
+        html += "<tr><td>" + s.code + "</td><td>" + gName(s.code) + "</td>" +
+          "<td><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
+          "<td><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:74px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
+          "<td><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:66px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
+          "<td><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
+          "<td><input type='number' step='100' data-k='perLevelAmt' data-c='" + s.code + "' value='" + p.perLevelAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td>" +
+          "<td><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:78px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827'></td></tr>";
+      });
+      html += "</tbody></table>";
+      el.innerHTML = '<div style="overflow-x:auto">' + html + "</div>";
+      el.querySelectorAll("input").forEach(function (inp) {
+        inp.addEventListener("change", function () {
+          var c = inp.getAttribute("data-c"), k = inp.getAttribute("data-k");
+          var p = self.lastParams[c]; if (!p) return;
+          p[k] = +inp.value || p[k];
+          if (k === "lower" || k === "upper" || k === "nLevels") {
+            var nL = Math.max(1, Math.round(p.nLevels || 5));
+            p.step = (p.upper - p.lower) / nL;
+          }
+          self.lastParams[c] = p;
+        });
+      });
+    },
+    run: function () {
+      if (!D) { showNotice("行情数据加载中，请稍候…"); return; }
+      window.__GRID_D = D;
+      if (!this.lastScores || !this.lastScores.length) { showNotice("请先计算适配度评分"); return; }
+      var self = this;
+      var codes = this.lastScores.map(function (s) { return s.code; });
+      var overrides = {};
+      this.lastScores.forEach(function (s) {
+        var p = self.lastParams[s.code];
+        if (!p) return;
+        overrides[s.code] = { lower: p.lower, upper: p.upper, step: p.step, nLevels: p.nLevels, perLevelAmt: p.perLevelAmt, baseAmt: p.baseAmt };
+      });
+      this.lastCapital = Math.max(1, +($("gridCapital").value) || 1000000);
+      var params = {
+        codes: codes, initial_capital: this.lastCapital,
+        mgmt: $("gridMgmt").value || "B",
+        period_n: Math.max(1, +($("gridPeriodN").value) || 12),
+        period_unit: $("gridPeriodUnit").value || "周",
+        commission_rate: +($("gridComm").value) || 0.00025,
+        slippage_rate: +($("gridSlip").value) || 0.0005,
+        min_commission: +($("gridMinComm").value) || 0,
+        gridOverrides: overrides
+      };
+      var stEl = $("gridRunState"); stEl.textContent = "计算中…";
+      try {
+        var res = WufuEngine.backtestGrid(D, params);
+        this._lastRes = res;
+        stEl.textContent = "完成";
+        this.renderResult(res);
+      } catch (e) {
+        stEl.textContent = "失败：" + ((e && e.message) || e);
+      }
+    },
+    renderResult: function (res) {
+      var m = res.metrics;
+      $("gridResult").style.display = "";
+      this.lastCapital = this.lastCapital || 1000000;
+      var kpi = [
+        ["累计收益", gPct(m.total_return), m.total_return >= 0 ? "up" : "down"],
+        ["年化收益", gPct(m.cagr), m.cagr >= 0 ? "up" : "down"],
+        ["最大回撤", gPct(m.max_dd), "down"],
+        ["夏普比率", m.sharpe.toFixed(2), ""],
+        ["年化波动", gPct(m.vol), ""],
+        ["胜率", (m.win_rate * 100).toFixed(1) + "%", ""],
+        ["成交笔数", String(m.n_trades), ""],
+        ["体检次数", String(res.health.length), ""]
+      ];
+      var kh = "";
+      kpi.forEach(function (k) {
+        var cls = k[2] === "up" ? "color:#34D399" : k[2] === "down" ? "color:#F87171" : "";
+        kh += '<div class="kpi"><div class="t">' + k[0] + '</div><div class="v" style="' + cls + '">' + k[1] + '</div><div class="s">' + (k[3] || "") + "</div></div>";
+      });
+      $("gridKpis").innerHTML = kh;
+      // 净值
+      var nav = res.nav.map(function (v, idx) { var d0 = String(res.dates[idx]).replace(/-/g, ""); return [+d0.slice(0, 4) + "-" + d0.slice(4, 6) + "-" + d0.slice(6, 8), +(v > 0 ? v : this.lastCapital)]; });
+      var dts = nav.map(function (x) { return x[0]; });
+      var navs = nav.map(function (x) { return +(x[1] / GridView.lastCapital).toFixed(4); });
+      this.drawChart("gridNavChart", dts, navs, "组合净值", "#F59E0B");
+      this.drawDd("gridDdChart", dts, res.drawdown, "回撤", "#F87171");
+      // 成交表
+      var tt = $("gridTradeTable");
+      var th = "<tr><th>日期</th><th>标的</th><th>方向</th><th>格位</th><th>成交价</th><th>份额</th><th>金额(元)</th><th>标签</th></tr>";
+      var tb = res.trades.slice(0, 300).map(function (t) {
+        return "<tr><td>" + t.d + "</td><td>" + t.code + "</td><td style='color:" + (t.side === "BUY" ? "#34D399" : "#F87171") + "'>" + (t.side === "BUY" ? "买入" : "卖出") +
+          "</td><td>" + (+t.level).toFixed(3) + "</td><td>" + (+t.px).toFixed(3) + "</td><td>" + t.sh + "</td><td>" + (+t.amt).toFixed(0) + "</td><td>" + t.tag + "</td></tr>";
+      }).join("");
+      tt.innerHTML = "<thead>" + th + "</thead><tbody>" + tb + "</tbody>";
+      // 体检表
+      var ht = $("gridHealthTable");
+      var hh = "<tr><th>日期</th><th>标的</th><th>动作</th><th>原因</th></tr>";
+      var hb = res.health.map(function (h) {
+        return "<tr><td>" + h.d + "</td><td>" + h.code + "</td><td style='color:#FBBF24'>" + h.action + "</td><td>" + h.reason + "</td></tr>";
+      }).join("");
+      ht.innerHTML = "<thead>" + hh + "</thead><tbody>" + hb + "</tbody>";
+    },
+    drawChart: function (id, x, y, name, color) {
+      if (this._charts[id]) this._charts[id].dispose();
+      var el = document.getElementById(id); if (!el) return;
+      var c = echarts.init(el);
+      c.setOption({
+        backgroundColor: "transparent",
+        grid: { left: 46, right: 14, top: 18, bottom: 26 },
+        tooltip: { trigger: "axis", backgroundColor: "#0F172A", borderColor: "#334155", textStyle: { color: "#E2E8F0", fontSize: 11 } },
+        xAxis: { type: "category", data: x, axisLine: { lineStyle: { color: "#334155" } }, axisLabel: { color: "#94A3B8", fontSize: 10 } },
+        yAxis: { type: "value", scale: true, axisLabel: { color: "#94A3B8", fontSize: 10 }, splitLine: { lineStyle: { color: "#1E293B" } } },
+        series: [{ name: name, type: "line", data: y, showSymbol: false, lineStyle: { width: 1.4, color: color }, areaStyle: { opacity: 0.06, color: color } }]
+      });
+      this._charts[id] = c;
+    },
+    drawDd: function (id, x, y, name, color) {
+      if (this._charts[id]) this._charts[id].dispose();
+      var el = document.getElementById(id); if (!el) return;
+      var c = echarts.init(el);
+      c.setOption({
+        backgroundColor: "transparent",
+        grid: { left: 46, right: 14, top: 18, bottom: 26 },
+        tooltip: { trigger: "axis", backgroundColor: "#0F172A", borderColor: "#334155", textStyle: { color: "#E2E8F0", fontSize: 11 }, valueFormatter: function (v) { return (v * 100).toFixed(1) + "%"; } },
+        xAxis: { type: "category", data: x, axisLine: { lineStyle: { color: "#334155" } }, axisLabel: { color: "#94A3B8", fontSize: 10 } },
+        yAxis: { type: "value", axisLabel: { color: "#94A3B8", fontSize: 10, formatter: function (v) { return (v * 100).toFixed(0) + "%"; } }, splitLine: { lineStyle: { color: "#1E293B" } } },
+        series: [{ name: name, type: "line", data: y, showSymbol: false, lineStyle: { width: 1.2, color: color }, areaStyle: { opacity: 0.12, color: color } }]
+      });
+      this._charts[id] = c;
+    }
+  };
+  function gPct(v) { return (v * 100).toFixed(2) + "%"; }
 
   // ---------- 因子 IC 视图交互绑定 ----------
   (function () {
