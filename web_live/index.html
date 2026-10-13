@@ -604,12 +604,17 @@ footer b{color:#94A3B8}
       <div class="psec">
         <h3>② 网格参数（推荐值，可手动覆盖）</h3>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#CBD5E1;font-weight:600">投资总金额</span>
+          <input id="gridInvest" type="number" value="1000000" title="网格策略总投资金额，每标的底仓资金=总金额÷参与标的数（均分，可手动覆盖单个）" style="width:110px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+          <span style="font-size:12px;color:#94A8B8">（每标的底仓 = 总金额 ÷ 标的数，均分；改动后自动重算，手动覆盖值保留）</span>
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#CBD5E1">波动统计区间</span>
           <input id="gridVolWin" type="number" min="20" max="250" value="60" title="收盘涨跌幅σ/日内振幅均值的统计窗口，改动后自动重算格距与警告" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
           <span style="font-size:12px;color:#94A3B8">（默认60日：σ/振幅统计窗口，改动后重算格距）</span>
         </div>
         <div id="gridParamTable"></div>
-        <div style="font-size:11px;color:#94A3B8;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；底仓=投入×(上限−当前价)/(上限−下限)；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；底仓资金=投资总金额÷参与标的数（均分，可手动覆盖单个）；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
       </div>
       <div class="psec">
         <h3>③ 回测设置</h3>
@@ -627,7 +632,7 @@ footer b{color:#94A3B8}
           </select>
         </div>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1">初始资金</span>
+          <span style="font-size:12px;color:#CBD5E1">投资总金额</span>
           <input id="gridCapital" type="number" value="1000000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
           <span style="font-size:12px;color:#CBD5E1">佣金率</span>
           <input id="gridComm" type="number" step="0.0001" value="0.00025" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
@@ -1088,9 +1093,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var nLev = Math.max(5, Math.min(10, Math.round((p90 - p10) / step)));
     step = (p90 - p10) / nLev;
     var perLevelAmt = invest / nLev;
-    var baseRatio = (p90 - cur) / (p90 - p10);
-    baseRatio = Math.max(0, Math.min(1, baseRatio));
-    var baseAmt = invest * baseRatio;
+    // 投资总金额均分：每标的底仓资金 = 该标的投入额（总金额÷标的数，不再按当前价位置比例）
+    var baseAmt = invest;
     var p = { code: code, lower: p10, upper: p90, mid: mid, step: step, nLevels: nLev, perLevelAmt: perLevelAmt, baseAmt: baseAmt, cur: cur, stepRatio: stepRatio, sig: sig, amp: amp };
     p.warns = [];
     var adx = gridADX(hArr, lArr, cArr, i, 14);
@@ -4958,6 +4962,14 @@ function buildChips() {
         vW.addEventListener("input", function () { clearTimeout(vT); vT = setTimeout(function () { self.applyVolWin(); }, 500); });
         vW.addEventListener("change", function () { clearTimeout(vT); self.applyVolWin(); });
       }
+      var gIv = $("gridInvest"); if (gIv) {
+        var gT = null;
+        gIv.addEventListener("input", function () { clearTimeout(gT); gT = setTimeout(function () { self.applyInvest(); }, 500); });
+        gIv.addEventListener("change", function () { clearTimeout(gT); self.applyInvest(); });
+      }
+      var gCap2 = $("gridCapital"); if (gCap2 && $("gridInvest")) {
+        gCap2.addEventListener("change", function () { $("gridInvest").value = this.value; self.applyInvest(); });
+      }
       $("gridBackBtn").addEventListener("click", function () { $("gridResult").style.display = "none"; });
       this.initDone = true;
     },
@@ -5172,6 +5184,7 @@ function buildChips() {
           p.step = (p.upper - p.lower) / nL;
         } else {
           p[k] = +this.value || p[k];
+          if (k === "baseAmt") p._manualAmt = true;
         }
         if (p._changed !== undefined) delete p._changed;
         refreshRow(c);
@@ -5287,6 +5300,30 @@ function buildChips() {
       });
       this._charts[id] = c;
     },
+    applyInvest: function () {
+      var self = this;
+      var invest = Math.max(1000, +($("gridInvest").value) || 1000000);
+      if ($("gridCapital")) $("gridCapital").value = invest;
+      if (!self.lastScores || !self.lastScores.length) {
+        self.lastCapital = invest;
+        showNotice("投资总金额已设为 " + invest.toLocaleString() + " 元；请先计算适配度评分，评分后按标的数均分底仓");
+        return;
+      }
+      var perCode = invest / Math.max(1, self.lastScores.length);
+      var kept = 0;
+      self.lastScores.forEach(function (s) {
+        var p = self.lastParams[s.code];
+        if (!p) return;
+        if (p._manualAmt) { kept++; return; }
+        p.baseAmt = perCode;
+        p.perLevelAmt = perCode / Math.max(1, p.nLevels);
+        if (p._changed !== undefined) delete p._changed;
+      });
+      self.lastCapital = invest;
+      self.renderParamsTable();
+      self.renderScoreTable();
+      showNotice(kept ? "投资总金额已改为 " + invest.toLocaleString() + " 元：每标的底仓 " + perCode.toFixed(0) + " 元（均分，" + kept + " 只手动覆盖值保留）" : "投资总金额已改为 " + invest.toLocaleString() + " 元：每标的底仓 " + perCode.toFixed(0) + " 元（" + self.lastScores.length + " 只均分）");
+    },
     applyVolWin: function () {
       var self = this;
       if (!D) { showNotice("行情数据尚未加载，请先点「计算适配度评分」"); return; }
@@ -5355,6 +5392,7 @@ function buildChips() {
       if ($("gridPeriodUnit") && s.period_unit) $("gridPeriodUnit").value = s.period_unit;
       if ($("gridMgmt") && s.mgmt) $("gridMgmt").value = s.mgmt;
       if ($("gridCapital")) $("gridCapital").value = s.capital || 1000000;
+      if ($("gridInvest")) $("gridInvest").value = $("gridCapital").value;
       if ($("gridComm") && s.comm !== undefined) $("gridComm").value = s.comm;
       if ($("gridSlip") && s.slip !== undefined) $("gridSlip").value = s.slip;
       if ($("gridMinComm") && s.min_comm !== undefined) $("gridMinComm").value = s.min_comm;
