@@ -1091,7 +1091,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var baseRatio = (p90 - cur) / (p90 - p10);
     baseRatio = Math.max(0, Math.min(1, baseRatio));
     var baseAmt = invest * baseRatio;
-    var p = { code: code, lower: p10, upper: p90, mid: mid, step: step, nLevels: nLev, perLevelAmt: perLevelAmt, baseAmt: baseAmt, cur: cur, stepRatio: stepRatio };
+    var p = { code: code, lower: p10, upper: p90, mid: mid, step: step, nLevels: nLev, perLevelAmt: perLevelAmt, baseAmt: baseAmt, cur: cur, stepRatio: stepRatio, sig: sig, amp: amp };
     p.warns = [];
     var adx = gridADX(hArr, lArr, cArr, i, 14);
     if (adx > 25) p.warns.push("ADX=" + adx.toFixed(1) + ">25，趋势过强，网格可能长期单边套牢");
@@ -5094,7 +5094,7 @@ function buildChips() {
           "%</td><td data-label='ADX'>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td data-label='ER'>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td data-label='年触发'>" +
           (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#94A3B8;font-size:11px'>" +
           (p0 ? "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
-          " 格 · 每格 " + p0.perLevelAmt.toFixed(0) + " 元 · 底仓 " + p0.baseAmt.toFixed(0) + " 元 " + warns : "") + "</td></tr>";
+          " 格 · 每格 " + p0.perLevelAmt.toFixed(0) + " 元 · 底仓 " + p0.baseAmt.toFixed(0) + " 元 · σ" + ((p0.sig || 0) * 100).toFixed(2) + "%·振" + ((p0.amp || 0) * 100).toFixed(2) + "% " + warns : "") + "</td></tr>";
       });
       html += "</tbody></table>";
       el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#CBD5E1;margin:4px 0">适配度评分 · Top ' + top.length + "（达标≥" + thr + " 分）</div>" + html + "</div>";
@@ -5126,7 +5126,7 @@ function buildChips() {
       var el = $("gridParamTable"); if (!el) return;
       if (!this.lastScores || !this.lastScores.length) { el.innerHTML = '<div style="font-size:12px;color:#64748B">先执行适配度评分，自动生成每标的网格参数</div>'; return; }
       var html = '<table class="trades" style="width:100%"><thead><tr>' +
-        "<th>代码</th><th>名称</th><th>区间下限</th><th>区间上限</th><th>格距</th><th>格数</th><th>底仓资金</th><th>每格资金</th><th>触发基准价</th><th>档位预览</th></tr></thead><tbody>";
+        "<th>代码</th><th>名称</th><th>区间下限</th><th>区间上限</th><th>格距</th><th>格数</th><th>底仓资金</th><th>每格资金</th><th>触发基准价</th><th>波动统计</th><th>档位预览</th></tr></thead><tbody>";
       this.lastScores.forEach(function (s) {
         var p = self.lastParams[s.code];
         if (!p) return;
@@ -5136,6 +5136,8 @@ function buildChips() {
         var nD = Math.floor((nL - 1) / 2);
         var loL = tb + (0 - nD) * p.step, hiL = tb + (nL - 1 - nD) * p.step;
         var warns = p.warns ? p.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
+        var unchg = p._changed === false;
+        var volCell = '<span data-k="volStat" data-c="' + s.code + '" style="color:#94A3B8;font-size:11px">σ' + ((p.sig || 0) * 100).toFixed(2) + '%·振' + ((p.amp || 0) * 100).toFixed(2) + '%</span>' + (unchg ? ' <span style="color:#64748B;font-size:10px">·未变</span>' : '');
         html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td>" +
           "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
           "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
@@ -5144,6 +5146,7 @@ function buildChips() {
           "<td data-label='底仓资金'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:76px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
           "<td data-label='每格资金'><span data-k='perL' data-c='" + s.code + "' style='color:#CBD5E1;font-size:12px'>" + perL.toFixed(0) + " 元</span></td>" +
           "<td data-label='触发基准价'><input type='number' step='0.001' data-k='triggerBase' data-c='" + s.code + "' value='" + tb.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='波动统计'>" + volCell + "</td>" +
           "<td data-label='档位预览'><span data-k='lvlPrev' data-c='" + s.code + "' style='color:#64748B;font-size:11px'>" + loL.toFixed(3) + " ~ " + hiL.toFixed(3) + "</span></td></tr>" +
           (warns ? "<tr><td colspan='10' data-label='' style='color:#FBBF24;font-size:11px'>" + warns + "</td></tr>" : "");
       });
@@ -5170,6 +5173,7 @@ function buildChips() {
         } else {
           p[k] = +this.value || p[k];
         }
+        if (p._changed !== undefined) delete p._changed;
         refreshRow(c);
         self.renderScoreTable();
       }
@@ -5292,14 +5296,23 @@ function buildChips() {
       var invest = Math.max(1, +($("gridCapital").value) || 1000000);
       var perCode = invest / Math.max(1, self.lastScores.length);
       var costRt = (+($("gridComm").value) || 0.00025) + (+($("gridSlip").value) || 0.0005);
-      var changed = false;
+      var changed = false, snap = {}, anyMsg = null;
       self.lastScores.forEach(function (s) {
+        snap[s.code] = self.lastParams[s.code];
         var p = WufuEngine.gridParams(s.code, i, perCode, costRt, volWin);
-        if (p) { var old = self.lastParams[s.code]; if (old) { p.triggerBase = old.triggerBase; p.baseAmt = old.baseAmt; p.perLevelAmt = old.baseAmt / Math.max(1, p.nLevels); if (Math.abs((p.step || 0) - (old.step || 0)) > 1e-9 || p.nLevels !== old.nLevels) changed = true; } self.lastParams[s.code] = p; self.allParams[s.code] = p; }
+        if (p) { var old = self.lastParams[s.code]; if (old) { p.triggerBase = old.triggerBase; p.baseAmt = old.baseAmt; p.perLevelAmt = old.baseAmt / Math.max(1, p.nLevels); p._changed = !(Math.abs((p.step || 0) - (old.step || 0)) > 1e-9 || p.nLevels !== old.nLevels) === false ? true : (Math.abs((p.step || 0) - (old.step || 0)) > 1e-9 || p.nLevels !== old.nLevels); if (p._changed) changed = true; if (!anyMsg) anyMsg = { code: s.code, oldSig: old.sig, newSig: p.sig, oldAmp: old.amp, newAmp: p.amp, oldStep: old.step, newStep: p.step, oldN: old.nLevels, newN: p.nLevels }; } self.lastParams[s.code] = p; self.allParams[s.code] = p; }
       });
+      var oldV = $("gridVolWin") && $("gridVolWin").dataset ? +$("gridVolWin").dataset.lastV || 60 : 60;
+      var msg;
+      if (anyMsg) {
+        msg = "波动统计区间 " + oldV + "→" + volWin + " 日：σ " + (anyMsg.oldSig * 100).toFixed(2) + "%→" + (anyMsg.newSig * 100).toFixed(2) + "%、振幅 " + (anyMsg.oldAmp * 100).toFixed(2) + "%→" + (anyMsg.newAmp * 100).toFixed(2) + "%；格距 " + anyMsg.oldStep.toFixed(4) + "→" + anyMsg.newStep.toFixed(4) + "（" + anyMsg.oldN + "→" + anyMsg.newN + " 格" + (anyMsg.newN === anyMsg.oldN ? "，取整后相同，可手动改格距）" : "）") + "；已重算 " + self.lastScores.length + " 只（底仓/触发基准价保留手动值）";
+      } else {
+        msg = "波动统计区间已改为 " + volWin + " 日；格距/格数未变化（窗口内波动率相近，格数离散化后相同），可手动修改格距";
+      }
+      if ($("gridVolWin")) $("gridVolWin").dataset.lastV = volWin;
       self.renderParamsTable();
       self.renderScoreTable();
-      showNotice(changed ? "波动统计区间已改为 " + volWin + " 日，格距/格数已重算（底仓/触发基准价保留手动值）" : "波动统计区间已改为 " + volWin + " 日；格距/格数未变化（该窗口内波动率相近，格数离散化后相同），可手动修改格距");
+      showNotice(msg);
     },
     collectCfg: function () {
       var self = this;
