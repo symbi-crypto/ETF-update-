@@ -573,7 +573,7 @@ footer b{color:#94A3B8}
     <div class="s1card">
       <h2>网格交易回测</h2>
       <div class="notice" id="gridNotice"></div>
-      <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">两步式：① 选标的（轻量秒开，评分时才加载行情）→ ② 回测设置并运行。独立网格引擎：档位穿越触发（当日 high/low 穿越格位，次日开盘成交；A股 T+1：当日买入不可当日卖出）；触发/成交均为后复权口径；价位线以「触发基准价」为中心对称铺开（默认=当前价）。</div>
+      <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">三步式：① 选标的（轻量秒开，评分时才加载行情）→ ② 压力测试（可选，可跳过直接回测）→ ③ 回测设置并运行。独立网格引擎：档位穿越触发（当日 high/low 穿越格位，次日开盘成交；A股 T+1：当日买入不可当日卖出）；触发/成交均为后复权口径；价位线以「触发基准价」为中心对称铺开（默认=当前价）。</div>
       <div id="gridStep1">
       <div class="psec">
         <h3>① 选标的与适配度评分</h3>
@@ -606,12 +606,30 @@ footer b{color:#94A3B8}
         </div>
         <div id="gridScoreTable" style="margin-top:6px"></div>
         <div style="margin-top:8px">
-          <button type="button" id="gridNextBtn" style="font-size:13px;padding:5px 18px">下一步 → 回测设置</button>
+          <button type="button" id="gridNextBtn" style="font-size:13px;padding:5px 18px">下一步 → 压力测试（可选）</button>
           <span style="font-size:11px;color:#64748B;margin-left:8px">评分后才可进入下一步（评分触发行情加载）</span>
         </div>
       </div>
       </div><!-- /gridStep1 -->
       <div id="gridStep2" style="display:none">
+      <div class="psec">
+        <h3>② 压力测试（可选，可跳过直接回测）</h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 8px">历史极端段回放 + 破网情景模拟 + 参数扰动。极端情景假设，仅供风险评估，不代表真实收益。</div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">破网深度 X%</span>
+          <input id="gridStressDepth" type="number" min="5" max="50" value="20" title="破网情景：从当前价沿格距逐格单边下跌至 区间下限×(1-X%)，模拟底部越跌越买、破网后资金耗尽的最坏情形" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+          <button type="button" id="gridStressBtn" style="font-size:12px;padding:3px 12px">运行压力测试</button>
+          <span id="gridStressState" style="font-size:11px;color:#94A3B8"></span>
+        </div>
+        <div id="gridStressResult" style="margin-top:6px"></div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button type="button" id="gridPrev2Btn" style="font-size:12px;padding:4px 14px">← 上一步（选标的）</button>
+          <button type="button" id="gridNext2Btn" style="font-size:13px;padding:5px 18px">下一步 → 回测设置</button>
+          <span style="font-size:11px;color:#64748B">压力测试可跳过：直接「下一步」不影响回测</span>
+        </div>
+      </div>
+      </div><!-- /gridStep2 -->
+      <div id="gridStep3" style="display:none">
       <div class="psec">
         <h3>② 网格参数（推荐值，可手动覆盖）</h3>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
@@ -1278,7 +1296,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           var ok = !sc.gate.length && sc.score >= 60 && vol2 >= 0.10 && vol2 <= 0.50 && er2 < 0.45 && perY >= 15;
           if (adx2 > 25 && lastADX[c2] > 25) ok = false;
           lastADX[c2] = adx2;
-          if (ok) {
+          if (ok && !params.no_reanchor) {   // 压力测试参数扰动：no_reanchor=true 时保持固定参数（聚焦参数敏感性，不被体检重锚定覆盖）
             var g2 = gridParams(c2, ii, s.pos * s.ca[ii] + s.cash, comm + slip, volWin), volWin;
             if (g2 && g2.upper > g2.lower) {
               var lv2 = [];
@@ -1428,7 +1446,171 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     };
   }
 
-  // ---------- 主回测 ----------
+    // ==================== 网格压力测试：历史极端段回放 + 破网情景模拟 + 参数扰动（风险评估用途，非真实收益） ====================
+  // 预设极端段（日历对齐：2016-06-01 ~ 2026-10-09，2513 日；2015 段在数据覆盖之外）
+  var STRESS_SEGS = [
+    { label: "2015 股灾", start: "2015-06-15", end: "2016-01-28" },
+    { label: "2018 熊市", start: "2018-01-24", end: "2019-01-03" },
+    { label: "2020 疫情", start: "2020-02-03", end: "2020-03-23" },
+    { label: "2022 熊市", start: "2022-01-04", end: "2022-04-27" },
+    { label: "2024 小微盘流动性危机", start: "2024-01-02", end: "2024-02-05" },
+    { label: "2025 关税急跌", start: "2025-04-07", end: "2025-04-18" }
+  ];
+  // 段内破网次数：标的后复权 close 跌破段首网格区间下限的独立事件数
+  function gridBrokeCount(Dd, codes, sIdx, eIdx, lowerOf) {
+    var cnt = 0;
+    for (var ci = 0; ci < codes.length; ci++) {
+      var code = codes[ci];
+      var sArr = Dd.series[code]; if (!sArr) continue;
+      var cl = sArr.close;
+      var lower = lowerOf ? lowerOf(code) : null;
+      if (!lower) continue;
+      var inBreak = false;
+      for (var i = sIdx; i <= eIdx; i++) {
+        var px = cl[i];
+        if (isMiss(px)) continue;
+        if (px < lower) { if (!inBreak) { inBreak = true; cnt++; } }
+        else inBreak = false;
+      }
+    }
+    return cnt;
+  }
+  // 历史极端段回放：每段用网格引擎子段回测（段前预热窗口建仓），输出段收益/最大浮亏/补仓次数/破网次数/交易日数
+  function gridStressSegs(Dd, params, segs) {
+    var cal = Dd.calendar;
+    var out = [];
+    var costRt = (params.commission_rate || 0.00025) + (params.slippage_rate || 0.0005);
+    var volWin = Math.max(20, +params.vol_win || 60);
+    for (var si = 0; si < segs.length; si++) {
+      var seg = segs[si];
+      var sIdx = cal.indexOf(seg.start), eIdx = cal.indexOf(seg.end);
+      if (sIdx < 0 || eIdx < 0) { out.push({ label: seg.label, status: "日历未覆盖", start: seg.start, end: seg.end }); continue; }
+      var startIdx = Math.max(GRID_LOOK + 60, sIdx - (GRID_LOOK + 60));
+      var r = backtestGrid(Dd, Object.assign({}, params, { start_idx: startIdx, end_idx: eIdx }));
+      if (!r || !r.nav || r.nav.length < 2) { out.push({ label: seg.label, status: "无数据" }); continue; }
+      var s0 = Math.max(0, sIdx - startIdx - 1), s1 = eIdx - startIdx - 1;
+      if (s1 >= r.nav.length) s1 = r.nav.length - 1;
+      var v0 = r.nav[s0], v1 = r.nav[s1];
+      var tot = v0 > 0 ? v1 / v0 - 1 : 0;
+      var pk = v0, mdd = 0, i2;
+      for (i2 = s0; i2 <= s1; i2++) { if (r.nav[i2] > pk) pk = r.nav[i2]; var dd = 1 - r.nav[i2] / pk; if (dd > mdd) mdd = dd; }
+      var buys = 0;
+      for (var t = 0; t < r.trades.length; t++) {
+        var tr = r.trades[t];
+        if (tr.side === "BUY" && tr.d >= seg.start && tr.d <= seg.end) buys++;
+      }
+      var nInvSeg = (params.initial_capital || 1e6) / Math.max(1, +params.top_n || params.codes.length);
+      var broke = gridBrokeCount(Dd, params.codes, sIdx, eIdx, function (c) {
+        var g = gridParams(c, sIdx, nInvSeg, costRt, volWin);
+        return g && g.lower > 0 ? g.lower : null;
+      });
+      out.push({
+        label: seg.label, start: cal[sIdx], end: cal[eIdx],
+        n_days: eIdx - sIdx + 1,
+        total_return: Math.round(tot * 1e6) / 1e6,
+        max_dd: Math.round(mdd * 1e6) / 1e6,
+        buy_trades: buys, broke: broke
+      });
+    }
+    return out;
+  }
+  // 全历史最大回撤段自动检测：全周期回测 → nav 峰值/谷值日期
+  function gridMaxDDSeg(Dd, params) {
+    var r = backtestGrid(Dd, params);
+    if (!r || !r.nav || r.nav.length < 2) return null;
+    var nav = r.nav, pk = nav[0], pkI = 0, mdd = 0, i0 = 0, i1 = 0, i;
+    for (i = 1; i < nav.length; i++) {
+      if (nav[i] > pk) { pk = nav[i]; pkI = i; }
+      var dd = 1 - nav[i] / pk;
+      if (dd > mdd) { mdd = dd; i0 = pkI; i1 = i; }
+    }
+    if (mdd <= 0) return null;
+    return { label: "全历史最大回撤（自动检测）", start: r.dates[i0], end: r.dates[i1], maxDD: mdd };
+  }
+  // 破网情景模拟：从当前价沿格距逐格单边下跌，每穿越一格买入一格，直至跌破 区间下限×(1-X%)；输出累计买入/期末市值/最大浮亏/买入格数/剩余资金（纯情景，无前视）
+  function gridBreachSim(Dd, params, depthPct) {
+    var cal = Dd.calendar, iLast = cal.length - 1;
+    var codes = params.codes.slice();
+    var invest = params.initial_capital || 1e6;
+    var topN = Math.max(1, +params.top_n || codes.length);
+    var nInv = invest / topN;
+    var costRt = (params.commission_rate || 0.00025) + (params.slippage_rate || 0.0005);
+    var volWin = Math.max(20, +params.vol_win || 60);
+    var depth = Math.max(5, Math.min(50, +depthPct || 20)) / 100;
+    var rows = [], totalBuy = 0, hasRows = false;
+    for (var ci = 0; ci < codes.length; ci++) {
+      var code = codes[ci];
+      var sArr = Dd.series[code]; if (!sArr) continue;
+      var cur = sArr.close[iLast];
+      if (isMiss(cur)) continue;
+      var g = gridParams(code, iLast, nInv, costRt, volWin);
+      if (!g || !(g.upper > g.lower)) { rows.push({ code: code, status: "无有效网格参数（未上市/无窗口）" }); continue; }
+      hasRows = true;
+      var lower = g.lower, step = g.step, per = g.perLevelAmt, base = g.baseAmt;
+      var breakPx = lower * (1 - depth);
+      var buyK = 0;
+      for (var k = 1; ; k++) { if (cur - k * step <= breakPx + 1e-9) break; buyK++; }
+      var cumBuy = base + buyK * per;
+      var val = base * (breakPx / cur);
+      for (var j = 1; j <= buyK; j++) val += per * (breakPx / (cur - j * step));
+      var loss = cumBuy - val;
+      rows.push({
+        code: code, cur: Math.round(cur * 1e4) / 1e4, lower: Math.round(lower * 1e4) / 1e4,
+        breakPx: Math.round(breakPx * 1e4) / 1e4, step: Math.round(step * 1e4) / 1e4,
+        nLevels: g.nLevels, baseAmt: Math.round(base), perLevelAmt: Math.round(per),
+        buyLevels: buyK, cumBuy: Math.round(cumBuy), val: Math.round(val),
+        loss: Math.round(loss), lossPct: cumBuy > 0 ? Math.round(loss / cumBuy * 1e4) / 1e4 : 0,
+        remain: Math.max(0, Math.round(nInv - cumBuy))
+      });
+      totalBuy += cumBuy;
+    }
+    return { depthPct: depth * 100, invest: invest, rows: rows, totalBuy: Math.round(totalBuy), totalRemain: Math.round(invest - totalBuy), hasRows: hasRows };
+  }
+  // 参数扰动：对当前推荐参数做 格距±30% / 格数±2(clamp 5~10) / 区间±10% 六组扰动 × 基准，跑全周期网格回测对比
+  function gridStressPerturb(Dd, params) {
+    var iLast = Dd.calendar.length - 1;
+    var codes = params.codes.slice();
+    var invest = params.initial_capital || 1e6;
+    var topN = Math.max(1, +params.top_n || codes.length);
+    var nInv = invest / topN;
+    var costRt = (params.commission_rate || 0.00025) + (params.slippage_rate || 0.0005);
+    var volWin = Math.max(20, +params.vol_win || 60);
+    var variants = [
+      { key: "base", label: "基准（推荐）", f: function (g) { return g; } },
+      { key: "step07", label: "格距 ×0.7（格数×1.43）", f: function (g) { g.nLevels = Math.min(10, Math.max(5, Math.round(g.nLevels / 0.7))); g.perLevelAmt = g.baseAmt / g.nLevels; return g; } },
+      { key: "step13", label: "格距 ×1.3（格数×0.77）", f: function (g) { g.nLevels = Math.min(10, Math.max(5, Math.round(g.nLevels / 1.3))); g.perLevelAmt = g.baseAmt / g.nLevels; return g; } },
+      { key: "lv+2", label: "格数 +2", f: function (g) { g.nLevels = Math.min(10, Math.round(g.nLevels) + 2); g.perLevelAmt = g.baseAmt / g.nLevels; return g; } },
+      { key: "lv-2", label: "格数 -2", f: function (g) { g.nLevels = Math.max(5, Math.round(g.nLevels) - 2); g.perLevelAmt = g.baseAmt / g.nLevels; return g; } },
+      { key: "rng09", label: "区间 ×0.9", f: function (g) { g.lower *= 0.9; g.upper *= 0.9; return g; } },
+      { key: "rng11", label: "区间 ×1.1", f: function (g) { g.lower *= 1.1; g.upper *= 1.1; return g; } }
+    ];
+    var out = [];
+    for (var vi = 0; vi < variants.length; vi++) {
+      var v = variants[vi];
+      var overrides = {};
+      var okAll = true;
+      for (var ci = 0; ci < codes.length; ci++) {
+        var g = gridParams(codes[ci], iLast, nInv, costRt, volWin);
+        if (!g || !(g.upper > g.lower)) { okAll = false; continue; }
+        var g2 = v.f({ lower: g.lower, upper: g.upper, step: g.step, nLevels: g.nLevels, perLevelAmt: g.perLevelAmt, baseAmt: g.baseAmt, triggerBase: g.cur });
+        overrides[codes[ci]] = g2;
+      }
+      if (!okAll && vi === 0) { out.push({ label: v.label, key: v.key, status: "部分标的无有效参数" }); continue; }
+      var r = backtestGrid(Dd, Object.assign({}, params, { gridOverrides: overrides, no_reanchor: true }));   // 扰动对比固定参数
+      var sIdx = GRID_LOOK + 60, eIdx = Dd.calendar.length - 1;
+      var broke = gridBrokeCount(Dd, codes, sIdx, eIdx, function (c) {
+        var o = overrides[c];
+        return o && o.lower > 0 ? o.lower : null;
+      });
+      out.push({
+        label: v.label, key: v.key,
+        cagr: r ? r.metrics.cagr : null, max_dd: r ? r.metrics.max_dd : null,
+        n_trades: r ? r.metrics.n_trades : null, broke: broke
+      });
+    }
+    return out;
+  }
+// ---------- 主回测 ----------
   // D: 导出数据对象；params: 参数对象（见 README / UI）
   function backtest(D, params) {
     // 稳健标准化辅助：与 numpy.percentile(linear)/median 同构（供截面 z-score 使用）
@@ -2636,7 +2818,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     };
   }
 
-  var api = { backtest: backtest, momentumMetrics: momentumMetrics, rollingMA: rollingMA, gridER: gridER, gridAnnVol: gridAnnVol, gridADX: gridADX, gridQuantile: gridQuantile, gridMean: gridMean, gridStd: gridStd, gridScore: gridScore, gridParams: gridParams, backtestGrid: backtestGrid, gridUnitDays: gridUnitDays, GRID_LOOK: GRID_LOOK };
+  var api = { backtest: backtest, momentumMetrics: momentumMetrics, rollingMA: rollingMA, gridER: gridER, gridAnnVol: gridAnnVol, gridADX: gridADX, gridQuantile: gridQuantile, gridMean: gridMean, gridStd: gridStd, gridScore: gridScore, gridParams: gridParams, backtestGrid: backtestGrid, gridUnitDays: gridUnitDays, GRID_LOOK: GRID_LOOK, STRESS_SEGS: STRESS_SEGS, gridStressSegs: gridStressSegs, gridMaxDDSeg: gridMaxDDSeg, gridBreachSim: gridBreachSim, gridStressPerturb: gridStressPerturb };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.WufuEngine = api;
 })(this);
@@ -5004,6 +5186,9 @@ function buildChips() {
       $("gridRunBtn").addEventListener("click", function () { self.run(); });
       var nB = $("gridNextBtn"); if (nB) nB.addEventListener("click", function () { self.nextStep(); });
       var pB = $("gridPrevBtn"); if (pB) pB.addEventListener("click", function () { self.prevStep(); });
+      var sB = $("gridStressBtn"); if (sB) sB.addEventListener("click", function () { self.runStress(); });
+      var n2B = $("gridNext2Btn"); if (n2B) n2B.addEventListener("click", function () { self.nextStep2(); });
+      var p2B = $("gridPrev2Btn"); if (p2B) p2B.addEventListener("click", function () { self.prevStep2(); });
       var fOn = $("gridFilterOn"); if (fOn) fOn.addEventListener("change", function () { self.filterOn = this.checked; self.renderPoolBox(); });
       var vW = $("gridVolWin"); if (vW) {
         var vT = null;
@@ -5094,7 +5279,7 @@ function buildChips() {
         var op2 = self._needOp; self._needOp = null;
         if (op2 === "scores") self.computeScores();
         else if (op2 === "run") self.run();
-        else if (op2 === "next") self.nextStep();
+        else if (op2 === "next") self.nextStep();         else if (op2 === "stress") self.runStress();
       });
     },
     computeScores: function () {
@@ -5183,8 +5368,86 @@ function buildChips() {
       self.renderParamsTable();
     },
     prevStep: function () {
+      $("gridStep3").style.display = "none";
+      $("gridStep2").style.display = "";
+    },
+    nextStep2: function () {
+      $("gridStep2").style.display = "none";
+      $("gridStep3").style.display = "";
+      this.renderParamsTable();
+    },
+    prevStep2: function () {
       $("gridStep2").style.display = "none";
       $("gridStep1").style.display = "";
+    },
+    runStress: function () {
+      var self = this;
+      if (!D) { self._ensureD("stress"); return; }
+      if (!this.lastScores || !this.lastScores.length) { showNotice("请先计算适配度评分（勾选标的后点「计算适配度评分」）"); return; }
+      var stEl = $("gridStressState"); if (stEl) stEl.textContent = "压力测试计算中…（极端段回放+破网模拟+参数扰动）";
+      var cfg = self.collectCfg();
+      var params = {
+        codes: cfg.codes, initial_capital: cfg.settings.capital,
+        mgmt: cfg.settings.mgmt, period_n: cfg.settings.period_n, period_unit: cfg.settings.period_unit,
+        commission_rate: cfg.settings.comm, slippage_rate: cfg.settings.slip, min_commission: cfg.settings.min_comm,
+        vol_win: cfg.vol_win, top_n: cfg.top_n, idle_buy: cfg.idle_buy, gridOverrides: cfg.overrides
+      };
+      setTimeout(function () {
+        try {
+          var segs = WufuEngine.STRESS_SEGS.slice();
+          var mdd = WufuEngine.gridMaxDDSeg(D, params);
+          if (mdd) segs.push(mdd);
+          var segR = WufuEngine.gridStressSegs(D, params, segs);
+          var depth = Math.max(5, Math.min(50, +($("gridStressDepth").value) || 20));
+          var breach = WufuEngine.gridBreachSim(D, params, depth);
+          var perturb = WufuEngine.gridStressPerturb(D, params);
+          self._stressRes = { segs: segR, breach: breach, perturb: perturb, mdd: mdd };
+          if (stEl) stEl.textContent = "完成";
+          self.renderStress();
+        } catch (e) { if (stEl) stEl.textContent = "失败：" + ((e && e.message) || e); }
+      }, 40);
+    },
+    renderStress: function () {
+      var self = this;
+      var el = $("gridStressResult"); if (!el) return;
+      var gW = function (v) { return (v / 10000).toFixed(1) + "万"; };
+      var res = this._stressRes; if (!res) return;
+      var h = '';
+      h += '<div style="font-size:13px;color:#E2E8F0;font-weight:600;margin:8px 0 4px">① 历史极端段回放（网格策略段内表现）</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      res.segs.forEach(function (r) {
+        var d = r.status ? '<div style="font-size:12px;color:#64748B">' + r.status + '</div>' :
+          '<div style="font-size:12px;color:#CBD5E1">' + r.start + ' ~ ' + r.end + ' · ' + r.n_days + ' 个交易日</div>' +
+          '<div style="font-size:12px;color:#CBD5E1;margin-top:2px">段收益 <span style="color:' + (r.total_return >= 0 ? '#34D399' : '#F87171') + ';font-weight:600">' + gPct(r.total_return) + '</span></div>' +
+          '<div style="font-size:12px;color:#CBD5E1">最大浮亏 <span style="color:#F87171">' + gPct(r.max_dd) + '</span></div>' +
+          '<div style="font-size:12px;color:#CBD5E1">补仓 ' + r.buy_trades + ' 次 · 破网 ' + r.broke + ' 次</div>';
+        h += '<div style="flex:1;min-width:220px;background:#111827;border:1px solid #334155;border-radius:8px;padding:8px 10px">' +
+          '<div style="font-size:12px;color:#93C5FD;font-weight:600;margin-bottom:2px">' + r.label + '</div>' + d + '</div>';
+      });
+      h += '</div>';
+      var b = res.breach;
+      h += '<div style="font-size:13px;color:#E2E8F0;font-weight:600;margin:12px 0 4px">② 破网情景模拟（深度 ' + b.depthPct.toFixed(0) + '%，从当前价逐格单边下跌至 区间下限×(1-' + b.depthPct.toFixed(0) + '%)）</div>';
+      h += '<div style="font-size:12px;color:#FBBF24;margin-bottom:4px">累计买入 <b>' + gW(b.totalBuy) + '</b>（投资总额 ' + gW(b.invest) + '）· 剩余可用资金 <b>' + (b.totalRemain >= 0 ? gW(b.totalRemain) : '0（资金耗尽，需追加 ' + gW(-b.totalRemain) + '）') + '</b></div>';
+      h += '<div style="overflow-x:auto"><table class="trades" style="width:100%"><thead><tr><th>代码</th><th>当前价</th><th>区间下限</th><th>破网价</th><th>格数</th><th>买入格数</th><th>累计买入</th><th>期末市值</th><th>最大浮亏</th><th>浮亏%</th><th>剩余资金</th></tr></thead><tbody>';
+      b.rows.forEach(function (r) {
+        if (r.status) { h += '<tr><td colspan="11" style="color:#64748B;font-size:12px">' + r.code + ' ' + r.status + '</td></tr>'; return; }
+        h += '<tr><td>' + r.code + '</td><td>' + r.cur + '</td><td>' + r.lower + '</td><td>' + r.breakPx + '</td><td>' + r.nLevels + '</td><td>' + r.buyLevels + '</td><td>' + gW(r.cumBuy) + '</td><td>' + gW(r.val) + '</td><td style="color:#F87171">' + gW(r.loss) + '</td><td style="color:#F87171">' + gPct(r.lossPct) + '</td><td>' + (r.remain > 0 ? gW(r.remain) : '耗尽') + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+      h += '<div style="font-size:11px;color:#64748B;margin-top:2px">极端情景假设：底仓已按当前价买入，每穿越一格买入一格，直至跌破破网价停止；仅供风险评估，不代表真实收益。</div>';
+      h += '<div style="font-size:13px;color:#E2E8F0;font-weight:600;margin:12px 0 4px">③ 参数扰动对比（固定网格参数、不重锚定，聚焦参数敏感性）</div>';
+      h += '<div style="overflow-x:auto"><table class="trades" style="width:100%"><thead><tr><th>扰动组</th><th>年化</th><th>最大回撤</th><th>破网次数</th><th>成交笔数</th></tr></thead><tbody>';
+      res.perturb.forEach(function (r) {
+        if (r.status) { h += '<tr><td colspan="5" style="color:#64748B;font-size:12px">' + r.label + ' ' + r.status + '</td></tr>'; return; }
+        h += '<tr' + (r.key === "base" ? ' style="background:#1E293B"' : '') + '><td>' + r.label + '</td><td>' + gPct(r.cagr) + '</td><td>' + gPct(r.max_dd) + '</td><td>' + r.broke + '</td><td>' + r.n_trades + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+      h += '<div style="font-size:11px;color:#64748B;margin-top:2px">格距按格数换算（引擎格距=区间宽÷格数）：格距×0.7≈格数×1.43、格距×1.3≈格数×0.77；区间×0.9/×1.1 为上下界整体缩放。主回测含体检重锚定，扰动对比固定参数仅供敏感性参考。</div>';
+      el.innerHTML = h;
+    },
+    nameOf: function (code) {
+      var p = (window.WUFU_POOL || []).filter(function (x) { return x.code === code; })[0];
+      return p ? p.name : code;
     },
     renderParamsTable: function () {
       var self = this;
