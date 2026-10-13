@@ -582,7 +582,7 @@ footer b{color:#94A3B8}
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">适配度评分</span>
             <button type="button" id="gridScoreBtn" style="font-size:12px;padding:3px 12px">计算适配度评分</button>
-            <button type="button" id="gridScoreHelpBtn" style="font-size:12px;padding:3px 12px;border-color:#334155">评分标准</button>
+            <button type="button" id="gridScoreHelpBtn" style="font-size:12px;padding:3px 12px">评分标准</button>
             <span style="font-size:11px;color:#64748B">（评分触发行情加载）</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1098,7 +1098,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var D = gridData();
     var sArr = D.series[code];
     var cArr = sArr.close, hArr = sArr.high, lArr = sArr.low;
-    var lo = Math.max(0, i - GRID_LOOK + 1);
+    var lo = Math.max(0, i - volWin + 1);   // P10/P90 区间窗口跟随「波动统计区间」volWin（原固定 GRID_LOOK=250）
     var p10 = gridQuantile(cArr, lo, i, 0.10), p90 = gridQuantile(cArr, lo, i, 0.90);
     var cur = cArr[i];
     if (isNaN(p10) || isNaN(p90) || !(p90 > p10) || isMiss(cur)) return null;
