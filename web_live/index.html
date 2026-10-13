@@ -179,56 +179,23 @@ footer b{color:#94A3B8}
 </header>
 <div class="nav">
   <button type="button" id="tabCorr">相关性</button>
-  <button type="button" id="tabBacktest" class="on">回测</button>
+  <button type="button" id="tabRotation" class="on">轮动回测</button>
+  <button type="button" id="tabRebalance">再平衡回测</button>
   <button type="button" id="tabGrid">网格回测</button>
   <button type="button" id="tabStrategies">我的策略</button>
   <button type="button" id="tabCombo">策略组合</button>
   <button type="button" id="tabIc">因子IC</button>
   </div>
 <div id="pageErr" style="display:none;background:#3F1D1D;color:#FECACA;font-size:13px;padding:10px 16px;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box"></div>
-<div id="viewBacktest">
+<div id="viewRotation" style="display:none">
 <div id="step1">
-  <div class="s1card">
-    <h2>第一步：选择回测方式与标的</h2>
-    <div class="psec">
-      <h3>策略模式</h3>
-      <select id="modeSel" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
-        <option value="rotation">动量轮动（按因子排序持有排名区间）</option>
-        <option value="rebalance">比例再平衡（勾选标的按比例持有）</option>
-      </select>
-      <div style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">再平衡模式：勾选标的并填写各标的持有比例（%），调仓日按比例再平衡；不走动量筛选/择时；比例合计不足 100% 的部分自动买入货币ETF（511990）</div>
-    </div>
-    <div class="psec" id="psecRebW" style="display:none">
-      <h3>目标权重来源</h3>
-      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
-        <option value="fixed">比例（按标的池比例输入）</option>
-        <option value="inv_vol">逆波动率（近20日，低波多配）</option>
-        <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
-      </select>
-      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">比例：调仓日按标的池填写的比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，标的池比例输入不生效</div>
-    </div>
-    <div class="psec" id="psecPool">
-      <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
-        <button class="corr-mini" id="poolAll" type="button">全选</button>
-        <button class="corr-mini" id="poolNone" type="button">清空</button>
-      </div>
-      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
-      <div class="notice" id="survivorTip" style="display:none"></div>
-    </div>
-    <div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div>
-  </div>
+<div class="s1card">
+<h2>第一步：选择标的</h2>
+<div id="rotSh1Slot"></div>
+</div>
 </div>
 <div id="step2" style="display:none">
-<div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div>
-<div class="s2sel" id="selSummary" style="display:none"></div>
-<div class="wrap">
-  <aside id="panel">
-    <div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div>
-    <div class="pbody">
-      <div style="display:flex;justify-content:flex-end;margin:2px 0 4px"><button type="button" id="sfToggle" style="font-size:11px;padding:2px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;color:#94A3B8;cursor:pointer">展开全部</button></div>
-      <div class="sfold">
+<div id="rotOnlyStep2" style="display:none"><div class="sfold">
         <button type="button" class="sfold-h" data-g="fac"><b>② 因子与选股</b><span class="sf-a">点击展开</span></button>
         <div class="sfold-b hide" id="sfg-fac">
       <div class="psec" id="psecFactor">
@@ -341,12 +308,7 @@ footer b{color:#94A3B8}
         </div>
       </div>
         </div><!-- /因子与选股 -->
-      </div><!-- /sfold fac -->
-      <div class="sfold">
-        <button type="button" class="sfold-h" data-g="core"><b>① 交易参数</b><span class="sf-a">收起</span></button>
-        <div class="sfold-b" id="sfg-core">
-      <div class="psec">
-        <div id="topnRow">
+      </div><div class="psec"><div id="topnRow">
         <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
           第 <input id="rankNIn" type="number" min="1" max="60" step="1" value="1"
@@ -355,125 +317,7 @@ footer b{color:#94A3B8}
                style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
           名
         </div>
-        </div>
-        <h3 style="margin-top:10px">调仓周期 <span class="v" id="rebUnit"></span></h3>
-        <div class="chips" id="rebChips"></div>
-        <div class="chips" id="rebAnchorChips" style="margin-top:3px"></div>
-        <div class="row" style="margin-top:4px;font-size:12px;color:#64748B">每
-          <input id="rebIn" type="number" min="1" max="60" step="1" value="1"
-                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-          个单位
-        </div>
-        <h3 style="margin-top:10px">空闲资金配置
-          <select id="idleSel" style="width:45%;max-width:200px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-            <option value="cash" selected>空仓（不持有）</option>
-            <option value="gold">黄金ETF（518880）</option>
-            <option value="bond">国债ETF（511010）</option>
-            <option value="money">货币ETF（511990）</option>
-          </select>
-        </h3>
-        <h3 style="margin-top:10px">回测区间</h3>
-        <label class="row">起始日期
-          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row">结束日期
-          <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row" style="margin-top:4px"><input id="realPoolSw" type="checkbox" checked style="width:auto;margin:0"> <span>真实可得池 <span class="tip">按各标的上市日动态过滤，消除幸存者偏差（未上市标的早期不参与候选/排名）</span></span></label>
-      </div>
-      <div class="psec">
-        <h3>交易成本</h3>
-        <label class="row">佣金(单边,万分之) <span class="v" id="cmV" style="display:none">2.5</span>
-          <input id="cmIn" type="number" min="0" max="50" step="0.5" value="2.5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row">滑点(单边,bp) <span class="v" id="slV" style="display:none">5</span>
-          <input id="slIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row">最低佣金(元/笔) <span class="tip">ETF 常见 5 元；万1免5 可填 0.1，填 0 关闭</span>
-          <input id="minCmIn" type="number" min="0" max="100" step="0.1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row" style="margin-top:4px"><span>成本分档（按流动性调整滑点<span class="tip">开启后按标的近20日平均成交额分档：≥10亿→3bp / ≥1亿→5bp / ≥5000万→8bp / ≥1000万→15bp / 其余→30bp；关闭则用上方统一滑点</span>）</span><input id="tierSw" type="checkbox"></label>
-      </div>
-        </div><!-- /核心参数 -->
-      </div><!-- /sfold core -->
-      <div class="sfold">
-        <button type="button" class="sfold-h" data-g="exe"><b>③ 择时管理</b><span class="sf-a">点击展开</span></button>
-        <div class="sfold-b hide" id="sfg-exe">
-      <div class="psec" id="psecMt">
-        <h3>市场状态风控 <span class="tip">合并走弱期机制与大盘择时</span></h3>
-        <label class="row"><span>启用市场状态风控</span><input id="mmOn" type="checkbox"></label>
-        <label class="row"><span>触发模式</span>
-          <select id="mmModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827">
-            <option value="any" selected>任一跌破（默认）：任一指数跌破MA即看弱，全部站上才恢复</option>
-            <option value="all">全部跌破：全部跌破MA才看弱，任一站上即恢复</option>
-          </select>
-        </label>
-        <label class="row" style="margin-top:4px"><input id="mmSearchIn" type="text" placeholder="搜索状态判定指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">状态判定指数（可多选，分组折叠+搜索；未选择判定指数时风控不生效；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
-        <div class="chips" id="mmIdxChips"></div>
-        <label class="row">均线窗口(MA,日) <span class="v" id="mmWV" style="display:none">20</span>
-          <input id="mmWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row">连续跌破N日进入走弱 <span class="v" id="mmNV" style="display:none">3</span>
-          <input id="mmNIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row">连续站上N日恢复 <span class="v" id="mmMV" style="display:none">3</span>
-          <input id="mmMIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row"><span>避险动作</span>
-          <select id="mmActionSel" style="flex:1;min-width:0;max-width:250px">
-            <option value="cut">降至X%（降仓）</option>
-          </select>
-        </label>
-        <label class="row" id="mmCutRow">降至仓位(%) <span style="color:#64748B;font-weight:400">0=空仓(现金零息)</span> <span class="v" id="mmCV" style="display:none">50</span>
-          <input id="mmCutIn" type="number" min="0" max="100" step="5" value="50" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <label class="row"><span>走弱期内叠加标的均线过滤</span><input id="mmWeakMa" type="checkbox"></label>
-        <div style="font-size:11px;color:#64748B;margin:2px 0">连续跌破 N 日进入走弱：所选指数连续看弱 N 日才切换（1=即时，可覆盖旧大盘择时无迟滞行为）；避险动作：降至 X%（目标仓位整体×X%，0=空仓现金零息）。指数未发布日前不生效</div>
-        <div id="mmMigrateTip" style="display:none;font-size:11px;color:#F59E0B;margin:2px 0"></div>
-      </div>
-      <div class="psec" id="psecSt">
-        <h3>大盘择时·风格切换（相对强弱） <span class="tip">小盘 vs 大盘 N 日动量差</span></h3>
-        <label class="row"><span>启用风格切换</span><input id="stOn" type="checkbox"></label>
-        <label class="row"><span>小盘指数</span>
-          <select id="stSmallSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="000852.SH">中证1000 000852.SH</option></select>
-        </label>
-        <label class="row"><span>大盘指数</span>
-          <select id="stLargeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="000300.SH">沪深300 000300.SH</option></select>
-        </label>
-        <label class="row">动量窗口(日) <span class="v" id="stV" style="display:none">20</span>
-          <input id="stWinIn" type="number" min="5" max="120" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-        </label>
-        <div style="font-size:11px;color:#64748B;margin:2px 0">小盘动量强 → 候选剔除大盘风格组（偏小盘）；弱 → 剔除小盘风格组（偏大盘）。小盘组=中证1000/中证2000/万得微盘，大盘组=上证50/沪深300/深证100/富时A50/中证A50/A500</div>
-      </div>
-        </div><!-- /执行细节 -->
-      </div><!-- /sfold exe -->
-      <div class="sfold">
-        <button type="button" class="sfold-h" data-g="mgmt"><b>④ 策略与管理</b><span class="sf-a">点击展开</span></button>
-        <div class="sfold-b hide" id="sfg-mgmt">
-      <div class="psec">
-        <h3>策略管理 <span class="v" id="stCount">0 个</span></h3>
-        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
-          <input id="stName" type="text" placeholder="策略名，如：6因子月度"
-                 style="flex:2;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
-          <input id="stInvIn" type="number" min="1000" step="10000" value="1000000" title="保存策略时记录的投资额：卖出/买入金额与买入份额按此口径计算"
-                 style="flex:1;min-width:80px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
-          <button type="button" id="saveSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">保存</button>
-          <button type="button" id="exportSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出</button>
-          <button type="button" id="exportAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出全部</button>
-          <button type="button" id="importSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入</button>
-          <button type="button" id="importAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入全部</button>
-          <input id="impFile" type="file" accept=".json,application/json" style="display:none">
-          <input id="impAllFile" type="file" accept=".json,application/json" style="display:none">
-        </div>
-        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
-          <select id="stList" style="flex:2;min-width:120px;font-size:12px;padding:3px 4px;border:1px solid #334155;border-radius:4px"></select>
-          <button type="button" id="loadSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">加载</button>
-          <button type="button" id="renSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">重命名</button>
-          <button type="button" id="delSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">删除</button>
-        </div>
-      </div>
-      <div class="psec" id="psecTune">
+        </div></div><div class="psec" id="psecTune">
         <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
         <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
@@ -524,20 +368,172 @@ footer b{color:#94A3B8}
           <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
           <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
         </div>
+      </div></div>
+<div id="rotSh2Slot"></div>
+</div>
+</div>
+<div id="viewRebalance" style="display:none">
+<div id="step1">
+<div class="s1card">
+<h2>第一步：选择标的与目标权重</h2>
+<div class="psec" id="psecRebW">
+      <h3>目标权重来源</h3>
+      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+        <option value="fixed">比例（按标的池比例输入）</option>
+        <option value="inv_vol">逆波动率（近20日，低波多配）</option>
+        <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
+      </select>
+      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">比例：调仓日按标的池填写的比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，标的池比例输入不生效</div>
+    </div>
+<div id="rebSh1Slot"></div>
+</div>
+</div>
+<div id="step2" style="display:none">
+<div id="rebSh2Slot"></div>
+</div>
+</div>
+<div id="sharedCfg" style="display:none">
+<div id="sh1"><div class="psec" id="psecPool">
+      <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+        <button class="corr-mini" id="poolAll" type="button">全选</button>
+        <button class="corr-mini" id="poolNone" type="button">清空</button>
       </div>
+      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
+      <div class="notice" id="survivorTip" style="display:none"></div>
+    </div><div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div></div>
+<div id="sh2"><div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div><div class="s2sel" id="selSummary" style="display:none"></div><div class="wrap">
+<aside id="panel"><div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div><div class="sfold">
+        <button type="button" class="sfold-h" data-g="core"><b>① 交易参数</b><span class="sf-a">收起</span></button>
+        <div class="sfold-b" id="sfg-core">
+      <div class="psec">
+        
+        <h3 style="margin-top:10px">调仓周期 <span class="v" id="rebUnit"></span></h3>
+        <div class="chips" id="rebChips"></div>
+        <div class="chips" id="rebAnchorChips" style="margin-top:3px"></div>
+        <div class="row" style="margin-top:4px;font-size:12px;color:#64748B">每
+          <input id="rebIn" type="number" min="1" max="60" step="1" value="1"
+                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          个单位
+        </div>
+        <h3 style="margin-top:10px">空闲资金配置
+          <select id="idleSel" style="width:45%;max-width:200px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+            <option value="cash" selected>空仓（不持有）</option>
+            <option value="gold">黄金ETF（518880）</option>
+            <option value="bond">国债ETF（511010）</option>
+            <option value="money">货币ETF（511990）</option>
+          </select>
+        </h3>
+        <h3 style="margin-top:10px">回测区间</h3>
+        <label class="row">起始日期
+          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">结束日期
+          <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row" style="margin-top:4px"><input id="realPoolSw" type="checkbox" checked style="width:auto;margin:0"> <span>真实可得池 <span class="tip">按各标的上市日动态过滤，消除幸存者偏差（未上市标的早期不参与候选/排名）</span></span></label>
+      </div>
+      <div class="psec">
+        <h3>交易成本</h3>
+        <label class="row">佣金(单边,万分之) <span class="v" id="cmV" style="display:none">2.5</span>
+          <input id="cmIn" type="number" min="0" max="50" step="0.5" value="2.5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">滑点(单边,bp) <span class="v" id="slV" style="display:none">5</span>
+          <input id="slIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">最低佣金(元/笔) <span class="tip">ETF 常见 5 元；万1免5 可填 0.1，填 0 关闭</span>
+          <input id="minCmIn" type="number" min="0" max="100" step="0.1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row" style="margin-top:4px"><span>成本分档（按流动性调整滑点<span class="tip">开启后按标的近20日平均成交额分档：≥10亿→3bp / ≥1亿→5bp / ≥5000万→8bp / ≥1000万→15bp / 其余→30bp；关闭则用上方统一滑点</span>）</span><input id="tierSw" type="checkbox"></label>
+      </div>
+        </div><!-- /核心参数 -->
+      </div><div class="sfold">
+        <button type="button" class="sfold-h" data-g="exe"><b>③ 择时管理</b><span class="sf-a">点击展开</span></button>
+        <div class="sfold-b hide" id="sfg-exe">
+      <div class="psec" id="psecMt">
+        <h3>市场状态风控 <span class="tip">合并走弱期机制与大盘择时</span></h3>
+        <label class="row"><span>启用市场状态风控</span><input id="mmOn" type="checkbox"></label>
+        <label class="row"><span>触发模式</span>
+          <select id="mmModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827">
+            <option value="any" selected>任一跌破（默认）：任一指数跌破MA即看弱，全部站上才恢复</option>
+            <option value="all">全部跌破：全部跌破MA才看弱，任一站上即恢复</option>
+          </select>
+        </label>
+        <label class="row" style="margin-top:4px"><input id="mmSearchIn" type="text" placeholder="搜索状态判定指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
+        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">状态判定指数（可多选，分组折叠+搜索；未选择判定指数时风控不生效；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
+        <div class="chips" id="mmIdxChips"></div>
+        <label class="row">均线窗口(MA,日) <span class="v" id="mmWV" style="display:none">20</span>
+          <input id="mmWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">连续跌破N日进入走弱 <span class="v" id="mmNV" style="display:none">3</span>
+          <input id="mmNIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row">连续站上N日恢复 <span class="v" id="mmMV" style="display:none">3</span>
+          <input id="mmMIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row"><span>避险动作</span>
+          <select id="mmActionSel" style="flex:1;min-width:0;max-width:250px">
+            <option value="cut">降至X%（降仓）</option>
+          </select>
+        </label>
+        <label class="row" id="mmCutRow">降至仓位(%) <span style="color:#64748B;font-weight:400">0=空仓(现金零息)</span> <span class="v" id="mmCV" style="display:none">50</span>
+          <input id="mmCutIn" type="number" min="0" max="100" step="5" value="50" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <label class="row"><span>走弱期内叠加标的均线过滤</span><input id="mmWeakMa" type="checkbox"></label>
+        <div style="font-size:11px;color:#64748B;margin:2px 0">连续跌破 N 日进入走弱：所选指数连续看弱 N 日才切换（1=即时，可覆盖旧大盘择时无迟滞行为）；避险动作：降至 X%（目标仓位整体×X%，0=空仓现金零息）。指数未发布日前不生效</div>
+        <div id="mmMigrateTip" style="display:none;font-size:11px;color:#F59E0B;margin:2px 0"></div>
+      </div>
+      <div class="psec" id="psecSt">
+        <h3>大盘择时·风格切换（相对强弱） <span class="tip">小盘 vs 大盘 N 日动量差</span></h3>
+        <label class="row"><span>启用风格切换</span><input id="stOn" type="checkbox"></label>
+        <label class="row"><span>小盘指数</span>
+          <select id="stSmallSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="000852.SH">中证1000 000852.SH</option></select>
+        </label>
+        <label class="row"><span>大盘指数</span>
+          <select id="stLargeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="000300.SH">沪深300 000300.SH</option></select>
+        </label>
+        <label class="row">动量窗口(日) <span class="v" id="stV" style="display:none">20</span>
+          <input id="stWinIn" type="number" min="5" max="120" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        </label>
+        <div style="font-size:11px;color:#64748B;margin:2px 0">小盘动量强 → 候选剔除大盘风格组（偏小盘）；弱 → 剔除小盘风格组（偏大盘）。小盘组=中证1000/中证2000/万得微盘，大盘组=上证50/沪深300/深证100/富时A50/中证A50/A500</div>
+      </div>
+        </div><!-- /执行细节 -->
+      </div><div class="sfold">
+        <button type="button" class="sfold-h" data-g="mgmt"><b>④ 策略与管理</b><span class="sf-a">点击展开</span></button>
+        <div class="sfold-b hide" id="sfg-mgmt">
+      <div class="psec">
+        <h3>策略管理 <span class="v" id="stCount">0 个</span></h3>
+        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
+          <input id="stName" type="text" placeholder="策略名，如：6因子月度"
+                 style="flex:2;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
+          <input id="stInvIn" type="number" min="1000" step="10000" value="1000000" title="保存策略时记录的投资额：卖出/买入金额与买入份额按此口径计算"
+                 style="flex:1;min-width:80px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
+          <button type="button" id="saveSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">保存</button>
+          <button type="button" id="exportSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出</button>
+          <button type="button" id="exportAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出全部</button>
+          <button type="button" id="importSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入</button>
+          <button type="button" id="importAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入全部</button>
+          <input id="impFile" type="file" accept=".json,application/json" style="display:none">
+          <input id="impAllFile" type="file" accept=".json,application/json" style="display:none">
+        </div>
+        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
+          <select id="stList" style="flex:2;min-width:120px;font-size:12px;padding:3px 4px;border:1px solid #334155;border-radius:4px"></select>
+          <button type="button" id="loadSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">加载</button>
+          <button type="button" id="renSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">重命名</button>
+          <button type="button" id="delSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">删除</button>
+        </div>
+      </div>
+      
         </div><!-- /策略与管理 -->
-      </div><!-- /sfold mgmt -->
-      <div class="runbar">
+      </div><div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
         <div class="runbar2">
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8;white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden" title="自定义基准（默认沪深300全收益）">基准<select id="benchSel" style="flex:1;min-width:0;max-width:100%;text-overflow:ellipsis;font-size:11px;padding:3px 4px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益</option></select></label>
           <span class="st" id="runState">就绪</span>
         </div>
-      </div>
-      <div class="notice" id="notice"></div>
-    </div>
-  </aside>
-  <main>
+      </div><div class="notice" id="notice"></div></aside>
+<main><main>
     <div class="kpis" id="kpis"></div>
     <div class="segwrap" id="segBox" style="display:none;margin:8px 0 0;font-size:12px;color:#CBD5E1;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:8px 12px;line-height:1.7">
       <div style="font-weight:600;margin-bottom:4px">样本内外分割 <span style="font-weight:400;color:#64748B" id="segTip"></span></div>
@@ -564,11 +560,10 @@ footer b{color:#94A3B8}
       <div class="card"><h2>调仓记录 <span class="n" id="tradeCount"></span><span class="n">（卖出/买入金额按策略管理区填写的投资额口径；买入份额按执行日未复权开盘价）</span></h2><div class="tblwrap"><table class="trades" id="tradeTable"><thead></thead><tbody></tbody></table></div></div>
     </div>
     <footer>策略口径：多因子动量（涨幅/斜率动量/收益波动率/风险调整动量，逐因子截面z-score加权），筛选条件（R²阈值/涨幅/收益波动率等）由筛选面板配置、走弱期MA迟滞、海外池轮动、成本=佣金+滑点。<br><b>本系统仅用于策略研究与参数探索，历史回测不代表未来收益，不构成投资建议。</b></footer>
-  </main>
+  </main></main>
 </div>
 </div>
-</div>
-<div id="viewGrid" style="display:none">
+</div><div id="viewGrid" style="display:none">
   <div style="max-width:1280px;margin:0 auto;padding:14px">
     <div class="s1card">
       <h2>网格交易回测</h2>
@@ -1615,6 +1610,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 // ---------- 主回测 ----------
   // D: 导出数据对象；params: 参数对象（见 README / UI）
   function backtest(D, params) {
+    // ---- 策略配置对象化：兼容 mode 字符串（老调用）与 strategy 配置对象（新 UI），行为等价 ----
+    var ST = (params.strategy && typeof params.strategy === "object") ? params.strategy : { mode: params.mode || "rotation" };
+    var isReb = ST.mode === "rebalance";
     // 稳健标准化辅助：与 numpy.percentile(linear)/median 同构（供截面 z-score 使用）
     function pctNp(sArr, p) {
       var n = sArr.length;
@@ -1636,7 +1634,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     // 空仓时持有标的（fallback）：非现金目标标的纳入数据/权重空间（不入候选池，仅作兜底持仓——即使未勾选也能持有）
     var idleMap0 = { cash: null, gold: "518880.SH", bond: "511010.SH", money: "511990.SH" };
     var idleC = idleMap0[params.fallback_when_no_signal] || null;
-    if (params.mode !== "rebalance" && idleC && codes.indexOf(idleC) < 0) codes = codes.concat([idleC]);
+    if (!isReb && idleC && codes.indexOf(idleC) < 0) codes = codes.concat([idleC]);
     var scoreFloor = +(params.score_floor) || 0;
     var ann = params.annualize_factor || 252;
     var costPerSide = params.commission_rate + params.slippage_rate;
@@ -2291,7 +2289,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         // 3) 避险动作：cut=目标仓位整体×X% / cash=候选清空（空仓零收益/货币兜底语义不变） / switch=候选换入自定义避险池
         var REGIME_SINCE = params.regime_since || { "index_000510.SH": "2024-09-23" };
         var mmAction = "normal";
-        if (params.mm_on && params.mode !== "rebalance") {   // 再平衡模式不适用风控/择时
+        if (params.mm_on && !isReb) {   // 再平衡模式不适用风控/择时
           var mmW = Math.max(1, +(params.mm_window) || 20);
           var mmCs = params.mm_bench;
           if (Object.prototype.toString.call(mmCs) !== "[object Array]" || !mmCs.length) mmCs = [];
@@ -2420,7 +2418,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
         var wNew2 = new Array(nAssets).fill(0);
         var holding = [];
-        if (params.mode === "rebalance") {
+        if (isReb) {
           // 再平衡：比例（reb_weights）或 动态权重（inv_vol/risk_parity，按决策日数据算目标权重再平衡）
           var rwM = params.reb_weights || {};
           var rwm2 = params.reb_weight_mode || "fixed";
@@ -2852,11 +2850,11 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   var charts = {};
 
   // ---------- 标的池渲染（第一步：仅用 POOL 元信息，无需行情数据） ----------
-  var poolChecked = {}, onlyRot = {};      // 全局勾选状态（跨步骤/跨重建保留）
-  POOL.forEach(function (p) { poolChecked[p.code] = false; onlyRot[p.code] = false; });   // 初始全不勾选：由用户按需选择
-  var stMode = "rotation";                 // rotation | rebalance
+  var poolChecked = {}, onlyRot = {}, rebalanceChecked = {};   // 轮动/再平衡视图各自独立勾选状态
+  POOL.forEach(function (p) { poolChecked[p.code] = false; rebalanceChecked[p.code] = false; onlyRot[p.code] = false; });
+  var activeView = "rotation";             // rotation | rebalance（视图路由）
   var rebW = {};                           // 再平衡模式：code -> 用户手填比例（%），未手填用等权
-  function checkedCodes() { return POOL.filter(function (p) { return poolChecked[p.code]; }); }
+  function checkedCodes() { var cm = activeView === "rebalance" ? rebalanceChecked : poolChecked; return POOL.filter(function (p) { return cm[p.code]; }); }
   function wFor(code, n) { var v = rebW[code]; return (v !== undefined && v >= 0) ? v : 0; }
   function syncWIn() {
     POOL.forEach(function (p) {
@@ -2877,24 +2875,23 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       (Math.abs(s - 100) > 0.01 ? (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") : "");
   }
   function applyModeUI() {
-    var isReb = stMode === "rebalance";
-    ["psecFactor", "psecFilter", "psecRank", "topnRow", "psecBuyAdd", "psecSell", "psecHold", "psecRebW", "psecTune"].forEach(function (id) {
-      var el = $(id); if (el) el.style.display = isReb ? (id === "psecRebW" ? "" : "none") : (id === "psecRebW" ? "none" : "");
-    });
-    // 参数稳健性检查仅对排名因子有意义：再平衡模式隐藏
+    // 视图拆分后：轮动/再平衡面板已物理分离，此处仅处理共享块内按视图切换的显隐
+    var isReb = activeView === "rebalance";
     var robw = $("robwrap"); if (robw) robw.style.display = isReb ? "none" : "";
-    // ③择时管理（市场状态风控）不适用再平衡模式：整块隐藏，切回动量恢复
-    var exeB = $("sfg-exe"); if (exeB) exeB.style.display = isReb ? "none" : "";
     if (isReb) { var rb = $("robBox"); if (rb) rb.style.display = "none"; }
+    var cic = $("cICCard"); if (cic) cic.style.display = isReb ? "none" : "";
+    // ③择时管理（市场状态风控）不适用再平衡模式：整块隐藏，切回轮动恢复
+    var exeB = $("sfg-exe"); if (exeB) exeB.style.display = isReb ? "none" : "";
     var dyn = isReb && $("rebWeightMode") && $("rebWeightMode").value !== "fixed";
-    Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = (isReb && !dyn) ? "flex" : "none"; });
-    Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = isReb ? "none" : ""; });
+    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = (isReb && !dyn) ? "flex" : "none"; });
+    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = isReb ? "none" : ""; });
     var ws = $("wSum"); if (ws) ws.style.display = (isReb && !dyn) ? "" : "none";
     if (isReb && !dyn) { syncWIn(); updateWSum(); }
   }
 
   var poolBox = $("poolBox");
   function renderPool() {
+  var cm = activeView === "rebalance" ? rebalanceChecked : poolChecked;
   poolBox.innerHTML = "";
   var kw = ($("poolSearch").value || "").trim().toLowerCase();
   var groups = [], frag = document.createDocumentFragment();
@@ -2913,12 +2910,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     head.className = "corr-grp";
     head.innerHTML = '<input type="checkbox" style="margin:0;accent-color:var(--acc);cursor:pointer">' + g + " (" + items.length + "只)";
     var allOn = true, anyOn = false;
-    for (var ai1 = 0; ai1 < allItems.length; ai1++) { if (!poolChecked[allItems[ai1].code]) allOn = false; else anyOn = true; }
+    for (var ai1 = 0; ai1 < allItems.length; ai1++) { if (!cm[allItems[ai1].code]) allOn = false; else anyOn = true; }
     head.querySelector("input").checked = allOn;
     head.querySelector("input").indeterminate = anyOn && !allOn;
     head.querySelector("input").addEventListener("change", function () {
       var on = this.checked;
-      allItems.forEach(function (p) { poolChecked[p.code] = on; });
+      allItems.forEach(function (p) { cm[p.code] = on; });
       // 同步本组已渲染子项的勾选状态（大类级联）
       Array.prototype.forEach.call(poolBox.querySelectorAll(".pick"), function (cb) {
         var c = cb.getAttribute("data-c");
@@ -2927,7 +2924,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         if (hit) cb.checked = on;
       });
       updatePoolCount();
-      if (stMode === "rebalance") { updateWSum(); }
+      if (activeView === "rebalance") { updateWSum(); }
       if (D) scheduleRun();
     });
     frag.appendChild(head);
@@ -2939,14 +2936,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         '<span class="corr-nm">' + p.name + "</span><span class='corr-cd'>" + p.code + "</span>" +
         "<label class='rot'><input type='checkbox' class='rotc'>仅轮动</label>" +
         "<label class='wlab'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;text-align:right'>%</label>";
-      if (poolChecked[p.code]) l.querySelector(".pick").checked = true;
+      if (cm[p.code]) l.querySelector(".pick").checked = true;
       if (onlyRot[p.code]) l.querySelector(".rotc").checked = true;
       var wv0 = rebW[p.code];
       if (wv0 !== undefined && wv0 >= 0) l.querySelector(".wIn").value = wv0;
       l.querySelector(".pick").addEventListener("change", function () {
-        poolChecked[p.code] = this.checked;
+        cm[p.code] = this.checked;
         updatePoolCount();
-        if (stMode === "rebalance") { updateWSum(); }
+        if (activeView === "rebalance") { updateWSum(); }
         if (D) scheduleRun();
       });
       l.querySelector(".rotc").addEventListener("change", function () {
@@ -2962,20 +2959,20 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     });
   });
   poolBox.appendChild(frag);
-  if (stMode === "rebalance") { syncWIn(); updateWSum(); }
+  if (activeView === "rebalance") { syncWIn(); updateWSum(); }
   }
   if ($("poolSearch")) {
     $("poolSearch").addEventListener("input", function () { renderPool(); });
     $("poolAll").addEventListener("click", function () {
-      POOL.forEach(function (p) { poolChecked[p.code] = true; });
+      POOL.forEach(function (p) { cm[p.code] = true; });
       renderPool(); updatePoolCount();
-      if (stMode === "rebalance") { updateWSum(); }
+      if (activeView === "rebalance") { updateWSum(); }
       if (D) scheduleRun();
     });
     $("poolNone").addEventListener("click", function () {
-      POOL.forEach(function (p) { poolChecked[p.code] = false; });
+      POOL.forEach(function (p) { cm[p.code] = false; });
       renderPool(); updatePoolCount();
-      if (stMode === "rebalance") { updateWSum(); }
+      if (activeView === "rebalance") { updateWSum(); }
       if (D) scheduleRun();
     });
   }
@@ -3875,8 +3872,9 @@ function buildChips() {
   // ---------- 参数收集 ----------
   function getParams() {
     var codes = [], onlyRotCodes = [];
+    var cmG = activeView === "rebalance" ? rebalanceChecked : poolChecked;
     (D ? D.pool : POOL).forEach(function (p) {   // D 未解析（第一步）时用全局池元信息
-      if (poolChecked[p.code]) codes.push(p.code);
+      if (cmG[p.code]) codes.push(p.code);
       if (onlyRot[p.code]) onlyRotCodes.push(p.code);
     });
     return {
@@ -3913,7 +3911,7 @@ function buildChips() {
         if (c.type === "factor") return { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
         return { type: c.type, value: c.value };
       }),
-      mode: $("modeSel") ? $("modeSel").value : "rotation",
+      mode: activeView === "rebalance" ? "rebalance" : "rotation",
       reb_weights: (function () {
         var o = {}, n = checkedCodes().length;
         checkedCodes().forEach(function (p) { o[p.code] = Math.round(wFor(p.code, n) * 100) / 10000; });
@@ -3998,12 +3996,13 @@ function buildChips() {
     // 标的池（只更新数据层，随后 renderPool() 重建界面，保证大类回显/子项勾选一致）
     var want = p.codes || [];
     var wantRot = p.only_rotation_codes || [];
+    // 策略类型路由：先切视图（轮动/再平衡），再写各自独立勾选状态
+    if (p.mode === "rebalance" || p.mode === "rotation") showView(p.mode === "rebalance" ? "rebalance" : "rotation");
+    var cmA = activeView === "rebalance" ? rebalanceChecked : poolChecked;
     (D ? D.pool : POOL).forEach(function (it) {
-      poolChecked[it.code] = want.indexOf(it.code) >= 0;
+      cmA[it.code] = want.indexOf(it.code) >= 0;
       onlyRot[it.code] = wantRot.indexOf(it.code) >= 0;
     });
-    // 策略模式 + 再平衡权重回填
-    if ($("modeSel")) { stMode = $("modeSel").value = p.mode || "rotation"; }
     rebW = {};
     var rw = p.reb_weights || {};
     Object.keys(rw).forEach(function (c) { rebW[c] = Math.round(rw[c] * 10000) / 100; });
@@ -4030,9 +4029,11 @@ function buildChips() {
                      op: ft.op, threshold: ft.threshold, usage: "filter", weight: 0 });
     });
     if (droppedPremium) showNotice("旧策略中的溢价率因子已下线（净值数据不全），已自动剔除");
-    renderMfLib();
-    renderMfList();
-    renderFltList();
+    if (activeView === "rotation") {
+      renderMfLib();
+      renderMfList();
+      renderFltList();
+    }
     if ($("stdSel")) { $("stdSel").value = p.standardize || "robust"; }
     updateStdSel();
     var rn = $("rankNIn"), rm = $("rankMIn");
@@ -4717,12 +4718,13 @@ function buildChips() {
     if (!m[stCurName]) return;
     ensureData(function () {
       applyParams(m[stCurName]);
-      $("step1").style.display = "none";
-      $("step2").style.display = "";
+      stepTo(2);
+      moveRotOnly(activeView);
+      renderSelSummary();
       scheduleRun();
       $("stDetail").style.display = "none";
       showNotice("已应用策略参数并回测：" + stCurName);
-      location.hash = "#/backtest";
+      try { history.replaceState(null, "", "#/" + (activeView === "rebalance" ? "rebalance" : "rotation")); } catch (e) { }
     });
   });
   $("stRefresh").addEventListener("click", function () { renderStrategyList(); showNotice("列表已刷新：" + Object.keys(loadStored()).length + " 个策略"); });
@@ -5082,39 +5084,111 @@ function buildChips() {
     });
   }
 
-  // ---------- 启动：第一步（仅标的池元信息，秒开） ----------
-  renderPool();
-  applyModeUI();
-  updatePoolCount();
-  var ms = $("modeSel");
-  if (ms) ms.addEventListener("change", function () {
-    stMode = this.value;
+  // ---------- 视图路由与共享步骤切换 ----------
+  function curChecked() { return activeView === "rebalance" ? rebalanceChecked : poolChecked; }
+  function moveRotOnly(v) {
+    var ro = $("rotOnlyStep2"); if (!ro) return;
+    if (v === "rotation") {
+      var panel = $("panel"), core = $("sfg-core");
+      if (panel && ro.parentNode !== panel) {
+        // 目标锚点必须在 panel 内（拆分/重渲染时序下可能不在）：含判断 + appendChild 兜底
+        if (core && core.parentNode === panel) panel.insertBefore(ro, core);
+        else panel.appendChild(ro);
+      }
+      ro.style.display = "";
+    } else { ro.style.display = "none"; }
+  }
+  function switchView(v) {
+    var target = (v === "rebalance") ? "rebalance" : "rotation";
+    var changed = activeView !== target;
+    activeView = target;
+    var sh1 = $("sh1"), sh2 = $("sh2");
+    var s1 = activeView === "rebalance" ? $("rebSh1Slot") : $("rotSh1Slot");
+    var s2 = activeView === "rebalance" ? $("rebSh2Slot") : $("rotSh2Slot");
+    if (sh1 && s1 && sh1.parentNode !== s1) s1.appendChild(sh1);
+    if (sh2 && s2 && sh2.parentNode !== s2) s2.appendChild(sh2);
+    // 仅视图真正切换时重置到第一步；同视图内（boot/goNext 流程）保持当前步骤
+    if (changed) {
+      stepTo(1);
+      moveRotOnly(activeView);
+    }
     applyModeUI();
-    if (D) scheduleRun();
-  });
-  $("nextBtn").addEventListener("click", function () {
+    setFoldByMode();
+    renderPool();
+    updatePoolCount();
+    renderSelSummary();
+  }
+  function stepTo(n) {
+    // 当前视图 step1/step2 双层容器切换（slot 的父级=step，外加 sharedCfg 的 sh1/sh2）
+    var s1 = activeView === "rebalance" ? $("rebSh1Slot") : $("rotSh1Slot");
+    var s2 = activeView === "rebalance" ? $("rebSh2Slot") : $("rotSh2Slot");
+    var p1 = s1 ? s1.parentElement : null, p2 = s2 ? s2.parentElement : null;
+    var sh1 = $("sh1"), sh2 = $("sh2");
+    if (n === 2) {
+      if (p1) p1.style.display = "none";
+      if (p2) p2.style.display = "";
+      if (sh1) sh1.style.display = "none";
+      if (sh2) sh2.style.display = "";
+    } else {
+      if (p1) p1.style.display = "";
+      if (p2) p2.style.display = "none";
+      if (sh1) sh1.style.display = "";
+      if (sh2) sh2.style.display = "none";
+    }
+  }
+  function goNext() {
     var nb = $("nextBtn");
     nb.disabled = true; nb.textContent = "正在加载行情数据并回测…";
     setTimeout(function () {
       ensureData(function () {
-        $("step1").style.display = "none";
-        $("step2").style.display = "";
+        stepTo(2);
+        moveRotOnly(activeView);
         renderSelSummary();
         window.scrollTo(0, 0);
         boot();
       });
       nb.disabled = false; nb.textContent = "下一步 · 开始回测";
     }, 30);
-  });
-  $("backBtn").addEventListener("click", function () {
+  }
+  function goBack() {
     var nb2 = $("nextBtn");
     nb2.disabled = false; nb2.textContent = "下一步 · 开始回测";
-    $("step2").style.display = "none";
-    $("step1").style.display = "";
+    stepTo(1);
     renderPool();
     applyModeUI();
     updatePoolCount();
-  });
+  }
+
+  // 折叠标题按视图显隐：再平衡视图参数少无需折叠（隐藏标题、全部展开）；轮动视图恢复折叠状态
+  window.setFoldByMode = function () {
+    var reb = activeView === "rebalance";
+    var hsEls = document.querySelectorAll(".sfold-h");
+    for (var a = 0; a < hsEls.length; a++) hsEls[a].style.display = reb ? "none" : "";
+    var togEl = document.getElementById("sfToggle");
+    if (togEl) togEl.style.display = reb ? "none" : "";
+    var bs = document.querySelectorAll(".sfold-b");
+    for (var c = 0; c < bs.length; c++) bs[c].classList.remove("hide");
+    if (!reb) {
+      var hh = localStorage.getItem("sf_grp");
+      var openGrps = (hh === null) ? "fac" : hh.split(",").filter(function (x) { return x !== "exe"; }).join(",");
+      ["fac", "core", "exe", "mgmt"].forEach(function (g) {
+        var b = document.getElementById("sfg-" + g);
+        if (!b) return;
+        var open = openGrps.indexOf(g) >= 0;
+        if (open) b.classList.remove("hide"); else b.classList.add("hide");
+        var a2 = document.querySelector('.sfold-h[data-g="' + g + '"] .sf-a');
+        if (a2) a2.textContent = open ? "收起" : "点击展开";
+      });
+    }
+  };
+
+  // ---------- 启动：默认轮动视图（仅标的池元信息，秒开） ----------
+  var vrInit = $("viewRotation"); if (vrInit) vrInit.style.display = "";
+  var trInit = $("tabRotation"); if (trInit) trInit.className = "on";
+  switchView("rotation");
+  var sh1Init = $("sh1"); if (sh1Init) sh1Init.style.display = "";
+  $("nextBtn").addEventListener("click", goNext);
+  $("backBtn").addEventListener("click", goBack);
 
   function renderSelSummary() {
     var el = $("selSummary");
@@ -5129,18 +5203,21 @@ function buildChips() {
   // ---------- 第二步：解析行情数据后初始化完整界面并回测 ----------
   // ---------- 四视图导航（回测 / 已保存策略 / 相关性 / 策略组合） ----------
   function showView(v) {
-    $("viewBacktest").style.display = v === "backtest" ? "" : "none";
+    $("viewRotation").style.display = v === "rotation" ? "" : "none";
+    $("viewRebalance").style.display = v === "rebalance" ? "" : "none";
     $("viewGrid").style.display = v === "grid" ? "" : "none";
     $("viewStrategies").style.display = v === "strategies" ? "" : "none";
     $("viewCorr").style.display = v === "correlation" ? "" : "none";
     $("viewCombo").style.display = v === "combo" ? "" : "none";
     $("viewIc").style.display = v === "ic" ? "" : "none";
-    $("tabBacktest").className = v === "backtest" ? "on" : "";
+    $("tabRotation").className = v === "rotation" ? "on" : "";
+    $("tabRebalance").className = v === "rebalance" ? "on" : "";
     $("tabGrid").className = v === "grid" ? "on" : "";
     $("tabStrategies").className = v === "strategies" ? "on" : "";
     $("tabCorr").className = v === "correlation" ? "on" : "";
     $("tabCombo").className = v === "combo" ? "on" : "";
     $("tabIc").className = v === "ic" ? "on" : "";
+    if (v === "rotation" || v === "rebalance") switchView(v);
     if (v === "strategies") renderStrategyList();
     if (v === "grid" && window.GridView) GridView.render();
     if (v === "correlation" && window.CorrView) CorrView.render();
@@ -5149,14 +5226,17 @@ function buildChips() {
   }
   function hashView() {
     var h = location.hash || "";
+    if (h.indexOf("rotation") >= 0) return "rotation";
+    if (h.indexOf("rebalance") >= 0 || h.indexOf("backtest") >= 0) return "rebalance";
     if (h.indexOf("grid") >= 0 || h.indexOf("wangge") >= 0) return "grid";
     if (h.indexOf("strategies") >= 0) return "strategies";
     if (h.indexOf("correlation") >= 0 || h.indexOf("corr") >= 0) return "correlation";
     if (h.indexOf("combo") >= 0) return "combo";
     if (h.indexOf("ic") >= 0 || h.indexOf("factor") >= 0) return "ic";
-    return "backtest";
+    return "rotation";
   }
-  $("tabBacktest").addEventListener("click", function () { location.hash = "#/backtest"; });
+  $("tabRotation").addEventListener("click", function () { location.hash = "#/rotation"; });
+  $("tabRebalance").addEventListener("click", function () { location.hash = "#/rebalance"; });
   $("tabGrid").addEventListener("click", function () { location.hash = "#/grid"; });
    var gsBtn = $("gridSaveBtn");
    if (gsBtn) gsBtn.addEventListener("click", function () { if (window.GridView) GridView.gridSave(); });
@@ -5980,18 +6060,8 @@ function buildChips() {
       localStorage.setItem("sf_grp", H);
       apply();
     });
-    // 再平衡模式参数少、无需折叠：隐藏折叠标题、全部展开（还原平铺效果）
-    var msEl = document.getElementById("modeSel");
-    function setFoldByMode() {
-      var reb = msEl && msEl.value === "rebalance";
-      var hsEls = document.querySelectorAll(".sfold-h");
-      for (var a = 0; a < hsEls.length; a++) hsEls[a].style.display = reb ? "none" : "";
-      if (tog) tog.style.display = reb ? "none" : "";
-      var bs = document.querySelectorAll(".sfold-b");
-      for (var c = 0; c < bs.length; c++) bs[c].classList.remove("hide");
-      if (!reb) apply();
-    }
-    if (msEl) { msEl.addEventListener("change", setFoldByMode); setFoldByMode(); }
+    // setFoldByMode 已提升到 js_ui 顶层（window.setFoldByMode），此处仅初始化调用
+    setFoldByMode();
   })();
   // 行情数据懒加载：未进入第二步时（D=null）也可按需解析（策略详情/应用等）
   // 数据块为 gzip(base64) 内联（体积约减 63%），首屏不解析、不执行，进入第二步才解压
@@ -6019,6 +6089,7 @@ function buildChips() {
           D = JSON.parse(t);
           try { globalThis.D = D; } catch (e) { }
           if (D && D.pool) POOL = D.pool;   // 统一标的池：权威源=数据块，解析后全局池同步
+          _dataLoading = false;          // 复位解析锁：后续 ensureData 直接走 D 就绪分支（原实现漏复位导致二次调用排队卡死）
           var q = _dataWait; _dataWait = [];
           cb();
           q.forEach(function (f) { f(); });
