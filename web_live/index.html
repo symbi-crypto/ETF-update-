@@ -117,9 +117,9 @@ table.trades td.wk{color:#FBBF24} table.trades td.nm{color:var(--acc)}
 .tblwrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:8px}
 footer{color:var(--mut);font-size:11px;padding:14px 16px;text-align:center;line-height:1.7}
 footer b{color:#94A3B8}
-.nav{display:flex;gap:8px;padding:10px 16px 0;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav{display:flex;gap:5px;padding:10px 16px 0;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .nav::-webkit-scrollbar{display:none}
-.nav button{font-size:12px;padding:7px 10px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.nav button{font-size:11.5px;padding:6px 8px;flex:0 0 auto;white-space:nowrap;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer;white-space:nowrap;flex:0 0 auto}
 .nav button.on{background:var(--acc);color:#fff;font-weight:600}
 .slist{display:flex;flex-direction:column;gap:8px}
 .srow{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
@@ -190,8 +190,11 @@ footer b{color:#94A3B8}
 <div id="viewRotation" style="display:none">
 <div id="step1">
 <div class="s1card">
-<h2>第一步：因子与选择标的</h2>
-<div id="rotSh1Slot"><div class="sfold">
+<h2>第一步：选择标的</h2>
+<div id="rotSh1Slot"></div>
+</div>
+</div>
+<div id="step2" style="display:none"><div class="sfold">
         <button type="button" class="sfold-h" data-g="fac"><b>② 因子与选股</b><span class="sf-a">点击展开</span></button>
         <div class="sfold-b hide" id="sfg-fac">
       <div class="psec" id="psecFactor">
@@ -304,10 +307,7 @@ footer b{color:#94A3B8}
         </div>
       </div>
         </div><!-- /因子与选股 -->
-      </div></div>
-</div>
-</div>
-<div id="step2" style="display:none">
+      </div>
 <div id="rotOnlyStep2" style="display:none"><div class="psec"><div id="topnRow">
         <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
@@ -5220,6 +5220,9 @@ function buildChips() {
     $("tabCorr").className = v === "correlation" ? "on" : "";
     $("tabCombo").className = v === "combo" ? "on" : "";
     $("tabIc").className = v === "ic" ? "on" : "";
+    var svMap = { rotation: "tabRotation", rebalance: "tabRebalance", grid: "tabGrid", strategies: "tabStrategies", correlation: "tabCorr", combo: "tabCombo", ic: "tabIc" };
+    var svTab = svMap[v] ? $(svMap[v]) : null;
+    if (svTab && svTab.scrollIntoView) { try { svTab.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) { svTab.scrollIntoView(); } }
     if (v === "rotation" || v === "rebalance") switchView(v);
     if (v === "strategies") renderStrategyList();
     if (v === "grid" && window.GridView) GridView.render();
