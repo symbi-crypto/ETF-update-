@@ -586,6 +586,13 @@ footer b{color:#94A3B8}
             <span style="font-size:11px;color:#64748B">（评分触发行情加载）</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">流动性门槛</span>
+            <label style="font-size:12px;color:#CBD5E1;cursor:pointer;margin:0"><input type="radio" name="gridLiqMode" value="auto" checked style="margin:0 3px 0 0;accent-color:#F59E0B">按资金自动（推荐）</label>
+            <label style="font-size:12px;color:#CBD5E1;cursor:pointer;margin:0"><input type="radio" name="gridLiqMode" value="fixed" style="margin:0 3px 0 0;accent-color:#F59E0B">固定值</label>
+            <input id="gridLiqFixed" type="number" value="5000" style="width:64px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;display:none">
+            <span id="gridLiqHint" style="font-size:11px;color:#94A3B8">自动=单格金额×200（总金额÷标的数×40）折算；60日成交额P10≥门槛</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">组合标的数 Top N</span>
             <input id="gridTopN" type="number" min="1" max="20" value="10" style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
             <span style="font-size:11px;color:#64748B">（底仓资金=总金额÷组合标的数，均分）</span>
@@ -661,13 +668,6 @@ footer b{color:#94A3B8}
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#CBD5E1">投资总金额</span>
           <input id="gridCapital" type="number" value="1000000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-        </div>
-        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1">流动性门槛</span>
-          <label style="font-size:12px;color:#CBD5E1;cursor:pointer;margin:0"><input type="radio" name="gridLiqMode" value="auto" checked style="margin:0 3px 0 0;accent-color:#F59E0B">按资金自动（推荐）</label>
-          <label style="font-size:12px;color:#CBD5E1;cursor:pointer;margin:0"><input type="radio" name="gridLiqMode" value="fixed" style="margin:0 3px 0 0;accent-color:#F59E0B">固定值</label>
-          <input id="gridLiqFixed" type="number" value="5000" style="width:70px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;display:none">
-          <span id="gridLiqHint" style="font-size:11px;color:#94A3B8">自动 = 单格金额×200（总金额÷标的数×40）折算，60日成交额P10≥门槛</span>
         </div>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#CBD5E1">佣金率</span>
