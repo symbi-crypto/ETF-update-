@@ -661,6 +661,15 @@ footer b{color:#94A3B8}
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#CBD5E1">投资总金额</span>
           <input id="gridCapital" type="number" value="1000000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#CBD5E1">流动性门槛</span>
+          <label style="font-size:12px;color:#CBD5E1;cursor:pointer;margin:0"><input type="radio" name="gridLiqMode" value="auto" checked style="margin:0 3px 0 0;accent-color:#F59E0B">按资金自动（推荐）</label>
+          <label style="font-size:12px;color:#CBD5E1;cursor:pointer;margin:0"><input type="radio" name="gridLiqMode" value="fixed" style="margin:0 3px 0 0;accent-color:#F59E0B">固定值</label>
+          <input id="gridLiqFixed" type="number" value="5000" style="width:70px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;display:none">
+          <span id="gridLiqHint" style="font-size:11px;color:#94A3B8">自动 = 单格金额×200（总金额÷标的数×40）折算，60日成交额P10≥门槛</span>
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#CBD5E1">佣金率</span>
           <input id="gridComm" type="number" step="0.0001" value="0.00025" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
           <span style="font-size:12px;color:#CBD5E1">滑点</span>
@@ -1058,7 +1067,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   // ---------- 网格适配度评分（加权：震荡度30 / 波动空间25 / 区间覆盖20 / 触发频率15 / 成本流动性10；硬门槛：波动<8%或>55%、上市<250天剔除） ----------
   var GRID_LOOK = 250;
   var GRID_T0 = /^(511|513|518)/;   // 货币/债券/海外/黄金类 T+0，流动性加分
-  function gridScore(code, i) {
+  function gridScore(code, i, opts) {
+    // opts: { invest, topN, liqMode("auto"|"fixed"), liqFixed } —— 流动性门槛可配置；未传回退固定 5000 万
     var D = gridData();
     var sArr = D.series[code];
     var cArr = sArr.close, hArr = sArr.high, lArr = sArr.low, aArr = sArr.amount;
@@ -1071,17 +1081,17 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     if (vol < 0.08 || vol > 0.55) { out.gate.push(vol < 0.08 ? "波动<8%" : "波动>55%"); out.parts.vol = 0; return out; }
     var er20 = gridER(cArr, i, 20), er60 = gridER(cArr, i, 60), erM = (er20 + er60) / 2;
     var adx = gridADX(hArr, lArr, cArr, i, 14);
+    if (adx > 40) { out.gate.push("ADX>40 趋势过强"); out.adx = adx; return out; }   // ADX14 > 40 强制剔除
     var mom20 = Math.abs(cArr[i] / cArr[i - 20] - 1) * 100;
     var sEr = Math.max(0, Math.min(100, (1 - erM) * 100));
-    var sAdx = isNaN(adx) ? 40 : Math.max(0, Math.min(100, 100 - adx * 2.5));
+    var sAdx = isNaN(adx) ? 40 : Math.max(0, Math.min(100, 100 - adx * 4));   // ADX>25 归 0 分
     var sMom = Math.max(0, Math.min(100, 100 - mom20 * 12));
     var osc = 0.34 * sEr + 0.33 * sAdx + 0.33 * sMom;
     var vP;
     if (vol >= 0.15 && vol <= 0.30) vP = 100;
-    else if (vol >= 0.10 && vol < 0.15) vP = 40 + (vol - 0.10) / 0.05 * 60;
-    else if (vol > 0.30 && vol <= 0.40) vP = 100 - (vol - 0.30) / 0.10 * 60;
-    else if (vol < 0.10) vP = Math.max(0, (vol - 0.08) / 0.02 * 40);
-    else vP = Math.max(0, (0.55 - vol) / 0.15 * 40);
+    else if (vol >= 0.10 && vol < 0.15) vP = (vol - 0.10) / 0.05 * 100;
+    else if (vol > 0.30 && vol <= 0.45) vP = (0.45 - vol) / 0.15 * 100;
+    else vP = 0;   // <10% 或 >45% 归 0 分
     var p10 = gridQuantile(cArr, lo, i, 0.10), p90 = gridQuantile(cArr, lo, i, 0.90);
     var cov = 0;
     if (p90 > p10) { for (j = lo; j <= i; j++) if (!isMiss(cArr[j]) && cArr[j] >= p10 && cArr[j] <= p90) cov++; cov = cov / valid * 100; }
@@ -1099,13 +1109,19 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var perY = cross / valid * 252;
     var sTr = perY >= 15 && perY <= 60 ? 100 : (perY < 15 ? Math.max(0, perY / 15 * 100) : Math.max(0, 100 - (perY - 60) / 40 * 100));
     var amtAvg = gridMean(aArr, lo, i) / 10000;
-    // 流动性改为硬门槛：近250日日均成交额 < 0.5 亿直接剔除
-    if (amtAvg < 0.5) { out.gate.push("流动性<5000万"); out.parts.liq = amtAvg; out.amtAvg = amtAvg; return out; }
-    // 权重重分配（流动性 10% 按比例摊给四项）：震荡 32% / 波动 27% / 区间 22% / 触发 19%
-    var t0b = GRID_T0.test(code) ? 5 : 0;   // 511/513/518 开头 T+0 加分（独立加分项）
-    var score = 0.32 * osc + 0.27 * vP + 0.22 * cov + 0.19 * sTr + t0b;
-    if (score > 100) score = 100;
-    out.score = score; out.parts = { osc: osc, vol: vP, cov: cov, trig: sTr, liq: amtAvg, t0b: t0b, erM: erM, sEr: sEr, sAdx: sAdx, sMom: sMom, perY: perY };
+    // 流动性硬门槛（可配置）：近60日成交额 P10 分位（万元）；auto=投资总金额÷组合标的数×40（单格金额×200 折算）；fixed=固定值（默认5000万）
+    var liqP10 = gridQuantile(aArr, Math.max(0, i - 59), i, 0.10);   // amount 单位=万元，P10 直接为万元
+    var liqThr;
+    if (opts && opts.liqMode === "auto" && opts.invest > 0 && opts.topN > 0) liqThr = (opts.invest / opts.topN * 40) / 10000;
+    else liqThr = (opts && opts.liqFixed > 0) ? opts.liqFixed : 5000;
+    if (liqP10 < liqThr) {
+      out.gate.push("流动性<门槛(" + (liqThr >= 10000 ? (liqThr / 10000) + "亿" : Math.round(liqThr) + "万") + ")");
+      out.parts.liqP10 = liqP10; out.liqThr = liqThr; out.amtAvg = amtAvg;
+      return out;
+    }
+    // 定稿权重均分：0.25×四维（已删除 T+0 加分）
+    var score = 0.25 * (osc + vP + cov + sTr);
+    out.score = score; out.parts = { osc: osc, vol: vP, cov: cov, trig: sTr, liqP10: liqP10, liqThr: liqThr, erM: erM, sEr: sEr, sAdx: sAdx, sMom: sMom, perY: perY };
     out.adx = adx; out.er = erM; out.mom20 = mom20; out.amtAvg = amtAvg;
     return out;
   }
@@ -1161,6 +1177,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var periodN = Math.max(1, params.period_n || 12), unitD = gridUnitDays(params.period_unit || "周");
     var periodDays = periodN * unitD;
     var volWin = Math.max(20, +params.vol_win || 60);
+    var liqMode = params.liq_mode || "auto";           // 流动性门槛：auto=按资金自动 / fixed=固定值
+    var liqFixed = params.liq_fixed > 0 ? +params.liq_fixed : 5000;
     var TOPN = topN;   // 组合规模恒定（Top N），体检退出后补位回到 N
     // 剩余资金兜底：实际参与标的数 K < 组合标的数时，剩余资金按选项买入兜底标的长期持有（空仓则现金零收益）
     var idleMapG = { cash: null, gold: "518880.SH", bond: "511010.SH", money: "511990.SH" };
@@ -1292,7 +1310,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       if (isPeriodEnd) {
         codes.forEach(function (c2) {
           var s = st[c2]; if (!s || !s.active || s.pos <= 0) return;
-          var sc = gridScore(c2, ii);
+          var sc = gridScore(c2, ii, { invest: invest, topN: topN, liqMode: liqMode, liqFixed: liqFixed });
           var vol2 = sc.vol, adx2 = sc.adx, er2 = sc.er, perY = sc.parts.perY;
           var ok = !sc.gate.length && sc.score >= 60 && vol2 >= 0.10 && vol2 <= 0.50 && er2 < 0.45 && perY >= 15;
           if (adx2 > 25 && lastADX[c2] > 25) ok = false;
@@ -1358,7 +1376,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             if (!/^[0-9]{6}\.(SH|SZ)$/.test(pc3)) continue;   // 只补真实 ETF，排除指数类（如 8841431.WI）
             if (codes.indexOf(pc3) >= 0 && st[pc3] && st[pc3].active && st[pc3].pos > 0) continue;
             if (st[pc3] && st[pc3].active && (st[pc3]._exit || st[pc3].sellOnly)) continue;   // 仅 active 标的尊重退出状态；inactive 可重新入选
-            var sc3 = gridScore(pc3, ii);
+            var sc3 = gridScore(pc3, ii, { invest: invest, topN: topN, liqMode: liqMode, liqFixed: liqFixed });
             if (!sc3.gate.length && sc3.score >= 60) scored.push({ code: pc3, score: sc3.score });
           }
           scored.sort(function (a, b) { return b.score - a.score; });
@@ -5297,6 +5315,15 @@ function buildChips() {
         vW.addEventListener("input", function () { clearTimeout(vT); vT = setTimeout(function () { self.applyVolWin(); }, 500); });
         vW.addEventListener("change", function () { clearTimeout(vT); self.applyVolWin(); });
       }
+      Array.prototype.forEach.call(document.querySelectorAll('input[name=gridLiqMode]'), function (r) {
+        r.addEventListener("change", function () {
+          var fixed = document.querySelector('input[name=gridLiqMode]:checked').value === "fixed";
+          var fEl = $("gridLiqFixed");
+          if (fEl) fEl.style.display = fixed ? "" : "none";
+          var hEl = $("gridLiqHint");
+          if (hEl) hEl.textContent = fixed ? "固定值（万元）：60日成交额P10 >= 门槛" : "自动 = 单格金额×200（总金额÷标的数×40）折算，60日成交额P10>=门槛";
+        });
+      });
       var tN2 = $("gridTopN"); if (tN2) tN2.addEventListener("change", function () {
         if (D && self.allScores) { self.computeScores(); showNotice("组合标的数已改为 " + this.value + "：底仓均分与剩余资金已重算"); }
         else showNotice("组合标的数已改为 " + this.value + "（请先计算适配度评分后生效）");
@@ -5398,8 +5425,11 @@ function buildChips() {
       var volWin = Math.max(20, +($("gridVolWin").value) || 60);
       var invest = Math.max(1, +($("gridCapital").value) || 1000000);
       // 全池评分（供列表标注/过滤），Top N 只取勾选中合格的
+      var lmEl = document.querySelector('input[name=gridLiqMode]:checked');
+      var liqMode = lmEl ? lmEl.value : "auto";
+      var liqFixed = $("gridLiqFixed") ? Math.max(0, +($("gridLiqFixed").value) || 5000) : 5000;
       var all = {};
-      POOL.forEach(function (p) { all[p.code] = WufuEngine.gridScore(p.code, i); });
+      POOL.forEach(function (p) { all[p.code] = WufuEngine.gridScore(p.code, i, { invest: invest, topN: n, liqMode: liqMode, liqFixed: liqFixed }); });
       self.allScores = all;
       self.allParams = {};
       var scores = sel.map(function (p) { return all[p.code]; })
@@ -5411,7 +5441,7 @@ function buildChips() {
       var perCode = invest / Math.max(1, n);
       this.lastParams = {};
       var html = '<table class="trades" style="width:100%"><thead><tr>' +
-        "<th>代码</th><th>名称</th><th>综合分</th><th>震荡度</th><th>波动空间</th><th>区间覆盖</th><th>触发频率</th><th>日均额</th><th>年化波动</th><th>ADX</th><th>ER</th><th>年触发</th></tr></thead><tbody>";
+        "<th>代码</th><th>名称</th><th>综合分</th><th>震荡度</th><th>波动空间</th><th>区间覆盖</th><th>触发频率</th><th>60日P10</th><th>年化波动</th><th>ADX</th><th>ER</th><th>年触发</th></tr></thead><tbody>";
       top.forEach(function (s) {
         var p0 = WufuEngine.gridParams(s.code, i, perCode, costRt, volWin);
         self.lastParams[s.code] = p0;
@@ -5419,7 +5449,7 @@ function buildChips() {
         var warns = p0 && p0.warns ? p0.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
         html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td><td data-label='综合分' style='color:#60A5FA;font-weight:600'>" + s.score.toFixed(1) +
           "</td><td data-label='震荡度'>" + s.parts.osc.toFixed(0) + "</td><td data-label='波动空间'>" + s.parts.vol.toFixed(0) + "</td><td data-label='区间覆盖'>" + s.parts.cov.toFixed(0) +
-          "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='流动性'>" + (s.parts.liq !== undefined ? s.parts.liq.toFixed(1) + "亿" : "-") + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
+          "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='流动性'>" + (s.parts.liqP10 !== undefined ? (s.parts.liqP10 >= 10000 ? (s.parts.liqP10 / 10000).toFixed(1) + "亿" : s.parts.liqP10.toFixed(0) + "万") : "-") + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
           "%</td><td data-label='ADX'>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td data-label='ER'>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td data-label='年触发'>" +
           (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#94A3B8;font-size:11px'>" +
           "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
@@ -5436,13 +5466,13 @@ function buildChips() {
       var el = $("gridScoreTable"); if (!el || !self.lastScores || !self.lastScores.length) return;
       var top = self.lastScores, thr = self.thr || 60;
       var html = '<table class="trades" style="width:100%"><thead><tr>' +
-        "<th>代码</th><th>名称</th><th>综合分</th><th>震荡度</th><th>波动空间</th><th>区间覆盖</th><th>触发频率</th><th>日均额</th><th>年化波动</th><th>ADX</th><th>ER</th><th>年触发</th></tr></thead><tbody>";
+        "<th>代码</th><th>名称</th><th>综合分</th><th>震荡度</th><th>波动空间</th><th>区间覆盖</th><th>触发频率</th><th>60日P10</th><th>年化波动</th><th>ADX</th><th>ER</th><th>年触发</th></tr></thead><tbody>";
       top.forEach(function (s) {
         var p0 = self.lastParams[s.code];
         var warns = p0 && p0.warns ? p0.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
         html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td><td data-label='综合分' style='color:#60A5FA;font-weight:600'>" + s.score.toFixed(1) +
           "</td><td data-label='震荡度'>" + s.parts.osc.toFixed(0) + "</td><td data-label='波动空间'>" + s.parts.vol.toFixed(0) + "</td><td data-label='区间覆盖'>" + s.parts.cov.toFixed(0) +
-          "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='流动性'>" + (s.parts.liq !== undefined ? s.parts.liq.toFixed(1) + "亿" : "-") + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
+          "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='流动性'>" + (s.parts.liqP10 !== undefined ? (s.parts.liqP10 >= 10000 ? (s.parts.liqP10 / 10000).toFixed(1) + "亿" : s.parts.liqP10.toFixed(0) + "万") : "-") + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
           "%</td><td data-label='ADX'>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td data-label='ER'>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td data-label='年触发'>" +
           (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#94A3B8;font-size:11px'>" +
           (p0 ? "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
@@ -5492,7 +5522,8 @@ function buildChips() {
         codes: cfg.codes, initial_capital: cfg.settings.capital,
         mgmt: cfg.settings.mgmt, period_n: cfg.settings.period_n, period_unit: cfg.settings.period_unit,
         commission_rate: cfg.settings.comm, slippage_rate: cfg.settings.slip, min_commission: cfg.settings.min_comm,
-        vol_win: cfg.vol_win, top_n: cfg.top_n, idle_buy: cfg.idle_buy, gridOverrides: cfg.overrides
+        vol_win: cfg.vol_win, top_n: cfg.top_n, idle_buy: cfg.idle_buy, gridOverrides: cfg.overrides,
+        liq_mode: cfg.liq_mode, liq_fixed: cfg.liq_fixed
       };
       setTimeout(function () {
         try {
@@ -5638,6 +5669,8 @@ function buildChips() {
         vol_win: Math.max(20, +($("gridVolWin").value) || 60),
         top_n: Math.max(1, +($("gridTopN").value) || codes.length),
         idle_buy: $("gridIdleSel") ? $("gridIdleSel").value : "cash",
+        liq_mode: (document.querySelector('input[name=gridLiqMode]:checked') || {}).value || "auto",
+        liq_fixed: $("gridLiqFixed") ? Math.max(0, +($("gridLiqFixed").value) || 5000) : 5000,
         gridOverrides: overrides
       };
       var stEl = $("gridRunState"); stEl.textContent = "计算中…";
@@ -5780,6 +5813,8 @@ function buildChips() {
         idle_buy: $("gridIdleSel") ? $("gridIdleSel").value : "cash",
         overrides: self.lastParams || {},
         vol_win: Math.max(20, +($("gridVolWin").value) || 60),
+        liq_mode: (document.querySelector('input[name=gridLiqMode]:checked') || {}).value || "auto",
+        liq_fixed: $("gridLiqFixed") ? Math.max(0, +($("gridLiqFixed").value) || 5000) : 5000,
         settings: {
           period_n: Math.max(1, +($("gridPeriodN").value) || 12),
           period_unit: $("gridPeriodUnit") ? $("gridPeriodUnit").value : "周",
@@ -7342,25 +7377,22 @@ function buildChips() {
     <div style="padding:12px 16px 16px;font-size:12.5px;color:#CBD5E1;line-height:1.7">
       <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-bottom:10px">
         <b style="color:#F59E0B">硬门槛（任一不满足直接剔除）</b><br>
-        上市 ≥ 250 个交易日 ｜ 年化波动率 8% ~ 55% ｜ 日均成交额 ≥ 5000 万（近250日平均）
+        上市 ≥ 250 个交易日 ｜ 年化波动率 8% ~ 55% ｜ ADX14 ≤ 40（&gt;40 趋势过强剔除）｜ 流动性：近60日成交额 P10 ≥ 门槛（门槛=按资金自动「单格金额×200」或固定值，默认 5000 万，可配置）
       </div>
       <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-bottom:10px">
         <b style="color:#38BDF8">四维权重与公式</b>
         <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12px">
           <thead><tr style="color:#94A3B8;text-align:left"><th style="padding:5px 6px;border-bottom:1px solid #334155;width:22%">维度</th><th style="padding:5px 6px;border-bottom:1px solid #334155;width:10%">权重</th><th style="padding:5px 6px;border-bottom:1px solid #334155;width:68%">公式（引擎口径）</th></tr></thead>
           <tbody>
-            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">① 震荡度</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">32%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">0.34×效率比率分 + 0.33×ADX分 + 0.33×动量分<br>效率比率分 = (1 − ER20/60均值) × 100；ADX分 = 100 − ADX14×2.5；动量分 = 100 − |20日涨幅|×12</td></tr>
-            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">② 波动空间</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">27%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">年化波动率 15%~30% 满分100；10%~15% 线性升至100；30%~40% 线性降至40；&lt;10% 或 &gt;40% 低分</td></tr>
-            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">③ 区间覆盖</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">22%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">近250日收盘价落在 P10~P90 区间内的天数占比 × 100</td></tr>
-            <tr><td style="padding:5px 6px">④ 触发频率</td><td style="padding:5px 6px">19%</td><td style="padding:5px 6px">按 5% 线性格距的年穿越次数：15~60 次/年 满分；&lt;15 按比例降；&gt;60 线性降</td></tr>
+            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">① 震荡度</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">25%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">0.34×效率比率分 + 0.33×ADX分 + 0.33×动量分<br>效率比率分 = (1 − ER20/60均值) × 100；ADX分 = 100 − ADX14×4（ADX&gt;25 归 0 分）；动量分 = 100 − |20日涨幅|×12</td></tr>
+            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">② 波动空间</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">25%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">年化波动率 15%~30% 满分100；10%~15% 线性升至100；30%~45% 线性降至0；&lt;10% 或 &gt;45% 归 0 分</td></tr>
+            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">③ 区间覆盖</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">25%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">近250日收盘价落在 P10~P90 区间内的天数占比 × 100</td></tr>
+            <tr><td style="padding:5px 6px">④ 触发频率</td><td style="padding:5px 6px">25%</td><td style="padding:5px 6px">按 5% 线性格距的年穿越次数：15~60 次/年 满分；&lt;15 按比例降；&gt;60 线性降</td></tr>
           </tbody>
         </table>
       </div>
-      <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-bottom:10px">
-        <b style="color:#34D399">T+0 加分</b>：代码以 511 / 513 / 518 开头（货币/债券/海外/黄金类）总分 +5 分
-      </div>
       <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px">
-        <b style="color:#A78BFA">综合分公式</b>：0.32×震荡度 + 0.27×波动空间 + 0.22×区间覆盖 + 0.19×触发频率（T+0 标的 +5），满分 100 封顶
+        <b style="color:#A78BFA">综合分公式</b>：0.25×震荡度 + 0.25×波动空间 + 0.25×区间覆盖 + 0.25×触发频率（权重均分；已删除 T+0 加分）
       </div>
     </div>
   </div>
