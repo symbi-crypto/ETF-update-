@@ -1685,13 +1685,24 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     // 回测起点（日历已在导出时截断到 end_date）
     var startPos = 0;
     while (startPos < n && cal[startPos] < params.start_date) startPos++;
+    // 预热起点 = 策略保存时的起始日期（_warm_start）：warmStartPos~startPos 段只算指标/因子、不出交易、不进入净值
+    var warmStartPos = 0;
+    var warmStartDate = params.warm_start || params._warm_start;   // 兼容新参数名与保存固化字段
+    if (warmStartDate) { while (warmStartPos < n && cal[warmStartPos] < warmStartDate) warmStartPos++; }
+    else warmStartPos = startPos;
     var warmup = 40;
     // P2-10：预热按 needOf(f) 校验（ma_vs_ma_lag 需 max(w1, w2+w3)），避免前期用不完整窗口
     (params.factors || []).forEach(function (f) { warmup = Math.max(warmup, needOf(f) || 20); });
     var endPos = n - 1;
     if (params.end_date) { while (endPos >= 0 && cal[endPos] > params.end_date) endPos--; }
-    if (startPos + warmup + 5 > endPos + 1) throw new Error("回测区间过短，无法完成动量预热");
-    if (endPos < startPos) throw new Error("结束日期早于起始日期");
+    if (startPos > endPos) {
+      if (startPos >= n) throw new Error("起始日期晚于最新行情日期（" + cal[n - 1] + "），请等待行情数据更新后重试");
+      throw new Error("结束日期早于起始日期");
+    }
+    // 预热段不足（未修改起始日期时 warmStartPos===startPos 恒成立）→ 保持原区间内预热逻辑与报错，行为与之前完全一致
+    if (warmStartPos + warmup > startPos) {
+      if (startPos + warmup + 5 > endPos + 1) throw new Error("回测区间过短，无法完成动量预热");
+    }
 
     // 序列
     var closes = {}, opens = {}, highs = {}, lows = {}, vols = {}, amts = {}, turnovers = {}, idxClose = {}, codeSet = {};
@@ -4062,6 +4073,7 @@ function buildChips() {
       var m = loadStored();
       var p = getParams();
       p._saved_at = new Date().toISOString();
+      p._warm_start = p.start_date;   // 固化预热起点 = 保存那一刻的起始日期（详情页改起始日期不影响预热段）
       m[name] = p;
       storeAll(m); refreshStList(); renderStrategyList();
       showNotice("策略已保存：" + name + "（本地存储按链接CDN域隔离，换链接/换设备请用「导出全部/导入全部」迁移）");
