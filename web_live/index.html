@@ -8,15 +8,15 @@
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
 :root{
-  --bg:#0F172A; --card:#111827; --line:#1E293B;
-  --ink:#E2E8F0; --mut:#94A3B8; --acc:#38BDF8; --acc2:#22D3EE;
-  --up:#F87171; --down:#34D399; --purple:#A78BFA; --gray:#64748B;
+  --bg:#1B2634; --card:#202E3F; --line:#243244;
+  --ink:#F1F5F9; --mut:#9FB0C3; --acc:#4FC3F7; --acc2:#22D3EE;
+  --up:#F87171; --down:#34D399; --purple:#A78BFA; --gray:#7C8DA1;
   --radius:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
-header{background:linear-gradient(135deg,#0F172A 0%,#0E7490 130%);color:#fff;padding:18px 24px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header{background:linear-gradient(135deg,#1B2634 0%,#0E7490 130%);color:#fff;padding:18px 24px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 header h1{font-size:20px;font-weight:700;letter-spacing:.5px}
 header h1 .fu{color:var(--acc2)}
 header .sub{font-size:12px;color:#BFDBFE;opacity:.9}
@@ -30,20 +30,20 @@ header .tag{margin-left:auto;font-size:11px;color:#A5F3FC;background:rgba(255,25
 #nextBtn:disabled{opacity:.6;cursor:wait}
 #nextBtn:hover:not(:disabled){opacity:.92}
 .s2top{display:flex;align-items:center;gap:12px;padding:10px 16px;max-width:1680px;margin:0 auto}
-#backBtn{font-size:12.5px;color:var(--acc);background:#111827;border:1px solid var(--line);border-radius:6px;padding:5px 14px;cursor:pointer}
-#backBtn:hover{background:#1E293B}
+#backBtn{font-size:12.5px;color:var(--acc);background:#202E3F;border:1px solid var(--line);border-radius:6px;padding:5px 14px;cursor:pointer}
+#backBtn:hover{background:#243244}
 .s2tip{font-size:12px;color:var(--mut)}
 .s2sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 16px;max-width:1680px;margin:0 auto;font-size:12px}
-.s2sel .sellab{color:#64748B;white-space:nowrap}
-.s2sel .seltag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid #1E293B;border-radius:4px;background:#111827;color:#E2E8F0}
-.s2sel .seltag i{font-style:normal;color:#64748B}
+.s2sel .sellab{color:#7C8DA1;white-space:nowrap}
+.s2sel .seltag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid #243244;border-radius:4px;background:#202E3F;color:#F1F5F9}
+.s2sel .seltag i{font-style:normal;color:#7C8DA1}
 @media (max-width:760px){#step1{padding:14px 10px}.s1card{padding:14px}}
 
 .trades td.fc, .trades th.fc{max-width:240px;white-space:normal;word-break:break-all;line-height:1.4}
 .trades td.fc span,.trades th.fc span{display:inline-block;margin-right:2px}
 /* ---------- 参数面板 ---------- */
 aside{width:400px;flex-shrink:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-aside .phead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:#1E293B}
+aside .phead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:#243244}
 aside .phead b{font-size:14px}
 aside .phead button{font-size:11px;color:var(--acc);background:none;border:none;cursor:pointer;padding:2px 4px}
 aside .phead button:hover{text-decoration:underline}
@@ -52,35 +52,35 @@ aside .phead button:hover{text-decoration:underline}
 .psec h3{font-size:12px;color:var(--mut);font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .psec h3 .v{color:var(--acc);font-weight:700;font-variant-numeric:tabular-nums}
 .sfold{border-bottom:1px solid var(--line)}
-.sfold-h{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0F172A;color:var(--mut);border:none;padding:9px 14px;font-size:12px;cursor:pointer;text-align:left;box-sizing:border-box}
-.sfold-h:hover{background:#111827}
-.sfold-h b{color:#CBD5E1;font-weight:600}
+.sfold-h{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#1B2634;color:var(--mut);border:none;padding:9px 14px;font-size:12px;cursor:pointer;text-align:left;box-sizing:border-box}
+.sfold-h:hover{background:#202E3F}
+.sfold-h b{color:#D8E2EF;font-weight:600}
 .sfold-h .sf-a{font-size:11px;color:var(--acc);white-space:nowrap}
 .sfold-b{padding:6px 0}
 .sfold-b.hide{display:none}
 label.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:7px;color:var(--ink)}
 input[type=number]{min-width:0;font-variant-numeric:tabular-nums}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chips button{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#111827;cursor:pointer;color:var(--ink);transition:all .15s}
+.chips button{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#202E3F;cursor:pointer;color:var(--ink);transition:all .15s}
 .chips button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .chips button:hover{border-color:var(--acc)}
-select{width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:#111827;color:var(--ink)}
-.grp{font-size:13px;margin:2px 0 6px;padding:5px 8px;background:#1E293B;border:1px solid var(--line);border-radius:7px}
+select{width:100%;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:#202E3F;color:var(--ink)}
+.grp{font-size:13px;margin:2px 0 6px;padding:5px 8px;background:#243244;border:1px solid var(--line);border-radius:7px}
 .grp .ghead{display:flex;align-items:center;gap:6px;margin-bottom:2px;font-weight:500}
 .grp .ghead span:first-child{min-width:16px}
-.grp .itm{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#CBD5E1;padding:1.5px 0}
+.grp .itm{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#D8E2EF;padding:1.5px 0}
 .grp .itm:hover{color:var(--acc)}
 .grp .itm .pick{cursor:pointer}
-.grp .itm .rot{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;color:#94A3B8;white-space:nowrap;font-weight:400;cursor:pointer}
+.grp .itm .rot{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;color:#9FB0C3;white-space:nowrap;font-weight:400;cursor:pointer}
 .grp .itm .rot:hover{color:var(--acc)}
 .grp .itm input{accent-color:var(--acc)}
 .grp .itm .rot input{accent-color:#F59E0B;margin:0}
-.runbar{padding:12px 14px;background:#1E293B;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.runbar{padding:12px 14px;background:#243244;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;align-items:stretch}
 .runbar2{display:flex;gap:8px;align-items:center;min-width:0}
 .runbar button{flex:0 0 auto;min-width:96px;width:100%;padding:9px 12px;background:var(--acc);border:none;color:#fff;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;transition:filter .15s}
 .runbar button:hover{filter:brightness(1.1)}
 .runbar .st{font-size:11px;color:var(--mut);white-space:nowrap;flex:0 0 auto}
-.notice{font-size:11px;color:#FBBF24;background:#3A2A12;border-radius:6px;padding:4px 8px;margin-top:6px;display:none} #gridNotice{color:#93C5FD;background:#1E293B;border:1px solid #334155}
+.notice{font-size:11px;color:#FBBF24;background:#3A2A12;border-radius:6px;padding:4px 8px;margin-top:6px;display:none} #gridNotice{color:#93C5FD;background:#243244;border:1px solid #3E4E63}
 /* ---------- 结果区 ---------- */
 main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
@@ -90,17 +90,17 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
 .kpi .s{font-size:11px;color:var(--mut);margin-top:2px}
 #gridScoreTable th,#gridScoreTable td,#gridParamTable th,#gridParamTable td{white-space:nowrap;padding:5px 6px;font-size:11px}
 @media (max-width:640px){#gridScoreTable th,#gridScoreTable td,#gridParamTable th,#gridParamTable td{font-size:10px;padding:3px 4px}}
-    #viewGrid input,#viewGrid select,#viewGrid option{color:#E2E8F0}
-    #viewGrid input::placeholder{color:#64748B}
+    #viewGrid input,#viewGrid select,#viewGrid option{color:#F1F5F9}
+    #viewGrid input::placeholder{color:#7C8DA1}
     @media (max-width:640px){
       #gridScoreTable thead,#gridParamTable thead{display:none}
       #gridScoreTable,#gridParamTable,#gridScoreTable tbody,#gridParamTable tbody{display:block;width:100%}
-      #gridScoreTable tr,#gridParamTable tr{display:block;background:#111827;border:1px solid #1E293B;border-radius:8px;margin:8px 0;padding:5px 8px;white-space:normal}
-      #gridScoreTable td,#gridParamTable td{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;border:none;white-space:normal;font-size:11px;color:#CBD5E1}
-      #gridScoreTable td:before,#gridParamTable td:before{content:attr(data-label);color:#64748B;flex:0 0 auto;margin-right:8px;font-size:11px}
+      #gridScoreTable tr,#gridParamTable tr{display:block;background:#202E3F;border:1px solid #243244;border-radius:8px;margin:8px 0;padding:5px 8px;white-space:normal}
+      #gridScoreTable td,#gridParamTable td{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;border:none;white-space:normal;font-size:11px;color:#D8E2EF}
+      #gridScoreTable td:before,#gridParamTable td:before{content:attr(data-label);color:#7C8DA1;flex:0 0 auto;margin-right:8px;font-size:11px}
       #gridScoreTable td input,#gridParamTable td input{width:70%;min-width:0;background:#0B1220}
-      #gridScoreTable tr+tr td{display:block;border-top:1px dashed #1E293B;margin-top:3px;padding-top:4px}
-      #gridScoreTable tr+tr td:before{content:"参数推荐";color:#64748B;display:block;margin-bottom:2px}
+      #gridScoreTable tr+tr td{display:block;border-top:1px dashed #243244;margin-top:3px;padding-top:4px}
+      #gridScoreTable tr+tr td:before{content:"参数推荐";color:#7C8DA1;display:block;margin-bottom:2px}
     }
 .up{color:var(--up)} .down{color:var(--down)}
 .cards{display:flex;flex-direction:column;gap:16px}
@@ -112,11 +112,11 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
 .chart.short{height:240px}
 table.trades{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px}
 table.trades th,table.trades td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;white-space:normal;word-break:break-word;font-variant-numeric:tabular-nums;line-height:1.35}
-table.trades th{background:#1E293B;color:var(--mut);font-weight:500;position:sticky;top:0}
+table.trades th{background:#243244;color:var(--mut);font-weight:500;position:sticky;top:0}
 table.trades td.wk{color:#FBBF24} table.trades td.nm{color:var(--acc)}
 .tblwrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:8px}
 footer{color:var(--mut);font-size:11px;padding:14px 16px;text-align:center;line-height:1.7}
-footer b{color:#94A3B8}
+footer b{color:#9FB0C3}
 .nav{display:flex;gap:5px;padding:10px 16px 0;max-width:1280px;margin:0 auto;width:100%;box-sizing:border-box;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .nav::-webkit-scrollbar{display:none}
 .nav button{font-size:11.5px;padding:6px 8px;flex:0 0 auto;white-space:nowrap;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer;white-space:nowrap;flex:0 0 auto}
@@ -126,7 +126,7 @@ footer b{color:#94A3B8}
 .srow:hover{border-color:var(--acc)}
 .srow .nm{font-weight:700;font-size:14px;color:#F1F5F9;margin-bottom:4px}
 .srow .meta{font-size:12px;color:var(--mut);display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:4px}
-.srow .pos{font-size:12.5px;color:#CBD5E1}
+.srow .pos{font-size:12.5px;color:#D8E2EF}
 .srow .pos b{color:var(--acc)}
 .srow .pos .sell{color:var(--down)}
 .srow .pos .buy{color:var(--up)}
@@ -137,11 +137,11 @@ footer b{color:#94A3B8}
 .syear{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
 .syear th,.syear td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
 .syear th:first-child,.syear td:first-child{text-align:left}
-.syear th{background:#1E293B;color:var(--mut);font-weight:500}
+.syear th{background:#243244;color:var(--mut);font-weight:500}
 .syear td.up{color:var(--up)} .syear td.down{color:var(--down)}
 .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:4px;margin-top:8px}
 .mcell{font-size:11px;padding:6px 4px;border-radius:6px;text-align:center;color:#F1F5F9;font-variant-numeric:tabular-nums}
-.mcell .y{color:#64748B;font-size:10px;margin-bottom:2px}
+.mcell .y{color:#7C8DA1;font-size:10px;margin-bottom:2px}
 @media (max-width:1023px){
   .wrap{flex-direction:column;padding:10px}
   aside{width:100%}
@@ -153,22 +153,22 @@ footer b{color:#94A3B8}
   aside{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
 }
 /* ---------- 相关性视图 ---------- */
-.corr-mini{font-size:11px;color:#94A3B8;cursor:pointer;border:1px solid var(--line);border-radius:4px;padding:3px 8px;background:transparent}
+.corr-mini{font-size:11px;color:#9FB0C3;cursor:pointer;border:1px solid var(--line);border-radius:4px;padding:3px 8px;background:transparent}
 .corr-mini:hover{border-color:var(--acc);color:var(--acc)}
 .corr-grp{font-size:11px;color:var(--acc);grid-column:1/-1;margin-top:4px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:2px}
 .corr-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 4px;border-radius:4px}
-.corr-item:hover{background:#1E293B}
+.corr-item:hover{background:#243244}
 .corr-item input{margin:0;accent-color:var(--acc)}
 .corr-item .corr-nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.corr-item .corr-cd{font-size:10px;color:#64748B}
-.corr-item .rot{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;color:#94A3B8;white-space:nowrap;font-weight:400;cursor:pointer}
+.corr-item .corr-cd{font-size:10px;color:#7C8DA1}
+.corr-item .rot{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;color:#9FB0C3;white-space:nowrap;font-weight:400;cursor:pointer}
 .corr-item .rot:hover{color:var(--acc)}
 .corr-item .rot input{accent-color:#F59E0B;margin:0;cursor:pointer}
-.corr-item .wlab{display:none;align-items:center;gap:3px;white-space:nowrap;font-size:11px;color:#94A3B8}
-.corr-kpi{background:#0F172A;border:1px solid var(--line);border-radius:8px;padding:10px}
+.corr-item .wlab{display:none;align-items:center;gap:3px;white-space:nowrap;font-size:11px;color:#9FB0C3}
+.corr-kpi{background:#1B2634;border:1px solid var(--line);border-radius:8px;padding:10px}
 .corr-kpi .k{font-size:11px;color:var(--mut)}
 .corr-kpi .v{font-size:18px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
-.corr-kpi .s{font-size:10px;color:#94A3B8;margin-top:2px}
+.corr-kpi .s{font-size:10px;color:#9FB0C3;margin-top:2px}
 #corrResult table.trades td.low:first-child{color:#34D399}
 #corrResult table.trades td.c{text-align:right;font-variant-numeric:tabular-nums}
 @media (max-width:640px){ html,body{max-width:100%;overflow-x:hidden} }
@@ -206,18 +206,18 @@ footer b{color:#94A3B8}
 <h2>第一步：选择标的与目标权重</h2>
 <div class="psec" id="psecRebW">
       <h3>目标权重来源</h3>
-      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
         <option value="fixed" selected>比例（按标的池比例输入）</option>
         <option value="inv_vol">逆波动率（近20日，低波多配）</option>
         <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
       </select>
-      <div id="rebStyleBox" style="margin-top:6px;font-size:12px;color:#64748B">比例方式
-        <select id="rebStyleSel" style="width:62%;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+      <div id="rebStyleBox" style="margin-top:6px;font-size:12px;color:#7C8DA1">比例方式
+        <select id="rebStyleSel" style="width:62%;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
           <option value="equal" selected>等比例（所有标等权，不填比例）</option>
           <option value="custom">自定义比例（按标的池手填 %）</option>
         </select>
       </div>
-      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">比例：等比例=全部标的等权再平衡，自定义=调仓日按标的池手填比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，比例输入不生效</div>
+      <div id="rebWTip" style="font-size:11.5px;color:#9FB0C3;margin:4px 0 0">比例：等比例=全部标的等权再平衡，自定义=调仓日按标的池手填比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，比例输入不生效</div>
     </div>
 <div id="rebSh1Slot"></div>
 </div>
@@ -230,11 +230,11 @@ footer b{color:#94A3B8}
 <div id="sh1"><div class="psec" id="psecPool">
       <h3><span style="white-space:nowrap">标的池</span> <span class="v" id="poolCount" style="white-space:nowrap"></span><span class="v" id="wSum" style="display:none"></span></h3>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
         <button class="corr-mini" id="poolAll" type="button">全选</button>
         <button class="corr-mini" id="poolNone" type="button">清空</button>
       </div>
-      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
+      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:6px"></div>
       <div class="notice" id="survivorTip" style="display:none"></div>
     </div><div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div></div>
 <div id="sh2"><div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div><div class="s2sel" id="selSummary" style="display:none"></div><div class="wrap">
@@ -246,7 +246,7 @@ footer b{color:#94A3B8}
           <button type="button" id="factorHelpBtn" style="font-size:12px;padding:2px 10px;flex:0 0 auto">因子说明</button>
         </h3>
         <div id="mfBox" style="margin-top:2px">
-          <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">创建因子并选择归属：<b>排名</b> → 放入「排名条件」参与轮动打分；<b>筛选</b> → 放入「筛选条件」作为过滤条件（全部满足才进入候选池，先筛选后排序）。可添加基础因子，或用公式四则运算组合自定义因子（最少2个成分）。</div>
+          <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">创建因子并选择归属：<b>排名</b> → 放入「排名条件」参与轮动打分；<b>筛选</b> → 放入「筛选条件」作为过滤条件（全部满足才进入候选池，先筛选后排序）。可添加基础因子，或用公式四则运算组合自定义因子（最少2个成分）。</div>
           <div id="mfLibList"></div>
           <div class="row" style="display:flex;align-items:center;margin-top:6px;gap:6px">
             <select id="mfCat" style="width:110px;text-align:center;appearance:none;-webkit-appearance:none">
@@ -264,17 +264,17 @@ footer b{color:#94A3B8}
           </div>
           <div class="row" id="cfNameRow" style="display:none;align-items:center;margin-top:6px;gap:6px">
             <input id="cfName" type="text" placeholder="自定义因子名，如：动量增强"
-                   style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+                   style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           </div>
-          <div id="cfEditor" style="display:none;margin-top:6px;padding:8px;border:1px dashed #334155;border-radius:6px">
-            <div style="font-size:12px;color:#64748B;margin-bottom:4px">用公式组合现有因子（最少2个成分）：成分间用 + − × ÷ 连接，每项 系数×因子值；确认后按下拉选择放入排名或筛选。</div>
-            <select id="cfUsage" style="font-size:12px;margin-bottom:4px;width:120px;padding:2px;border:1px solid #334155;border-radius:4px">
+          <div id="cfEditor" style="display:none;margin-top:6px;padding:8px;border:1px dashed #3E4E63;border-radius:6px">
+            <div style="font-size:12px;color:#7C8DA1;margin-bottom:4px">用公式组合现有因子（最少2个成分）：成分间用 + − × ÷ 连接，每项 系数×因子值；确认后按下拉选择放入排名或筛选。</div>
+            <select id="cfUsage" style="font-size:12px;margin-bottom:4px;width:120px;padding:2px;border:1px solid #3E4E63;border-radius:4px">
               <option value="filter">放入筛选条件</option>
               <option value="rank">放入排名条件</option>
             </select>
             <div id="cfParts"></div>
             <button type="button" id="cfAddPart" style="margin-top:4px;font-size:12px">+ 添加成分</button>
-            <div id="cfFormula" style="font-size:12px;color:#CBD5E1;margin:6px 0;word-break:break-all"></div>
+            <div id="cfFormula" style="font-size:12px;color:#D8E2EF;margin:6px 0;word-break:break-all"></div>
             <div style="display:flex;gap:6px">
               <button type="button" id="cfOk" style="font-size:12px">确认添加</button>
               <button type="button" id="cfCancel" style="font-size:12px">取消</button>
@@ -285,17 +285,17 @@ footer b{color:#94A3B8}
       <div class="psec" id="psecFilter">
         <h3>筛选条件</h3>
         <div id="fltBox" style="margin-top:2px">
-          <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">筛选因子（全部满足才进入候选池；如 R²阈值、涨幅≥X、收益波动率≤Y）——在「因子管理」创建并归属为筛选，或在此直接调整阈值</div>
+          <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">筛选因子（全部满足才进入候选池；如 R²阈值、涨幅≥X、收益波动率≤Y）——在「因子管理」创建并归属为筛选，或在此直接调整阈值</div>
           <div id="fltList"></div>
         </div>
       </div>
       <div class="psec" id="psecRank">
         <h3>排名条件（轮动因子）</h3>
         <div id="mfBox2" style="margin-top:2px">
-          <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">排名因子（截面z-score加权合成得分排序；权重合计 <b id="mfSum">0.00</b>，建议=1）——在「因子管理」创建并归属为排名，或在此直接调整权重/方向</div>
+          <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">排名因子（截面z-score加权合成得分排序；权重合计 <b id="mfSum">0.00</b>，建议=1）——在「因子管理」创建并归属为排名，或在此直接调整权重/方向</div>
           <div class="row" style="display:flex;align-items:center;margin:2px 0 6px;gap:6px">
-            <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">因子标准化</span>
-            <select id="stdSel" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+            <span style="font-size:12px;color:#D8E2EF;white-space:nowrap">因子标准化</span>
+            <select id="stdSel" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
               <option value="robust" selected>Winsorize+Median/MAD（稳健）</option>
               <option value="zscore">标准z（均值/标准差）</option>
               <option value="rank">百分位Rank（截面名次0~1）</option>
@@ -307,7 +307,7 @@ footer b{color:#94A3B8}
       </div>
       <div class="psec" id="psecBuyAdd">
         <h3>买入附加条件 <span class="v" id="buyAddCount">0 个</span></h3>
-        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">排名完成后，标的还需满足全部买入附加条件才买入（不配置则按排名区间直接买入）</div>
+        <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">排名完成后，标的还需满足全部买入附加条件才买入（不配置则按排名区间直接买入）</div>
         <div id="buyAddList"></div>
         <div class="row" style="display:flex;align-items:center;margin-top:4px;gap:6px">
           <select id="buyAddKind" style="flex:1;min-width:0">
@@ -316,13 +316,13 @@ footer b{color:#94A3B8}
             <option value="cooldown">距上次卖出 ≥ N 天</option>
             <option value="factor">因子判断</option>
           </select>
-          <input id="buyAddVal" type="number" step="1" value="1" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="buyAddVal" type="number" step="1" value="1" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           <button type="button" id="buyAddBtn">添加</button>
         </div>
       </div>
       <div class="psec" id="psecSell">
         <h3>卖出条件 <span class="v" id="sellCount">0 个</span></h3>
-        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">标的本来未满足轮动卖出（未跌出排名区间），但满足任意卖出条件时卖出。<b>至少选择 1 个才能回测</b></div>
+        <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">标的本来未满足轮动卖出（未跌出排名区间），但满足任意卖出条件时卖出。<b>至少选择 1 个才能回测</b></div>
         <div id="sellList"></div>
         <div class="row" style="display:flex;align-items:center;margin-top:4px;gap:6px">
           <select id="sellKind" style="flex:1;min-width:0">
@@ -333,20 +333,20 @@ footer b{color:#94A3B8}
             <option value="high_dd">买入后最高点回撤 ≥ N%</option>
             <option value="factor">因子判断</option>
           </select>
-          <input id="sellVal" type="number" step="1" value="10" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="sellVal" type="number" step="1" value="10" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           <button type="button" id="sellBtn">添加</button>
         </div>
       </div>
       <div class="psec" id="psecHold">
         <h3>不卖条件 <span class="v" id="holdCount">0 个</span></h3>
-        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">标的本来满足轮动卖出条件，但满足任意不卖条件时不卖出（不配置则按轮动卖出）</div>
+        <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">标的本来满足轮动卖出条件，但满足任意不卖条件时不卖出（不配置则按轮动卖出）</div>
         <div id="holdList"></div>
         <div class="row" style="display:flex;align-items:center;margin-top:4px;gap:6px">
           <select id="holdKind" style="flex:1;min-width:0">
             <option value="hold_days">持有天数 ≤ N</option>
             <option value="factor">因子判断</option>
           </select>
-          <input id="holdVal" type="number" step="1" value="5" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="holdVal" type="number" step="1" value="5" style="width:60px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           <button type="button" id="holdBtn">添加</button>
         </div>
       </div>
@@ -356,57 +356,57 @@ footer b{color:#94A3B8}
         <div class="sfold-b" id="sfg-core">
       <div class="psec"><div id="topnRow">
         <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7C8DA1">
           第 <input id="rankNIn" type="number" min="1" max="60" step="1" value="1"
-               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           名 至 第 <input id="rankMIn" type="number" min="1" max="60" step="1" value="3"
-               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           名
         </div>
         </div></div>
       <div class="psec" id="rebSetPsec">
         <h3 style="margin-top:10px">调仓设置</h3>
-        <div style="font-size:11.5px;color:#94A3B8;margin:2px 0 4px">勾选调仓方式：周期决策日或实际权重偏离目标范围任一触发再平衡（按目标比例重新平衡，可都勾选）</div>
-        <div style="margin-top:4px;font-size:12px;color:#64748B;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;width:100%">
+        <div style="font-size:11.5px;color:#9FB0C3;margin:2px 0 4px">勾选调仓方式：周期决策日或实际权重偏离目标范围任一触发再平衡（按目标比例重新平衡，可都勾选）</div>
+        <div style="margin-top:4px;font-size:12px;color:#7C8DA1;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;width:100%">
           <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="rebPeriodOn" checked style="width:14px;height:14px;accent-color:#F59E0B">调仓周期</label>
           <span class="v" id="rebUnit"></span>
         </div>
         <div id="rebPeriodBox" style="margin-top:2px">
         <div class="chips" id="rebChips"></div>
         <div class="chips" id="rebAnchorChips" style="margin-top:3px"></div>
-        <div class="row" style="margin-top:4px;font-size:12px;color:#64748B">每
+        <div class="row" style="margin-top:4px;font-size:12px;color:#7C8DA1">每
           <input id="rebIn" type="number" min="1" max="60" step="1" value="1"
-                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           个单位
         </div>
         </div>
         <div id="rebBandBox" style="margin-top:2px">
-        <div class="row" style="margin-top:6px;font-size:12px;color:#64748B">
+        <div class="row" style="margin-top:6px;font-size:12px;color:#7C8DA1">
           <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="rebBandOn" checked style="width:14px;height:14px;accent-color:#F59E0B">偏离目标范围</label>
           <input id="rebDevIn" type="number" min="0" max="100" step="1" value="10"
-                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+                 style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
           %（任一标的目标权重偏离超该值触发再平衡）
         </div>
         </div>
         <h3 style="margin-top:10px">回测区间</h3>
         <label class="row">起始日期
-          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+          <input id="startSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row">结束日期
-          <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #334155;border-radius:4px">
+          <input id="endSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row" style="margin-top:4px"><input id="realPoolSw" type="checkbox" checked style="width:auto;margin:0"> <span>真实可得池 <span class="tip">按各标的上市日动态过滤，消除幸存者偏差（未上市标的早期不参与候选/排名）</span></span></label>
       </div>
       <div class="psec">
         <h3>交易成本</h3>
         <label class="row">佣金(单边,万分之) <span class="v" id="cmV" style="display:none">2.5</span>
-          <input id="cmIn" type="number" min="0" max="50" step="0.5" value="2.5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="cmIn" type="number" min="0" max="50" step="0.5" value="2.5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row">滑点(单边,bp) <span class="v" id="slV" style="display:none">5</span>
-          <input id="slIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="slIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row">最低佣金(元/笔) <span class="tip">ETF 常见 5 元；万1免5 可填 0.1，填 0 关闭</span>
-          <input id="minCmIn" type="number" min="0" max="100" step="0.1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="minCmIn" type="number" min="0" max="100" step="0.1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row" style="margin-top:4px"><span>成本分档（按流动性调整滑点<span class="tip">开启后按标的近20日平均成交额分档：≥10亿→3bp / ≥1亿→5bp / ≥5000万→8bp / ≥1000万→15bp / 其余→30bp；关闭则用上方统一滑点</span>）</span><input id="tierSw" type="checkbox"></label>
       </div>
@@ -418,48 +418,48 @@ footer b{color:#94A3B8}
         <h3>市场状态风控 <span class="tip">合并走弱期机制与大盘择时</span></h3>
         <label class="row"><span>启用市场状态风控</span><input id="mmOn" type="checkbox"></label>
         <label class="row"><span>触发模式</span>
-          <select id="mmModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827">
+          <select id="mmModeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #3E4E63;border-radius:4px;color:#F1F5F9;background:#202E3F">
             <option value="any" selected>任一跌破（默认）：任一指数跌破MA即看弱，全部站上才恢复</option>
             <option value="all">全部跌破：全部跌破MA才看弱，任一站上即恢复</option>
           </select>
         </label>
-        <label class="row" style="margin-top:4px"><input id="mmSearchIn" type="text" placeholder="搜索状态判定指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0"></label>
-        <div style="font-size:12px;color:#64748B;margin:4px 0 2px">状态判定指数（可多选，分组折叠+搜索；未选择判定指数时风控不生效；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
+        <label class="row" style="margin-top:4px"><input id="mmSearchIn" type="text" placeholder="搜索状态判定指数名称或代码（如 中证500 / 000905）" style="flex:1;min-width:0;font-size:12px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9"></label>
+        <div style="font-size:12px;color:#7C8DA1;margin:4px 0 2px">状态判定指数（可多选，分组折叠+搜索；未选择判定指数时风控不生效；各指数共用同一 MA 窗口；点击组标题折叠/展开）</div>
         <div class="chips" id="mmIdxChips"></div>
         <label class="row">均线窗口(MA,日) <span class="v" id="mmWV" style="display:none">20</span>
-          <input id="mmWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="mmWinIn" type="number" min="5" max="250" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row">连续跌破N日进入走弱 <span class="v" id="mmNV" style="display:none">3</span>
-          <input id="mmNIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="mmNIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row">连续站上N日恢复 <span class="v" id="mmMV" style="display:none">3</span>
-          <input id="mmMIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="mmMIn" type="number" min="1" max="60" step="1" value="3" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row"><span>避险动作</span>
           <select id="mmActionSel" style="flex:1;min-width:0;max-width:250px">
             <option value="cut">降至X%（降仓）</option>
           </select>
         </label>
-        <label class="row" id="mmCutRow">降至仓位(%) <span style="color:#64748B;font-weight:400">0=空仓(现金零息)</span> <span class="v" id="mmCV" style="display:none">50</span>
-          <input id="mmCutIn" type="number" min="0" max="100" step="5" value="50" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+        <label class="row" id="mmCutRow">降至仓位(%) <span style="color:#7C8DA1;font-weight:400">0=空仓(现金零息)</span> <span class="v" id="mmCV" style="display:none">50</span>
+          <input id="mmCutIn" type="number" min="0" max="100" step="5" value="50" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
         <label class="row"><span>走弱期内叠加标的均线过滤</span><input id="mmWeakMa" type="checkbox"></label>
-        <div style="font-size:11px;color:#64748B;margin:2px 0">连续跌破 N 日进入走弱：所选指数连续看弱 N 日才切换（1=即时，可覆盖旧大盘择时无迟滞行为）；避险动作：降至 X%（目标仓位整体×X%，0=空仓现金零息）。指数未发布日前不生效</div>
+        <div style="font-size:11px;color:#7C8DA1;margin:2px 0">连续跌破 N 日进入走弱：所选指数连续看弱 N 日才切换（1=即时，可覆盖旧大盘择时无迟滞行为）；避险动作：降至 X%（目标仓位整体×X%，0=空仓现金零息）。指数未发布日前不生效</div>
         <div id="mmMigrateTip" style="display:none;font-size:11px;color:#F59E0B;margin:2px 0"></div>
       </div>
       <div class="psec" id="psecSt">
         <h3>大盘择时·风格切换（相对强弱） <span class="tip">小盘 vs 大盘 N 日动量差</span></h3>
         <label class="row"><span>启用风格切换</span><input id="stOn" type="checkbox"></label>
         <label class="row"><span>小盘指数</span>
-          <select id="stSmallSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="000852.SH">中证1000 000852.SH</option></select>
+          <select id="stSmallSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #3E4E63;border-radius:4px;color:#F1F5F9;background:#202E3F"><option value="000852.SH">中证1000 000852.SH</option></select>
         </label>
         <label class="row"><span>大盘指数</span>
-          <select id="stLargeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="000300.SH">沪深300 000300.SH</option></select>
+          <select id="stLargeSel" style="flex:2;min-width:150px;font-size:12px;padding:3px 5px;border:1px solid #3E4E63;border-radius:4px;color:#F1F5F9;background:#202E3F"><option value="000300.SH">沪深300 000300.SH</option></select>
         </label>
         <label class="row">动量窗口(日) <span class="v" id="stV" style="display:none">20</span>
-          <input id="stWinIn" type="number" min="5" max="120" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          <input id="stWinIn" type="number" min="5" max="120" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
         </label>
-        <div style="font-size:11px;color:#64748B;margin:2px 0">小盘动量强 → 候选剔除大盘风格组（偏小盘）；弱 → 剔除小盘风格组（偏大盘）。小盘组=中证1000/中证2000/万得微盘，大盘组=上证50/沪深300/深证100/富时A50/中证A50/A500</div>
+        <div style="font-size:11px;color:#7C8DA1;margin:2px 0">小盘动量强 → 候选剔除大盘风格组（偏小盘）；弱 → 剔除小盘风格组（偏大盘）。小盘组=中证1000/中证2000/万得微盘，大盘组=上证50/沪深300/深证100/富时A50/中证A50/A500</div>
       </div>
         </div><!-- /执行细节 -->
       </div><div class="sfold">
@@ -469,22 +469,22 @@ footer b{color:#94A3B8}
         <h3>策略管理 <span class="v" id="stCount">0 个</span></h3>
         <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
           <input id="stName" type="text" placeholder="策略名，如：6因子月度"
-                 style="flex:2;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
+                 style="flex:2;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px">
           <input id="stInvIn" type="number" min="1000" step="10000" value="1000000" title="保存策略时记录的投资额：卖出/买入金额与买入份额按此口径计算"
-                 style="flex:1;min-width:80px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px">
-          <button type="button" id="saveSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">保存</button>
-          <button type="button" id="exportSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出</button>
-          <button type="button" id="exportAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导出全部</button>
-          <button type="button" id="importSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入</button>
-          <button type="button" id="importAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入全部</button>
+                 style="flex:1;min-width:80px;font-size:12px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px">
+          <button type="button" id="saveSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">保存</button>
+          <button type="button" id="exportSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">导出</button>
+          <button type="button" id="exportAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">导出全部</button>
+          <button type="button" id="importSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">导入</button>
+          <button type="button" id="importAllSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">导入全部</button>
           <input id="impFile" type="file" accept=".json,application/json" style="display:none">
           <input id="impAllFile" type="file" accept=".json,application/json" style="display:none">
         </div>
         <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
-          <select id="stList" style="flex:2;min-width:120px;font-size:12px;padding:3px 4px;border:1px solid #334155;border-radius:4px"></select>
-          <button type="button" id="loadSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">加载</button>
-          <button type="button" id="renSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">重命名</button>
-          <button type="button" id="delSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">删除</button>
+          <select id="stList" style="flex:2;min-width:120px;font-size:12px;padding:3px 4px;border:1px solid #3E4E63;border-radius:4px"></select>
+          <button type="button" id="loadSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">加载</button>
+          <button type="button" id="renSt" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">重命名</button>
+          <button type="button" id="delSt" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">删除</button>
         </div>
       </div>
       
@@ -493,28 +493,28 @@ footer b{color:#94A3B8}
 <div class="sfold">
 <button type="button" class="sfold-h" data-g="tune"><b>⑤ 参数调优</b><span class="sf-a">点击展开</span></button>
 <div class="sfold-b hide" id="sfg-tune"><div class="psec" id="psecTune">
-        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
-        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
+        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#7C8DA1">约束版 · 固定因子结构</span></h3>
+        <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
 
         <h3>调优维度</h3>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
           <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
           <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
         </div>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
           <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
           <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
         </div>
       </div>
         
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
           <span style="width:16px;flex:0 0 16px"></span>
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
-          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
+          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
             <option value="total" selected>研究段累计收益</option>
             <option value="sharpe">研究段夏普比率</option>
             <option value="calmar">研究段收益/回撤比</option>
@@ -522,51 +522,51 @@ footer b{color:#94A3B8}
         </div>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
           <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
           <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
         </div>
 
         <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
           <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
           <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
-                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0;resize:vertical"></textarea>
+                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9;resize:vertical"></textarea>
         </div>
         <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
-          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">开始调优</button>
+          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">开始调优</button>
           <span class="st" id="tuneState" style="font-size:11px">就绪</span>
         </div>
         <div id="tuneProg" style="display:none;margin:4px 0 2px">
-          <div style="height:6px;background:#1E293B;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#38BDF8;transition:width .2s"></div></div>
-          <span id="tuneProgTxt" style="font-size:11px;color:#94A3B8"></span>
+          <div style="height:6px;background:#243244;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#4FC3F7;transition:width .2s"></div></div>
+          <span id="tuneProgTxt" style="font-size:11px;color:#9FB0C3"></span>
         </div>
-        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
-          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
+        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #3E4E63;border-radius:6px;padding:6px 8px">
+          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#7C8DA1"></span></div>
           <div id="tuneGrid" style="display:block;margin-top:4px"></div>
           <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
           <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
-          <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
+          <div style="font-size:11px;color:#7C8DA1;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
         </div>
       
 <div class="robwrap" id="robwrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0">
-      <button id="robBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#111827;color:#CBD5E1;cursor:pointer">参数稳健性检查（窗口±5日）</button>
+      <button id="robBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#202E3F;color:#D8E2EF;cursor:pointer">参数稳健性检查（窗口±5日）</button>
       <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
     </div>
-<div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#CBD5E1;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
+<div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#D8E2EF;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
 </div>
 </div>
 <div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
         <div class="runbar2">
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8;white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden" title="自定义基准（默认沪深300全收益）">基准<select id="benchSel" style="flex:1;min-width:0;max-width:100%;text-overflow:ellipsis;font-size:11px;padding:3px 4px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益</option></select></label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#9FB0C3;white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden" title="自定义基准（默认沪深300全收益）">基准<select id="benchSel" style="flex:1;min-width:0;max-width:100%;text-overflow:ellipsis;font-size:11px;padding:3px 4px;border:1px solid #3E4E63;border-radius:4px;color:#F1F5F9;background:#202E3F"><option value="H00300.CSI">沪深300全收益</option></select></label>
           <span class="st" id="runState">就绪</span>
         </div>
       </div><div class="notice" id="notice"></div></aside>
 <main><main>
     <div class="kpis" id="kpis"></div>
-    <div class="segwrap" id="segBox" style="display:none;margin:8px 0 0;font-size:12px;color:#CBD5E1;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:8px 12px;line-height:1.7">
-      <div style="font-weight:600;margin-bottom:4px">样本内外分割 <span style="font-weight:400;color:#64748B" id="segTip"></span></div>
+    <div class="segwrap" id="segBox" style="display:none;margin:8px 0 0;font-size:12px;color:#D8E2EF;background:#243244;border:1px solid #3E4E63;border-radius:8px;padding:8px 12px;line-height:1.7">
+      <div style="font-weight:600;margin-bottom:4px">样本内外分割 <span style="font-weight:400;color:#7C8DA1" id="segTip"></span></div>
       <div id="segGrid" style="display:grid;grid-template-columns:76px 1fr 1fr;gap:4px 12px;align-items:baseline"></div>
     </div>
     
@@ -577,7 +577,7 @@ footer b{color:#94A3B8}
         <div id="cICSum" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0"></div>
         <div id="cICChart" style="width:100%;height:280px"></div>
         <div id="cICDecay" style="width:100%;height:220px"></div>
-        <div style="font-size:12px;color:#94A3B8;margin:10px 0 6px">单因子 IC 排行（同一截面上各排名因子的单因子IC）</div>
+        <div style="font-size:12px;color:#9FB0C3;margin:10px 0 6px">单因子 IC 排行（同一截面上各排名因子的单因子IC）</div>
         <div class="tblwrap"><table class="trades"><thead><tr><th>因子</th><th style="width:80px">平均 IC</th><th style="width:70px">ICIR</th><th style="width:80px">有效占比</th><th style="width:70px">截面数</th></tr></thead><tbody id="cICFacBody"></tbody></table></div>
       </div>
       <div class="card"><h2>净值曲线 <span class="n">策略 / 沪深300 / 等权池（选中标的）</span></h2><div class="chart" id="cNav"></div></div>
@@ -595,42 +595,42 @@ footer b{color:#94A3B8}
     <div class="s1card">
       <h2>网格交易回测</h2>
       <div class="notice" id="gridNotice"></div>
-      <div style="font-size:12px;color:#94A3B8;margin:2px 0 10px">两步式：① 选标的（轻量秒开，评分时才加载行情）→ ② 回测设置并运行（含历史极端段回放查看）。独立网格引擎：档位穿越触发（当日 high/low 穿越格位，次日开盘成交；A股 T+1：当日买入不可当日卖出）；触发/成交均为后复权口径；价位线以「触发基准价」为中心对称铺开（默认=当前价）。</div>
+      <div style="font-size:12px;color:#9FB0C3;margin:2px 0 10px">两步式：① 选标的（轻量秒开，评分时才加载行情）→ ② 回测设置并运行（含历史极端段回放查看）。独立网格引擎：档位穿越触发（当日 high/low 穿越格位，次日开盘成交；A股 T+1：当日买入不可当日卖出）；触发/成交均为后复权口径；价位线以「触发基准价」为中心对称铺开（默认=当前价）。</div>
       <div id="gridStep1">
       <div class="psec">
         <h3>① 选标的与适配度评分</h3>
         <div class="row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-          <input id="gridPoolSearch" type="text" placeholder="搜索标的（名称/代码）" style="flex:1;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <input id="gridPoolSearch" type="text" placeholder="搜索标的（名称/代码）" style="flex:1;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
           <button type="button" id="gridPoolAll" style="font-size:11px;padding:2px 8px">全选</button>
           <button type="button" id="gridPoolNone" style="font-size:11px;padding:2px 8px">清空</button>
         </div>
         <div id="gridPoolBox" style="display:flex;flex-wrap:wrap;gap:4px;max-height:220px;overflow:auto"></div>
         <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0 4px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">适配度评分</span>
+            <span style="font-size:12px;color:#D8E2EF;white-space:nowrap">适配度评分</span>
             <button type="button" id="gridScoreBtn" style="font-size:12px;padding:3px 12px">计算适配度评分</button>
             <button type="button" id="gridScoreHelpBtn" style="font-size:12px;padding:3px 12px">评分标准</button>
-            <span style="font-size:11px;color:#64748B">（评分触发行情加载）</span>
+            <span style="font-size:11px;color:#7C8DA1">（评分触发行情加载）</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">组合标的数 Top N</span>
-            <input id="gridTopN" type="number" min="1" max="20" value="10" style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-            <span style="font-size:11px;color:#64748B">（底仓资金=总金额÷组合标的数，均分）</span>
+            <span style="font-size:12px;color:#D8E2EF;white-space:nowrap">组合标的数 Top N</span>
+            <input id="gridTopN" type="number" min="1" max="20" value="10" style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+            <span style="font-size:11px;color:#7C8DA1">（底仓资金=总金额÷组合标的数，均分）</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-size:12px;color:#CBD5E1;white-space:nowrap">达标阈值</span>
-            <input id="gridThr" type="number" min="0" max="100" value="60" style="width:44px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-            <span style="font-size:11px;color:#64748B">（低于阈值的标的不可进入组合）</span>
+            <span style="font-size:12px;color:#D8E2EF;white-space:nowrap">达标阈值</span>
+            <input id="gridThr" type="number" min="0" max="100" value="60" style="width:44px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+            <span style="font-size:11px;color:#7C8DA1">（低于阈值的标的不可进入组合）</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <label style="display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#CBD5E1;cursor:pointer"><input type="checkbox" id="gridFilterOn" style="margin:0;accent-color:#F59E0B;cursor:pointer">过滤不合格</label>
-            <span id="gridStat" style="font-size:12px;color:#94A3B8"></span>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#D8E2EF;cursor:pointer"><input type="checkbox" id="gridFilterOn" style="margin:0;accent-color:#F59E0B;cursor:pointer">过滤不合格</label>
+            <span id="gridStat" style="font-size:12px;color:#9FB0C3"></span>
           </div>
         </div>
         <div style="margin-top:8px">
           <button type="button" id="gridNextBtn" style="font-size:13px;padding:5px 18px">下一步 → 回测设置</button>
         </div>
-        <div style="margin-top:2px;font-size:11px;color:#64748B">评分后才可进入下一步（评分触发行情加载）</div>
+        <div style="margin-top:2px;font-size:11px;color:#7C8DA1">评分后才可进入下一步（评分触发行情加载）</div>
         <div id="gridScoreTable" style="margin-top:6px"></div>
         
       </div>
@@ -640,46 +640,46 @@ footer b{color:#94A3B8}
       <div class="psec">
         <h3>② 网格参数（推荐值，可手动覆盖）</h3>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1;font-weight:600">投资总金额</span>
-          <input id="gridInvest" type="number" value="1000000" title="网格策略总投资金额，每标的底仓资金=总金额÷参与标的数（均分，可手动覆盖单个）" style="width:110px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+          <span style="font-size:12px;color:#D8E2EF;font-weight:600">投资总金额</span>
+          <input id="gridInvest" type="number" value="1000000" title="网格策略总投资金额，每标的底仓资金=总金额÷参与标的数（均分，可手动覆盖单个）" style="width:110px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
           <span style="font-size:12px;color:#94A8B8">（每标的底仓 = 总金额 ÷ 标的数，均分；改动后自动重算，手动覆盖值保留）</span>
         </div>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1">波动统计区间</span>
-          <input id="gridVolWin" type="number" min="20" max="250" value="60" title="收盘涨跌幅σ/日内振幅均值的统计窗口，改动后自动重算格距与警告" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
-          <span style="font-size:12px;color:#94A3B8">（默认60日：σ/振幅统计窗口，改动后重算格距）</span>
+          <span style="font-size:12px;color:#D8E2EF">波动统计区间</span>
+          <input id="gridVolWin" type="number" min="20" max="250" value="60" title="收盘涨跌幅σ/日内振幅均值的统计窗口，改动后自动重算格距与警告" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
+          <span style="font-size:12px;color:#9FB0C3">（默认60日：σ/振幅统计窗口，改动后重算格距）</span>
         </div>
         <div id="gridParamTable"></div>
-        <div style="font-size:11px;color:#94A3B8;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；底仓资金=投资总金额÷组合标的数（均分，可手动覆盖单个；参与数不足时剩余资金按「剩余资金买入」兜底）；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
+        <div style="font-size:11px;color:#9FB0C3;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；底仓资金=投资总金额÷组合标的数（均分，可手动覆盖单个；参与数不足时剩余资金按「剩余资金买入」兜底）；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
       </div>
       <div class="psec">
         <h3>③ 回测设置</h3>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1">体检/轮动周期</span>
-          <input id="gridPeriodN" type="number" min="1" value="12" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-          <select id="gridPeriodUnit" style="font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#D8E2EF">体检/轮动周期</span>
+          <input id="gridPeriodN" type="number" min="1" value="12" style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+          <select id="gridPeriodUnit" style="font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
             <option value="日">日</option><option value="周" selected>周</option><option value="月">月</option><option value="季">季</option><option value="年">年</option>
           </select>
-          <span style="font-size:12px;color:#94A3B8">（默认12周：周末看信号调仓习惯；体检日=周期末收盘后判定，次日开盘执行，无前视）</span>
-          <span style="font-size:12px;color:#CBD5E1;margin-left:10px">管理模式</span>
-          <select id="gridMgmt" style="font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#9FB0C3">（默认12周：周末看信号调仓习惯；体检日=周期末收盘后判定，次日开盘执行，无前视）</span>
+          <span style="font-size:12px;color:#D8E2EF;margin-left:10px">管理模式</span>
+          <select id="gridMgmt" style="font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
             <option value="B" selected>B 体检式轮动（默认）</option>
             <option value="A">A 长持网格（仅重锚定）</option>
           </select>
         </div>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1">投资总金额</span>
-          <input id="gridCapital" type="number" value="1000000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#D8E2EF">投资总金额</span>
+          <input id="gridCapital" type="number" value="1000000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
         </div>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span style="font-size:12px;color:#CBD5E1">佣金率</span>
-          <input id="gridComm" type="number" step="0.0001" value="0.00025" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-          <span style="font-size:12px;color:#CBD5E1">滑点</span>
-          <input id="gridSlip" type="number" step="0.0001" value="0.0005" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-          <span style="font-size:12px;color:#CBD5E1">最低佣金(元)</span>
-          <input id="gridMinComm" type="number" step="0.1" value="0" style="width:64px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
-          <span style="font-size:12px;color:#CBD5E1">剩余资金买入</span>
-          <select id="gridIdleSel" title="参与标的数不足组合标的数时，剩余资金的处理：空仓(现金零收益)/黄金/国债/货币ETF长期持有" style="font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <span style="font-size:12px;color:#D8E2EF">佣金率</span>
+          <input id="gridComm" type="number" step="0.0001" value="0.00025" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+          <span style="font-size:12px;color:#D8E2EF">滑点</span>
+          <input id="gridSlip" type="number" step="0.0001" value="0.0005" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+          <span style="font-size:12px;color:#D8E2EF">最低佣金(元)</span>
+          <input id="gridMinComm" type="number" step="0.1" value="0" style="width:64px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+          <span style="font-size:12px;color:#D8E2EF">剩余资金买入</span>
+          <select id="gridIdleSel" title="参与标的数不足组合标的数时，剩余资金的处理：空仓(现金零收益)/黄金/国债/货币ETF长期持有" style="font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
             <option value="cash" selected>空仓（现金零收益）</option>
             <option value="gold">黄金ETF（518880）</option>
             <option value="bond">国债ETF（511010）</option>
@@ -689,17 +689,17 @@ footer b{color:#94A3B8}
         <div class="row" style="margin-top:6px;gap:8px">
           <button type="button" id="gridPrevBtn" style="font-size:12px;padding:4px 12px">← 上一步（改标的）</button>
           <button type="button" id="gridRunBtn" style="font-size:13px;padding:5px 20px">运行网格回测</button>
-          <span id="gridRunState" style="font-size:12px;color:#94A3B8;margin-left:8px"></span>
+          <span id="gridRunState" style="font-size:12px;color:#9FB0C3;margin-left:8px"></span>
         </div>
         <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap">
           <button type="button" id="gridHistBtn" style="font-size:12px;padding:4px 14px">查看历史极端段回放（7段 · 破网即冻结）</button>
-          <span id="gridStressState" style="font-size:11px;color:#94A3B8"></span>
+          <span id="gridStressState" style="font-size:11px;color:#9FB0C3"></span>
         </div>
         <div id="gridStressResult" style="margin-top:6px"></div>
         <div class="row" style="margin-top:6px;gap:4px;flex-wrap:wrap">
-          <input id="gridStName" type="text" placeholder="网格策略名（留空自动命名）" style="flex:1;min-width:130px;font-size:12px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
-          <button type="button" id="gridSaveBtn" style="font-size:12px;padding:3px 8px;border-radius:4px;border:1px solid #334155;background:#111827;color:#E2E8F0;cursor:pointer">保存网格策略</button>
-          <span style="font-size:11px;color:#64748B;flex-basis:100%">保存勾选标的 / TopN / 参数覆盖 / 回测设置，可在「我的策略」一键应用</span>
+          <input id="gridStName" type="text" placeholder="网格策略名（留空自动命名）" style="flex:1;min-width:130px;font-size:12px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
+          <button type="button" id="gridSaveBtn" style="font-size:12px;padding:3px 8px;border-radius:4px;border:1px solid #3E4E63;background:#202E3F;color:#F1F5F9;cursor:pointer">保存网格策略</button>
+          <span style="font-size:11px;color:#7C8DA1;flex-basis:100%">保存勾选标的 / TopN / 参数覆盖 / 回测设置，可在「我的策略」一键应用</span>
         </div>
       </div>
       </div><!-- /gridStep2 -->
@@ -708,21 +708,21 @@ footer b{color:#94A3B8}
       <div class="s2top"><button type="button" id="gridBackBtn">← 修改设置</button><span class="s2tip">网格回测结果</span></div>
       <div id="gridKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0"></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
-        <div style="flex:2;min-width:320px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px">
-          <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">组合净值（网格组合，起点=回测预热后首日）</div>
+        <div style="flex:2;min-width:320px;background:#1B2634;border:1px solid #243244;border-radius:8px;padding:10px">
+          <div style="font-size:12px;color:#9FB0C3;margin-bottom:4px">组合净值（网格组合，起点=回测预热后首日）</div>
           <div id="gridNavChart" style="width:100%;height:300px"></div>
         </div>
-        <div style="flex:1;min-width:240px;background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px">
-          <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">回撤</div>
+        <div style="flex:1;min-width:240px;background:#1B2634;border:1px solid #243244;border-radius:8px;padding:10px">
+          <div style="font-size:12px;color:#9FB0C3;margin-bottom:4px">回撤</div>
           <div id="gridDdChart" style="width:100%;height:300px"></div>
         </div>
       </div>
-      <div style="background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px;margin-top:8px">
-        <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">每格成交记录（前 300 条）</div>
+      <div style="background:#1B2634;border:1px solid #243244;border-radius:8px;padding:10px;margin-top:8px">
+        <div style="font-size:12px;color:#9FB0C3;margin-bottom:4px">每格成交记录（前 300 条）</div>
         <div style="max-height:260px;overflow:auto"><table class="trades" id="gridTradeTable" style="width:100%"><thead></thead><tbody></tbody></table></div>
       </div>
-      <div style="background:#0F172A;border:1px solid #1E293B;border-radius:8px;padding:10px;margin-top:8px">
-        <div style="font-size:12px;color:#94A3B8;margin-bottom:4px">体检撤换记录（时间 + 标的 + 动作 + 原因）</div>
+      <div style="background:#1B2634;border:1px solid #243244;border-radius:8px;padding:10px;margin-top:8px">
+        <div style="font-size:12px;color:#9FB0C3;margin-bottom:4px">体检撤换记录（时间 + 标的 + 动作 + 原因）</div>
         <div style="max-height:220px;overflow:auto"><table class="trades" id="gridHealthTable" style="width:100%"><thead></thead><tbody></tbody></table></div>
       </div>
     </div>
@@ -736,8 +736,8 @@ footer b{color:#94A3B8}
       <div style="font-size:12px;color:#FBBF24;background:#3A2A12;border:1px dashed #F59E0B;border-radius:8px;padding:8px 10px;margin:0 0 10px;line-height:1.7">
         <b>本地存储提示</b>：策略保存在<b>当前链接的存储域</b>（<span id="stOrigin"></span>）。发布链接每次打开可能落在不同 CDN 节点，导致已保存策略看不到——在<b>旧链接点「导出全部」</b>，在<b>本页点下方「导入全部」</b>即可一键恢复。
         <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
-          <button type="button" id="stImportAll" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">导入全部（迁移恢复）</button>
-          <button type="button" id="stRefresh" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">刷新列表</button>
+          <button type="button" id="stImportAll" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">导入全部（迁移恢复）</button>
+          <button type="button" id="stRefresh" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">刷新列表</button>
           <input id="stImpAllFile" type="file" accept=".json,application/json" style="display:none">
         </div>
       </div>
@@ -746,18 +746,18 @@ footer b{color:#94A3B8}
     <div class="card sdetail" id="stDetail">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
         <button type="button" class="back" id="stBack">收起详情</button>
-        <button type="button" id="stApply" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">应用此策略参数到回测</button>
+        <button type="button" id="stApply" style="font-size:12px;padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">应用此策略参数到回测</button>
       </div>
       <h2 id="stName2"></h2>
       <div style="display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap">
-        <label style="font-size:12.5px;color:#64748B">起始投资额（元）
-          <input type="number" id="stInvIn2" min="1000" step="10000" value="1000000" style="width:120px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
+        <label style="font-size:12.5px;color:#7C8DA1">起始投资额（元）
+          <input type="number" id="stInvIn2" min="1000" step="10000" value="1000000" style="width:120px;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px">
         </label>
-        <label style="font-size:12.5px;color:#64748B">投资起始日期
-          <input type="date" id="stStartIn" value="2016-06-01" style="width:140px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">
+        <label style="font-size:12.5px;color:#7C8DA1">投资起始日期
+          <input type="date" id="stStartIn" value="2016-06-01" style="width:140px;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px">
         </label>
-        <span class="n" style="font-size:12.5px;color:#CBD5E1">最新投资额 <b id="stLatestCap">—</b> 元</span>
-        <span class="n" style="font-size:11.5px;color:#94A3B8">最新投资额按策略净值自起始日起的变化计算；修改后自动更新该策略</span>
+        <span class="n" style="font-size:12.5px;color:#D8E2EF">最新投资额 <b id="stLatestCap">—</b> 元</span>
+        <span class="n" style="font-size:11.5px;color:#9FB0C3">最新投资额按策略净值自起始日起的变化计算；修改后自动更新该策略</span>
       </div>
       <div class="card" style="border:none;padding:0;margin-bottom:14px"><h2>当前交易 <span class="n">逐笔买卖（未复权价 · 整手份额），可对照券商成交单</span></h2><div id="stPosBuy"></div></div>
       <div class="skpis" id="stKpis"></div>
@@ -771,31 +771,31 @@ footer b{color:#94A3B8}
 </div>
 <div id="viewCorr" style="display:none">
   <div style="max-width:1680px;margin:0 auto;padding:12px 16px 40px;box-sizing:border-box">
-    <div id="corrTip" style="display:none;background:rgba(56,189,248,.12);border:1px solid #38BDF8;color:#7DD3FC;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px"></div>
+    <div id="corrTip" style="display:none;background:rgba(79,195,247,.12);border:1px solid #4FC3F7;color:#7DD3FC;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px"></div>
     <div class="card">
       <h2>标的相关性 <span class="n" id="corrBadge"></span></h2>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">起始日期<input type="date" id="corrStart" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">结束日期<input type="date" id="corrEnd" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">收益率周期
-          <select id="corrFreq" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;padding-right:24px;font-size:12px;background:#0F172A url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%2394A3B8'/%3E%3C/svg%3E&quot;) no-repeat right 8px center / 8px;border:1px solid #334155;border-radius:6px;color:#E2E8F0"><option value="daily">日收益</option><option value="weekly">周收益</option><option value="monthly">月收益</option></select>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">起始日期<input type="date" id="corrStart" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">结束日期<input type="date" id="corrEnd" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">收益率周期
+          <select id="corrFreq" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;padding-right:24px;font-size:12px;background:#1B2634 url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%2394A3B8'/%3E%3C/svg%3E&quot;) no-repeat right 8px center / 8px;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"><option value="daily">日收益</option><option value="weekly">周收益</option><option value="monthly">月收益</option></select>
         </label>
-        <button id="corrCalc" type="button" style="align-self:flex-end;padding:6px 16px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer">计算相关性</button>
+        <button id="corrCalc" type="button" style="align-self:flex-end;padding:6px 16px;font-size:12px;border-radius:6px;border:1px solid #4FC3F7;background:rgba(79,195,247,.12);color:#7DD3FC;cursor:pointer">计算相关性</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-        <input id="corrSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;height:24px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+        <input id="corrSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;height:24px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
         <button class="corr-mini" id="corrAll" type="button">全选</button>
         <button class="corr-mini" id="corrNone" type="button">清空</button>
         <button class="corr-mini" id="corrDiver" type="button">推荐分散组合</button>
       </div>
-      <div id="corrPool" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
+      <div id="corrPool" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:6px"></div>
     </div>
     <div id="corrResult" style="display:none">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px" id="corrKpis"></div>
       <div class="card"><h2>低相关组合 <span class="n">两两相关系数最低的 20 对</span></h2>
         <div class="tblwrap"><table class="trades"><thead><tr><th style="width:40px">#</th><th>标的 A</th><th>标的 B</th><th style="width:80px">相关系数</th><th>分组 A</th><th>分组 B</th></tr></thead><tbody id="corrPairBody"></tbody></table></div>
       </div>
-      <div class="card"><p style="font-size:11px;color:#94A3B8;margin:0;line-height:1.7" id="corrNote"></p></div>
+      <div class="card"><p style="font-size:11px;color:#9FB0C3;margin:0;line-height:1.7" id="corrNote"></p></div>
     </div>
   </div>
 </div>
@@ -803,17 +803,17 @@ footer b{color:#94A3B8}
   <div style="max-width:1280px;margin:0 auto;padding:12px 16px 40px;box-sizing:border-box">
     <div class="card">
       <h2>多策略组合</h2>
-      <p style="font-size:12px;color:#94A3B8;margin:2px 0 12px;line-height:1.7">从「我的策略」中勾选多个策略、手动分配权重，按所选周期做组合再平衡，合成组合净值；并计算各策略<b>日收益率相关</b>矩阵，辅助判断分散化。</p>
+      <p style="font-size:12px;color:#9FB0C3;margin:2px 0 12px;line-height:1.7">从「我的策略」中勾选多个策略、手动分配权重，按所选周期做组合再平衡，合成组合净值；并计算各策略<b>日收益率相关</b>矩阵，辅助判断分散化。</p>
       <h3 style="margin:8px 0 6px;font-size:13px">选择策略与权重</h3>
-      <div id="comboStratList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;max-height:300px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:8px"></div>
+      <div id="comboStratList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;max-height:300px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:8px"></div>
       <div id="comboWarn" style="display:none;background:rgba(251,191,36,.12);border:1px solid #FBBF24;color:#FCD34D;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:8px"></div>
       <h3 style="margin:14px 0 6px;font-size:13px">组合参数</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">起始日期<input type="date" id="comboStart" style="padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">结束日期<input type="date" id="comboEnd" style="padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"></label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">组合再平衡
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">起始日期<input type="date" id="comboStart" style="padding:5px 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">结束日期<input type="date" id="comboEnd" style="padding:5px 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">组合再平衡
           <span style="display:flex;align-items:center;gap:4px;white-space:nowrap">
-            <select id="comboReb" style="padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+            <select id="comboReb" style="padding:5px 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
               <option value="none">不调仓（买入持有）</option>
               <option value="daily">每交易日</option>
               <option value="weekly" selected>每周</option>
@@ -821,44 +821,44 @@ footer b{color:#94A3B8}
               <option value="quarterly">每季</option>
               <option value="yearly">每年</option>
             </select>
-            <span style="color:#94A3B8">每</span>
-            <select id="comboRebInt" style="padding:5px 6px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0"><option>1</option><option>2</option><option>3</option><option>4</option></select>
-            <span style="color:#94A3B8">个周期调仓</span>
+            <span style="color:#9FB0C3">每</span>
+            <select id="comboRebInt" style="padding:5px 6px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+            <span style="color:#9FB0C3">个周期调仓</span>
           </span>
         </label>
-        <button id="comboRun" type="button" style="padding:6px 18px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer">运行组合回测</button>
+        <button id="comboRun" type="button" style="padding:6px 18px;font-size:12px;border-radius:6px;border:1px solid #4FC3F7;background:rgba(79,195,247,.12);color:#7DD3FC;cursor:pointer">运行组合回测</button>
       </div>
     </div>
     <div id="comboResult" style="display:none;margin-top:14px">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px" id="comboKpis"></div>
       <div class="card"><h2>组合与各策略净值</h2><div id="comboChart" style="width:100%;height:340px"></div></div>
       <div class="card"><h2>策略收益率相关性 <span class="n">各策略日收益率序列皮尔逊相关</span></h2><div id="comboHeatmap" style="width:100%;height:340px"></div></div>
-      <div class="card"><h2>目标权重占比</h2><div id="comboWeightLegend" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:10px;padding:8px;border:1px solid #1E293B;border-radius:6px"></div><div id="comboWeight" style="width:100%;height:300px"></div></div>
+      <div class="card"><h2>目标权重占比</h2><div id="comboWeightLegend" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:10px;padding:8px;border:1px solid #243244;border-radius:6px"></div><div id="comboWeight" style="width:100%;height:300px"></div></div>
     </div>
   </div>
 </div>
 <div id="viewIc" style="display:none">
   <div class="card" style="padding:12px">
     <h2>因子 IC 分析 <span class="n">因子值 vs 未来收益的截面秩相关（Spearman IC）</span></h2>
-    <p style="font-size:11px;color:#94A3B8;margin:0 0 12px;line-height:1.7">IC = 每截面下因子值排序与未来 N 日收益排序的秩相关；ICIR = 平均 IC ÷ IC 标准差；有效占比 = IC&gt;0 的截面占比。用于判断哪些因子对未来收益有稳定预测力，辅助因子权重的设定与筛选。</p>
+    <p style="font-size:11px;color:#9FB0C3;margin:0 0 12px;line-height:1.7">IC = 每截面下因子值排序与未来 N 日收益排序的秩相关；ICIR = 平均 IC ÷ IC 标准差；有效占比 = IC&gt;0 的截面占比。用于判断哪些因子对未来收益有稳定预测力，辅助因子权重的设定与筛选。</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">
-      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">未来收益窗口 N 日
-        <input id="icFutN" type="number" value="20" min="1" max="250" style="width:90px;height:32px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">未来收益窗口 N 日
+        <input id="icFutN" type="number" value="20" min="1" max="250" style="width:90px;height:32px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
       </label>
-      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748B">截面频率
-        <select id="icFreq" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;padding-right:24px;font-size:12px;background:#0F172A url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%2394A3B8'/%3E%3C/svg%3E&quot;) no-repeat right 8px center / 8px;border:1px solid #334155;border-radius:6px;color:#E2E8F0"><option value="monthly">每月</option><option value="weekly">每周</option><option value="daily">每日</option></select>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">截面频率
+        <select id="icFreq" style="height:32px;box-sizing:border-box;-webkit-appearance:none;appearance:none;padding:0 8px;padding-right:24px;font-size:12px;background:#1B2634 url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%2394A3B8'/%3E%3C/svg%3E&quot;) no-repeat right 8px center / 8px;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"><option value="monthly">每月</option><option value="weekly">每周</option><option value="daily">每日</option></select>
       </label>
-      <button id="icRun" type="button" style="align-self:flex-end;padding:8px 18px;font-size:12px;border-radius:6px;border:1px solid #38BDF8;background:rgba(56,189,248,.12);color:#7DD3FC;cursor:pointer">开始计算</button>
+      <button id="icRun" type="button" style="align-self:flex-end;padding:8px 18px;font-size:12px;border-radius:6px;border:1px solid #4FC3F7;background:rgba(79,195,247,.12);color:#7DD3FC;cursor:pointer">开始计算</button>
     </div>
-    <div id="icMsg" style="display:none;font-size:12px;color:#38BDF8;margin-bottom:10px"></div>
-    <p style="font-size:12px;color:#CBD5E1;margin:6px 0 6px">选择标的池（默认全池）</p>
+    <div id="icMsg" style="display:none;font-size:12px;color:#4FC3F7;margin-bottom:10px"></div>
+    <p style="font-size:12px;color:#D8E2EF;margin:6px 0 6px">选择标的池（默认全池）</p>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-      <input id="icPoolSearch" type="text" placeholder="搜索代码 / 名称…" style="flex:1;min-width:160px;height:24px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+      <input id="icPoolSearch" type="text" placeholder="搜索代码 / 名称…" style="flex:1;min-width:160px;height:24px;box-sizing:border-box;padding:0 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
       <button class="corr-mini" id="icPoolAll" type="button">全选</button>
       <button class="corr-mini" id="icPoolNone" type="button">清空</button>
     </div>
-    <div id="icPool" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:220px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
-    <p style="font-size:12px;color:#CBD5E1;margin:12px 0 6px">选择因子（默认全部）</p>
+    <div id="icPool" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:220px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:6px"></div>
+    <p style="font-size:12px;color:#D8E2EF;margin:12px 0 6px">选择因子（默认全部）</p>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
       <button class="corr-mini" id="icFacAll" type="button">全选</button>
       <button class="corr-mini" id="icFacNone" type="button">清空</button>
@@ -2817,7 +2817,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   var engine = window.WufuEngine;
   var $ = function (id) { return document.getElementById(id); };
 
-  var COLOR = { str: "#38BDF8", bench: "#94A3B8", ew: "#A78BFA", dd: "#F87171", weak: "#F59E0B" };
+  var COLOR = { str: "#4FC3F7", bench: "#9FB0C3", ew: "#A78BFA", dd: "#F87171", weak: "#F59E0B" };
   var FMT = { pct: function (v, d) { return (v * 100).toFixed(d === undefined ? 2 : d) + "%"; } };
 
   var charts = {};
@@ -2846,7 +2846,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     if (!n) { el.textContent = ""; return; }
     // 两行结构：第一行「 | 权重合计 X%」（nowrap），余量/超限提示放第二行（整行 nowrap，不折词；权重合计=100% 时无第二行）
     el.innerHTML = "<span style='white-space:nowrap'> | 权重合计 " + (Math.round(s * 100) / 100) + "%</span>" +
-      (Math.abs(s - 100) > 0.01 ? "<br><span style='white-space:nowrap;color:#94A3B8'>" + (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") + "</span>" : "");
+      (Math.abs(s - 100) > 0.01 ? "<br><span style='white-space:nowrap;color:#9FB0C3'>" + (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") + "</span>" : "");
   }
   function applyModeUI() {
     // 视图拆分后：轮动/再平衡面板已物理分离，此处仅处理共享块内按视图切换的显隐
@@ -2918,7 +2918,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       l.innerHTML = '<input type="checkbox" class="pick" data-c="' + p.code + '">' +
         '<span class="corr-nm">' + p.name + "</span><span class='corr-cd'>" + p.code + "</span>" +
         "<label class='rot' style='display:" + (isRebNow ? "none" : "") + "'><input type='checkbox' class='rotc'>仅轮动</label>" +
-        "<label class='wlab' style='display:" + (dynNow ? "flex" : "none") + "'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;text-align:right'>%</label>";
+        "<label class='wlab' style='display:" + (dynNow ? "flex" : "none") + "'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;text-align:right'>%</label>";
       if (cm[p.code]) l.querySelector(".pick").checked = true;
       if (onlyRot[p.code]) l.querySelector(".rotc").checked = true;
       var wv0 = rebW[p.code];
@@ -3080,9 +3080,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     FACTOR_HELP.forEach(function (it, idx) {
       var tr = document.createElement("tr");
       if (idx % 2 === 1) tr.style.background = "rgba(255,255,255,.02)";
-      var td1 = document.createElement("td"); td1.style.cssText = "padding:7px 8px;border-bottom:1px solid #1E293B;font-weight:600;color:#60A5FA"; td1.textContent = it.label;
-      var td2 = document.createElement("td"); td2.style.cssText = "padding:7px 8px;border-bottom:1px solid #1E293B;color:#CBD5E1"; td2.textContent = it.mean;
-      var td3 = document.createElement("td"); td3.style.cssText = "padding:7px 8px;border-bottom:1px solid #1E293B;color:#94A3B8;font-family:ui-monospace,Consolas,monospace"; td3.textContent = it.formula;
+      var td1 = document.createElement("td"); td1.style.cssText = "padding:7px 8px;border-bottom:1px solid #243244;font-weight:600;color:#60A5FA"; td1.textContent = it.label;
+      var td2 = document.createElement("td"); td2.style.cssText = "padding:7px 8px;border-bottom:1px solid #243244;color:#D8E2EF"; td2.textContent = it.mean;
+      var td3 = document.createElement("td"); td3.style.cssText = "padding:7px 8px;border-bottom:1px solid #243244;color:#9FB0C3;font-family:ui-monospace,Consolas,monospace"; td3.textContent = it.formula;
       tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
       body.appendChild(tr);
     });
@@ -3142,7 +3142,7 @@ function windowGroupHtml(ki, f) {
   for (var j = 0; j < nw; j++) {
     (function (jj) {
       var tag = document.createElement("span");
-      tag.style.cssText = "flex:0 0 auto;font-size:10px;color:#64748B";
+      tag.style.cssText = "flex:0 0 auto;font-size:10px;color:#7C8DA1";
       tag.textContent = ["A", "B", "C"][jj];
       tag.title = (ki.winTitles && ki.winTitles[jj]) || ki.title || "";
       var mn = jj === 0 ? ki.wMin : ki["wMin" + (jj + 1)];
@@ -3153,7 +3153,7 @@ function windowGroupHtml(ki, f) {
                : (f.window3 !== undefined ? f.window3 : ki.def3);
       var inp = document.createElement("input");
       inp.type = "number"; inp.min = mn; inp.max = mx; inp.step = st; inp.value = wv;
-      inp.style.cssText = "flex:1;min-width:0;width:34px;font-size:12px;padding:2px 2px;border:1px solid #334155;border-radius:4px";
+      inp.style.cssText = "flex:1;min-width:0;width:34px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
       inp.title = tag.title;
       inp.addEventListener("input", function () {
         if (jj === 0) f.window = +this.value;
@@ -3173,7 +3173,7 @@ function renderMfLib() {
   box.innerHTML = "";
   if (!factors.length) {
     var hint = document.createElement("div");
-    hint.style.cssText = "font-size:12px;color:#94A3B8;padding:6px 2px;line-height:1.5";
+    hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px;line-height:1.5";
     hint.innerHTML = "当前无因子，策略保持空仓。<br>从下方选择因子类型与归属（排名/筛选）添加，或用公式组合自定义因子。";
     box.appendChild(hint);
   }
@@ -3188,7 +3188,7 @@ function renderMfLib() {
     lab.title = (f.kind === "custom") ? (f.name + " = " + ftxt) : ((KIND_INFO[f.kind] || {}).title || "");
     if (f.kind === "custom" && ftxt) { lab.textContent = lab.textContent + "  " + ftxt; }
     var uSel = document.createElement("select");
-    uSel.style.cssText = "flex:0 0 66px;font-size:11.5px;padding:2px 4px;border:1px solid #334155;border-radius:4px;color:#CBD5E1;background:#111827;appearance:none;-webkit-appearance:none;text-align:center";
+    uSel.style.cssText = "flex:0 0 66px;font-size:11.5px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F;appearance:none;-webkit-appearance:none;text-align:center";
     uSel.innerHTML = '<option value="filter">筛选</option><option value="rank">排名</option>';
     uSel.value = f.usage || "rank";
     uSel.title = "归属面板：排名=轮动打分；筛选=过滤条件";
@@ -3241,7 +3241,7 @@ function renderMfList() {
   var sum = 0, rankF = factors.filter(function (f) { return (f.usage || "rank") === "rank"; });
   if (!rankF.length) {
     var hint = document.createElement("div");
-    hint.style.cssText = "font-size:12px;color:#94A3B8;padding:6px 2px";
+    hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
     hint.textContent = "暂无排名因子，请在「因子管理」添加并归属为排名。";
     box.appendChild(hint);
   }
@@ -3260,18 +3260,18 @@ function renderMfList() {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var ft2 = document.createElement("span");
-      ft2.style.cssText = "font-size:11px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      ft2.style.cssText = "font-size:11px;color:#9FB0C3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
       ft2.textContent = factorFormulaText(f);
       ft2.title = f.name + " = " + factorFormulaText(f);
       wg.appendChild(ft2);
     } else wg = windowGroupHtml(ki, f);
     var wIn = document.createElement("input");
     wIn.type = "number"; wIn.min = 0; wIn.max = 1; wIn.step = 0.05; wIn.value = f.weight !== undefined ? f.weight : 0.1;
-    wIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #334155;border-radius:4px";
+    wIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
     wIn.title = "排名权重";
     wIn.addEventListener("input", function () { f.weight = +this.value; renderMfList(); renderMfLib(); scheduleRun(); });
     var dSel = document.createElement("select");
-    dSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #334155;border-radius:4px;color:#CBD5E1;background:#111827";
+    dSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
     dSel.innerHTML = '<option value="1">正向</option><option value="-1">反向</option>';
     dSel.value = String(f.direction !== undefined ? f.direction : (f.kind === "vol" ? -1 : 1));
     dSel.title = "该因子得分方向";
@@ -3306,7 +3306,7 @@ function renderFltList() {
   var fltF = factors.filter(function (f) { return (f.usage || "rank") === "filter"; });
   if (!fltF.length) {
     var hint = document.createElement("div");
-    hint.style.cssText = "font-size:12px;color:#94A3B8;padding:6px 2px";
+    hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
     hint.textContent = "暂无筛选因子（全部标的可参与排名），请在「因子管理」添加并归属为筛选。";
     box.appendChild(hint);
   }
@@ -3324,24 +3324,24 @@ function renderFltList() {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var ft3 = document.createElement("span");
-      ft3.style.cssText = "font-size:11px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      ft3.style.cssText = "font-size:11px;color:#9FB0C3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
       ft3.textContent = factorFormulaText(f);
       ft3.title = f.name + " = " + factorFormulaText(f);
       wg.appendChild(ft3);
     } else wg = windowGroupHtml(ki, f);
     var opSel = document.createElement("select");
-    opSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #334155;border-radius:4px;color:#CBD5E1;background:#111827";
+    opSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
     opSel.innerHTML = '<option value="gte">\u2265</option><option value="lte">\u2264</option>';
     opSel.value = f.op || "gte";
     opSel.addEventListener("change", function () { f.op = this.value; scheduleRun(); });
     var thIn = document.createElement("input");
     thIn.type = "number"; thIn.min = 0; thIn.max = 1000; thIn.step = 1;
     thIn.value = Math.round((f.threshold !== undefined ? f.threshold : 0) * 100);
-    thIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #334155;border-radius:4px";
+    thIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
     thIn.title = "筛选阈值（%）";
     thIn.addEventListener("input", function () { f.threshold = Math.max(0, Math.min(1000, +this.value || 0)) / 100; scheduleRun(); });
     var pct = document.createElement("span");
-    pct.style.cssText = "flex:0 0 14px;font-size:12px;color:#64748B"; pct.textContent = "%";
+    pct.style.cssText = "flex:0 0 14px;font-size:12px;color:#7C8DA1"; pct.textContent = "%";
     var del = document.createElement("button");
     del.type = "button"; del.textContent = "\u00d7";
     del.style.cssText = "flex:0 0 22px;margin-left:2px";
@@ -3357,20 +3357,20 @@ var cfEditIdx = -1;  // >=0 表示编辑已有自定义因子（factors 索引�
 var CF_OPS = [["+", " + "], ["-", " − "], ["\u00d7", " × "], ["\u00f7", " ÷ "]];
 function cfRowHtml(idx, p) {
   var ki = KIND_INFO[p.kind] || KIND_INFO.roc;
-  var opSel = '<select style="flex:0 0 34px;font-size:11.5px;padding:2px 1px;border:1px solid #334155;border-radius:4px;color:#CBD5E1;background:#111827" title="与上一项的运算">' +
+  var opSel = '<select style="flex:0 0 34px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F" title="与上一项的运算">' +
     CF_OPS.map(function (o) { return '<option value="' + o[0] + '">' + o[0] + '</option>'; }).join('') + '</select>';
   var wg = '';
   var nw = ki.nwin || 1;
   for (var j = 0; j < nw; j++) {
     wg += '<input type="number" min="' + (j === 0 ? ki.wMin : ki["wMin" + (j + 1)]) + '" max="' + (j === 0 ? ki.wMax : ki["wMax" + (j + 1)]) + '" step="' + (j === 0 ? ki.wStep : ki["wStep" + (j + 1)]) + '" value="' +
-      (j === 0 ? (p.window || ki.def) : j === 1 ? (p.window2 || ki.def2 || 0) : (p.window3 || ki.def3 || 0)) + '" style="flex:1;min-width:0;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px" title="' + ((ki.winTitles && ki.winTitles[j]) || "") + '">';
+      (j === 0 ? (p.window || ki.def) : j === 1 ? (p.window2 || ki.def2 || 0) : (p.window3 || ki.def3 || 0)) + '" style="flex:1;min-width:0;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px" title="' + ((ki.winTitles && ki.winTitles[j]) || "") + '">';
   }
   return '<div class="cfrow" style="display:flex;align-items:center;gap:3px;margin:3px 0">' +
-    (idx === 0 ? '<span style="flex:0 0 34px;font-size:12px;color:#94A3B8;text-align:center">=</span>' : opSel) +
-    '<select style="flex:1.2;min-width:0;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px">' +
+    (idx === 0 ? '<span style="flex:0 0 34px;font-size:12px;color:#9FB0C3;text-align:center">=</span>' : opSel) +
+    '<select style="flex:1.2;min-width:0;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px">' +
     Object.keys(KIND_INFO).map(function (k) { return '<option value="' + k + '">' + KIND_INFO[k].label + '</option>'; }).join('') +
     '</select>' + wg +
-    '<input type="number" step="0.1" value="' + (p.coef || 1) + '" style="flex:0 0 46px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px" title="系数">' +
+    '<input type="number" step="0.1" value="' + (p.coef || 1) + '" style="flex:0 0 46px;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px" title="系数">' +
     '<button type="button" style="flex:0 0 22px" title="移除成分">\u00d7</button></div>';
 }
 function renderCf() {
@@ -3608,10 +3608,10 @@ function buildChips() {
       var anyOn = items.some(function (x) { return mmIdxSel[x.code]; });
       var collapsed = !q && !anyOn && mmCollapsed[g];
       var hd = document.createElement("div");
-      hd.style.cssText = "font-size:12px;color:#94A3B8;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #334155;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
+      hd.style.cssText = "font-size:12px;color:#9FB0C3;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #3E4E63;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
       var caret = document.createElement("span");
       caret.textContent = collapsed ? "▶" : "▼";
-      caret.style.cssText = "font-size:9px;color:#64748B";
+      caret.style.cssText = "font-size:9px;color:#7C8DA1";
       var tt = document.createElement("span");
       tt.textContent = g + "（" + items.length + "）";
       hd.appendChild(caret); hd.appendChild(tt);
@@ -3625,7 +3625,7 @@ function buildChips() {
           b.type = "button";
           b.textContent = it.name + " " + it.code;
           b.className = mmIdxSel[it.code] ? "chip on" : "chip";
-          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #334155;border-radius:12px;background:" + (mmIdxSel[it.code] ? "#3B82F6" : "#1E293B") + ";color:#E2E8F0";
+          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #3E4E63;border-radius:12px;background:" + (mmIdxSel[it.code] ? "#3B82F6" : "#243244") + ";color:#F1F5F9";
           b.addEventListener("click", chipToggle(box, mmIdxSel, it.code));
           wr.appendChild(b);
         });
@@ -3652,10 +3652,10 @@ function buildChips() {
       var anyOn = items.some(function (x) { return mmHedgeSel[x.code]; });
       var collapsed = !q && !anyOn && mmHedgeCollapsed[g];
       var hd = document.createElement("div");
-      hd.style.cssText = "font-size:12px;color:#94A3B8;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #334155;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
+      hd.style.cssText = "font-size:12px;color:#9FB0C3;cursor:pointer;padding:4px 2px 2px;border-bottom:1px dashed #3E4E63;user-select:none;display:flex;gap:6px;align-items:center;margin-top:4px";
       var caret = document.createElement("span");
       caret.textContent = collapsed ? "▶" : "▼";
-      caret.style.cssText = "font-size:9px;color:#64748B";
+      caret.style.cssText = "font-size:9px;color:#7C8DA1";
       var tt = document.createElement("span");
       tt.textContent = g + "（" + items.length + "）";
       hd.appendChild(caret); hd.appendChild(tt);
@@ -3669,7 +3669,7 @@ function buildChips() {
           b.type = "button";
           b.textContent = it.name + " " + it.code;
           b.className = mmHedgeSel[it.code] ? "chip on" : "chip";
-          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #334155;border-radius:12px;background:" + (mmHedgeSel[it.code] ? "#10B981" : "#1E293B") + ";color:#E2E8F0";
+          b.style.cssText = "padding:2px 8px;font-size:11px;cursor:pointer;border:1px solid #3E4E63;border-radius:12px;background:" + (mmHedgeSel[it.code] ? "#10B981" : "#243244") + ";color:#F1F5F9";
           b.addEventListener("click", chipToggle(box, mmHedgeSel, it.code));
           wr.appendChild(b);
         });
@@ -3786,7 +3786,7 @@ function buildChips() {
     wrap.id = selKind.id + "_fac";
     wrap.style.cssText = "display:flex;align-items:center;gap:6px;margin-top:4px";
     var kSel = document.createElement("select");
-    kSel.style.cssText = "flex:1;min-width:0;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px";
+    kSel.style.cssText = "flex:1;min-width:0;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px";
     Object.keys(KIND_INFO).forEach(function (k) {
       var o = document.createElement("option");
       o.value = k; o.textContent = KIND_INFO[k].label;
@@ -3794,14 +3794,14 @@ function buildChips() {
     });
     var wIn = document.createElement("input");
     wIn.type = "number"; wIn.min = 1; wIn.max = 250; wIn.value = 20;
-    wIn.style.cssText = "flex:0 0 52px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px";
+    wIn.style.cssText = "flex:0 0 52px;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px";
     wIn.title = "因子窗口";
     var opSel = document.createElement("select");
-    opSel.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px";
+    opSel.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px";
     opSel.innerHTML = '<option value="gte">\u2265</option><option value="lte">\u2264</option>';
     var thIn = document.createElement("input");
     thIn.type = "number"; thIn.step = 1; thIn.value = 0;
-    thIn.style.cssText = "flex:0 0 56px;font-size:12px;padding:2px;border:1px solid #334155;border-radius:4px";
+    thIn.style.cssText = "flex:0 0 56px;font-size:12px;padding:2px;border:1px solid #3E4E63;border-radius:4px";
     thIn.title = "阈值（%）";
     wrap.appendChild(kSel); wrap.appendChild(wIn); wrap.appendChild(opSel); wrap.appendChild(thIn);
     var row = selKind.closest(".psec") || selKind.parentElement.parentElement;
@@ -4411,7 +4411,7 @@ function buildChips() {
     }
     function mean(arr) { if (!arr.length) return 0; var s = 0, i; for (i = 0; i < arr.length; i++) s += arr[i]; return s / arr.length; }
     function sd(arr) { if (arr.length < 2) return 0; var m = mean(arr), s = 0, i; for (i = 0; i < arr.length; i++) s += (arr[i] - m) * (arr[i] - m); return Math.sqrt(s / (arr.length - 1)); }
-    function icolor(v) { return v > 0 ? "#34D399" : (v < 0 ? "#F87171" : "#E2E8F0"); }
+    function icolor(v) { return v > 0 ? "#34D399" : (v < 0 ? "#F87171" : "#F1F5F9"); }
 
     var baseFut = Math.max(1, +(params.rebalance_days) || 20);
     var main = compIC(baseFut);
@@ -4435,10 +4435,10 @@ function buildChips() {
     var posRate = main.ics.length ? pos / main.ics.length : 0;
 
     function kpi(t, v, s, clr) {
-      return '<div style="background:#111827;border:1px solid var(--line);border-radius:8px;padding:8px 10px">' +
-        '<div style="font-size:11px;color:#94A3B8">' + t + '</div>' +
-        '<div style="font-size:16px;font-weight:600;color:' + (clr || "#E2E8F0") + '">' + v + '</div>' +
-        '<div style="font-size:10px;color:#64748B">' + s + '</div></div>';
+      return '<div style="background:#202E3F;border:1px solid var(--line);border-radius:8px;padding:8px 10px">' +
+        '<div style="font-size:11px;color:#9FB0C3">' + t + '</div>' +
+        '<div style="font-size:16px;font-weight:600;color:' + (clr || "#F1F5F9") + '">' + v + '</div>' +
+        '<div style="font-size:10px;color:#7C8DA1">' + s + '</div></div>';
     }
     $("cICSum").innerHTML =
       kpi("平均IC·筛选池", mIC.toFixed(3), "主窗口 " + baseFut + " 日", icolor(mIC)) +
@@ -4455,7 +4455,7 @@ function buildChips() {
         xAxis: { type: "category", data: main.dates, axisLabel: { fontSize: 10, hideOverlap: false, formatter: function (v) { return String(v).slice(0, 4); } } },
         yAxis: { type: "value", scale: true, axisLabel: { fontSize: 10 } },
         dataZoom: [{ type: "inside", start: 0, end: 100 }, { type: "slider", start: 0, end: 100, height: 14, bottom: 4 }],
-        series: [{ name: "组合IC", type: "line", showSymbol: false, lineStyle: { width: 1.6, color: "#38BDF8" }, itemStyle: { color: "#38BDF8" }, data: main.ics.map(function (x) { return +x.toFixed(4); }) }]
+        series: [{ name: "组合IC", type: "line", showSymbol: false, lineStyle: { width: 1.6, color: "#4FC3F7" }, itemStyle: { color: "#4FC3F7" }, data: main.ics.map(function (x) { return +x.toFixed(4); }) }]
       });
       if (charts["cICChart"]) charts["cICChart"].resize();
     } else if ($("cICChart")) { $("cICChart").style.display = "none"; }
@@ -4492,13 +4492,13 @@ function buildChips() {
       var fm = mean(ics), fs = sd(ics), fpos = 0;
       for (var k4 = 0; k4 < ics.length; k4++) if (ics[k4] > 0) fpos++;
       var label = f.kind === "custom" ? (f.name || "自定义") : (KIND_INFO[f.kind] ? KIND_INFO[f.kind].label : f.kind);
-      rows += '<tr><td>' + label + (f.kind === "custom" ? "" : ' <span style="color:#64748B;font-size:10px">(' + key + ')</span>') + '</td>' +
+      rows += '<tr><td>' + label + (f.kind === "custom" ? "" : ' <span style="color:#7C8DA1;font-size:10px">(' + key + ')</span>') + '</td>' +
         '<td style="color:' + icolor(fm) + '">' + fm.toFixed(3) + '</td>' +
         '<td>' + (fs > 0 ? (fm / fs).toFixed(2) : "—") + '</td>' +
         '<td style="color:' + icolor(fm) + '">' + (ics.length ? (fpos / ics.length * 100).toFixed(0) : "—") + '%</td>' +
         '<td>' + ics.length + '</td></tr>';
     });
-    $("cICFacBody").innerHTML = rows || '<tr><td colspan="5" style="color:#64748B">无排名因子</td></tr>';
+    $("cICFacBody").innerHTML = rows || '<tr><td colspan="5" style="color:#7C8DA1">无排名因子</td></tr>';
   }
 
   function showNotice(msg) {
@@ -4545,9 +4545,9 @@ function buildChips() {
         ["夏普比率", seg.study.sharpe.toFixed(2), seg.validation.sharpe.toFixed(2)],
         ["交易日数", String(seg.study.n_days), String(seg.validation.n_days)]
       ];
-      var cells = '<div style="color:#64748B">指标</div><div style="text-align:right;color:#64748B">研究段</div><div style="text-align:right;color:#64748B;font-weight:600">验证段（样本外）</div>';
+      var cells = '<div style="color:#7C8DA1">指标</div><div style="text-align:right;color:#7C8DA1">研究段</div><div style="text-align:right;color:#7C8DA1;font-weight:600">验证段（样本外）</div>';
       for (var ri = 0; ri < rows.length; ri++) {
-        cells += '<div style="color:#64748B">' + rows[ri][0] + '</div><div style="text-align:right">' + rows[ri][1] + '</div><div style="text-align:right;font-weight:600">' + rows[ri][2] + "</div>";
+        cells += '<div style="color:#7C8DA1">' + rows[ri][0] + '</div><div style="text-align:right">' + rows[ri][1] + '</div><div style="text-align:right;font-weight:600">' + rows[ri][2] + "</div>";
       }
       $("segGrid").innerHTML = cells;
     } else {
@@ -4561,7 +4561,7 @@ function buildChips() {
     return {
       tooltip: { trigger: "axis", triggerOn: "click", renderMode: "richText", confine: true },
       grid: { left: 56, right: 20, top: 34, bottom: 26, containLabel: true },
-      legend: { top: 4, textStyle: { fontSize: 12, color: "#CBD5E1" } }
+      legend: { top: 4, textStyle: { fontSize: 12, color: "#D8E2EF" } }
     };
   }
 
@@ -4605,7 +4605,7 @@ function buildChips() {
       yAxis: { type: "value", max: 0, axisLabel: { fontSize: 11, formatter: function (v) { return (v * 100).toFixed(0) + "%"; } } },
       series: [
         { name: "策略回撤", type: "line", showSymbol: false, lineStyle: { width: 2, color: COLOR.dd }, itemStyle: { color: COLOR.dd }, areaStyle: { color: "rgba(239,68,68,0.10)" }, data: dates.map(function (t, i) { return [t, +r.drawdown[i].toFixed(5)]; }) },
-        { name: "沪深300回撤", type: "line", showSymbol: false, lineStyle: { width: 1.5, color: "#334155" }, itemStyle: { color: "#334155" }, data: dates.map(function (t, i) { return [t, +r.bench_drawdown[i].toFixed(5)]; }) }
+        { name: "沪深300回撤", type: "line", showSymbol: false, lineStyle: { width: 1.5, color: "#3E4E63" }, itemStyle: { color: "#3E4E63" }, data: dates.map(function (t, i) { return [t, +r.bench_drawdown[i].toFixed(5)]; }) }
       ]
     });
   }
@@ -4654,7 +4654,7 @@ function buildChips() {
       yAxis: { type: "category", data: monthIdx, splitArea: { show: true }, axisLabel: { fontSize: 10 } },
       visualMap: { min: -absMax, max: absMax, calculable: true, orient: "horizontal", left: "center", bottom: 0,
         textStyle: { fontSize: 10 }, inRange: { color: ["#FCA5A5", "#FEF2F2", "#CCFBF1", "#14B8A6"] } },
-      series: [{ type: "heatmap", data: cells, label: { show: false }, emphasis: { itemStyle: { borderColor: "#334155", borderWidth: 1 } } }]
+      series: [{ type: "heatmap", data: cells, label: { show: false }, emphasis: { itemStyle: { borderColor: "#3E4E63", borderWidth: 1 } } }]
     });
   }
 
@@ -4802,7 +4802,7 @@ function buildChips() {
     $("stTotal").textContent = keys.length + " 个策略";
     box.innerHTML = "";
     if (!keys.length) {
-      box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:10px 2px">暂无已保存策略。<br>请在「回测」页调好参数后保存；若在其他链接/设备保存过，请用「导出全部/导入全部」迁移。</div>';
+      box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:10px 2px">暂无已保存策略。<br>请在「回测」页调好参数后保存；若在其他链接/设备保存过，请用「导出全部/导入全部」迁移。</div>';
       return;
     }
     // 先立即渲染全部列表结构（名称/创建时间），持仓与收益逐个异步回测填充，避免阻塞
@@ -4810,7 +4810,7 @@ function buildChips() {
     keys.forEach(function (k) {
       var row = document.createElement("div");
       row.className = "srow";
-      var tag = m[k].type === "grid" ? '<span class="tag" style="color:#FBBF24;border:1px solid #FBBF24;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">网格</span>' : (m[k].mode === "rebalance" ? '<span class="tag" style="color:#A78BFA;border:1px solid #A78BFA;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">再平衡</span>' : '<span class="tag" style="color:#38BDF8;border:1px solid #38BDF8;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">轮动</span>');
+      var tag = m[k].type === "grid" ? '<span class="tag" style="color:#FBBF24;border:1px solid #FBBF24;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">网格</span>' : (m[k].mode === "rebalance" ? '<span class="tag" style="color:#A78BFA;border:1px solid #A78BFA;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">再平衡</span>' : '<span class="tag" style="color:#4FC3F7;border:1px solid #4FC3F7;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">轮动</span>');
       row.innerHTML = '<div class="nm">' + k.replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }) + tag +
         '</div><div class="meta"><span>创建：' + fmtDate(m[k]._saved_at) + '</span><span class="ld">计算中…</span></div>' +
         '<div class="pos">回测中…</div>';
@@ -4901,7 +4901,7 @@ function buildChips() {
         var cs0 = lotShares(cap, cpx0);
         box.innerHTML = '<table class="trades" style="margin-top:4px;table-layout:fixed;width:100%"><thead><tr><th class="fc">当前交易</th><th>金额</th><th>最新未复权价</th><th>份额</th></tr></thead><tbody><tr><td class="fc">货币ETF</td><td>' + fmtN(cap) + '</td><td>' + (cpx0 ? cpx0.toFixed(4) : "—") + '</td><td>' + (cs0 ? fmtN(cs0) : "—") + '</td></tr></tbody></table>';
       } else {
-        box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:6px 0">现金（不持有）· 回测区间内无成交记录</div>';
+        box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:6px 0">现金（不持有）· 回测区间内无成交记录</div>';
       }
       return;
     }
@@ -4914,13 +4914,13 @@ function buildChips() {
       var sh = rp ? Math.floor(amt / rp / 100) * 100 : null;
       return "<tr><td>" + d + "</td><td class='fc'>" + gName(t.code) + "</td><td class='" + (buy ? "buy" : "sell") + "'>" + (buy ? "买" : "卖") + "</td><td>" + (rp ? rp.toFixed(4) : "—") + "</td><td>" + (sh ? sh.toLocaleString("zh-CN") : "—") + "</td><td>" + (buy ? "-" : "+") + Math.round(amt).toLocaleString("zh-CN") + "</td></tr>";
     }).join("");
-    var moreTip = total > 20 ? '<div style="font-size:11.5px;color:#94A3B8;margin-top:4px">共 ' + total + ' 笔成交，仅显示最近 20 笔（完整逐笔见回测成交表）</div>' : "";
+    var moreTip = total > 20 ? '<div style="font-size:11.5px;color:#9FB0C3;margin-top:4px">共 ' + total + ' 笔成交，仅显示最近 20 笔（完整逐笔见回测成交表）</div>' : "";
     box.innerHTML = '<div class="tblwrap"><table class="trades" style="margin-top:4px;table-layout:fixed;width:100%;min-width:560px"><colgroup><col style="width:15%"><col style="width:27%"><col style="width:8%"><col style="width:17%"><col style="width:17%"><col style="width:16%"></colgroup><thead><tr><th>日期</th><th class="fc">标的</th><th>方向</th><th>未复权价</th><th>数量（份）</th><th>金额</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + moreTip;
   }
 function showStrategyDetail(name) {
     var m = loadStored();
     if (!m[name]) return;
-    if (!D) { $("stDetail").style.display = "block"; $("stName2").textContent = name; $("stKpis").innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:8px">正在加载行情数据并计算策略详情…</div>'; }
+    if (!D) { $("stDetail").style.display = "block"; $("stName2").textContent = name; $("stKpis").innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:8px">正在加载行情数据并计算策略详情…</div>'; }
     ensureData(function () {
     stCurName = name;
     $("stDetail").style.display = "block";
@@ -5027,13 +5027,13 @@ function showStrategyDetail(name) {
       yAxis: { type: "value", axisLabel: { fontSize: 11, formatter: function (v) { return v.toFixed(2); } }, scale: true },
       series: [
         { name: "策略", type: "line", showSymbol: false, lineStyle: { width: 2, color: COLOR.str }, itemStyle: { color: COLOR.str }, data: dats.map(function (t, i) { return [t, +(res.nav[i]).toFixed(4)]; }) },
-        { name: "沪深300", type: "line", showSymbol: false, lineStyle: { width: 1.5, color: "#94A3B8" }, itemStyle: { color: "#94A3B8" }, data: res.bench_nav ? dats.map(function (t, i) { return [t, +(res.bench_nav[i]).toFixed(4)]; }) : [] }
+        { name: "沪深300", type: "line", showSymbol: false, lineStyle: { width: 1.5, color: "#9FB0C3" }, itemStyle: { color: "#9FB0C3" }, data: res.bench_nav ? dats.map(function (t, i) { return [t, +(res.bench_nav[i]).toFixed(4)]; }) : [] }
       ]
     });
     // 按年度收益表
     var yrs = mt.annual ? Object.keys(mt.annual).sort() : [];
     var yb = $("stYearly"); yb.innerHTML = '<tr><th>年份</th><th>策略</th><th>沪深300</th><th>超额</th></tr>';
-    if (!yrs.length) { yb.innerHTML += '<tr><td colspan="4" style="color:#64748B">网格策略不展示年度拆分</td></tr>'; }
+    if (!yrs.length) { yb.innerHTML += '<tr><td colspan="4" style="color:#7C8DA1">网格策略不展示年度拆分</td></tr>'; }
     yrs.forEach(function (y) {
       var a = mt.annual[y], b = (mt.bench_annual || {})[y] || 0;
       var e = a - b;
@@ -5044,7 +5044,7 @@ function showStrategyDetail(name) {
     var mb = $("stMonthly"); mb.innerHTML = "";
     var mon = mt.monthly || {};
     var monYrs = {};
-    if (Object.keys(mon).length === 0) { $("stMonthly").innerHTML = '<div style="font-size:12px;color:#64748B;padding:6px 0">网格策略不展示月度热力图</div>'; }
+    if (Object.keys(mon).length === 0) { $("stMonthly").innerHTML = '<div style="font-size:12px;color:#7C8DA1;padding:6px 0">网格策略不展示月度热力图</div>'; }
     Object.keys(mon).forEach(function (k) {
       var y = k.slice(0, 4), mIdx = +k.slice(5, 7);
       if (!monYrs[y]) monYrs[y] = {};
@@ -5053,14 +5053,14 @@ function showStrategyDetail(name) {
     Object.keys(monYrs).sort().forEach(function (y) {
       var wrap = document.createElement("div");
       wrap.style.cssText = "margin:6px 0";
-      wrap.innerHTML = '<div style="font-size:11px;color:#64748B;margin-bottom:3px">' + y + '</div>';
+      wrap.innerHTML = '<div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">' + y + '</div>';
       var grid = document.createElement("div");
       grid.className = "mgrid";
       for (var mi = 1; mi <= 12; mi++) {
         var c = document.createElement("div");
         c.className = "mcell";
         var v = monYrs[y][mi];
-        var bg = "#1E293B", fg = "#CBD5E1";
+        var bg = "#243244", fg = "#D8E2EF";
         if (v !== undefined) {
           var p = Math.min(Math.abs(v) * 400, 1);
           if (v >= 0) { bg = "rgba(16,185,129," + (0.12 + p * 0.6).toFixed(2) + ")"; }
@@ -5325,7 +5325,7 @@ function showStrategyDetail(name) {
         });
         if (!items.length) return;
         var head = document.createElement("div");
-        head.style.cssText = "width:100%;font-size:12px;color:#94A3B8;margin:3px 0 1px";
+        head.style.cssText = "width:100%;font-size:12px;color:#9FB0C3;margin:3px 0 1px";
         var allOn = true;
         allItems.forEach(function (p) { if (!self.checked[p.code]) allOn = false; });
         head.innerHTML = '<label style="cursor:pointer"><input type="checkbox" style="margin:0 4px 0 0;accent-color:#F59E0B;cursor:pointer">' + g + "（" + items.length + "）</label>";
@@ -5342,14 +5342,14 @@ function showStrategyDetail(name) {
           var low = sc && !bad && sc.score < self.thr;
           var dis = self.filterOn && (bad || low);
           var l = document.createElement("label");
-          l.style.cssText = "display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#CBD5E1;background:#111827;border:1px solid #1E293B;border-radius:4px;padding:1px 6px;cursor:pointer;white-space:nowrap" + (dis ? ";opacity:.45" : "");
+          l.style.cssText = "display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#D8E2EF;background:#202E3F;border:1px solid #243244;border-radius:4px;padding:1px 6px;cursor:pointer;white-space:nowrap" + (dis ? ";opacity:.45" : "");
           var tag = "";
           if (sc) {
             if (bad) tag = ' <span style="color:#F87171;font-size:10px">✗' + sc.gate[0] + '</span>';
             else if (low) tag = ' <span style="color:#FBBF24;font-size:10px">' + sc.score.toFixed(0) + '分·低</span>';
             else tag = ' <span style="color:#34D399;font-size:10px">' + sc.score.toFixed(0) + '分</span>';
           }
-          l.innerHTML = '<input type="checkbox" style="margin:0;accent-color:#F59E0B;cursor:pointer"' + (dis ? " disabled" : "") + '>' + p.name + ' <span style="color:#64748B">' + p.code + "</span>" + tag;
+          l.innerHTML = '<input type="checkbox" style="margin:0;accent-color:#F59E0B;cursor:pointer"' + (dis ? " disabled" : "") + '>' + p.name + ' <span style="color:#7C8DA1">' + p.code + "</span>" + tag;
           if (self.checked[p.code]) l.querySelector("input").checked = true;
           l.querySelector("input").addEventListener("change", function () { self.checked[p.code] = this.checked; self.refreshStat(); });
           box.appendChild(l);
@@ -5412,13 +5412,13 @@ function showStrategyDetail(name) {
           "</td><td data-label='震荡度'>" + s.parts.osc.toFixed(0) + "</td><td data-label='波动空间'>" + s.parts.vol.toFixed(0) + "</td><td data-label='区间覆盖'>" + s.parts.cov.toFixed(0) +
           "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
           "%</td><td data-label='ADX'>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td data-label='ER'>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td data-label='年触发'>" +
-          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#94A3B8;font-size:11px'>" +
+          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#9FB0C3;font-size:11px'>" +
           "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
           " 格 · 每格 " + p0.perLevelAmt.toFixed(0) + " 元 · 底仓 " + p0.baseAmt.toFixed(0) + " 元 " + warns + "</td></tr>";
       });
       html += "</tbody></table>";
       var el = $("gridScoreTable");
-      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#CBD5E1;margin:4px 0">适配度评分 · Top ' + top.length + "（勾选 " + sel.length + " 只，达标≥" + thr + " 分 " + scores.length + " 只）</div>" + html + "</div>";
+      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#D8E2EF;margin:4px 0">适配度评分 · Top ' + top.length + "（勾选 " + sel.length + " 只，达标≥" + thr + " 分 " + scores.length + " 只）</div>" + html + "</div>";
       self.renderPoolBox();
       self.refreshStat();
     },
@@ -5435,12 +5435,12 @@ function showStrategyDetail(name) {
           "</td><td data-label='震荡度'>" + s.parts.osc.toFixed(0) + "</td><td data-label='波动空间'>" + s.parts.vol.toFixed(0) + "</td><td data-label='区间覆盖'>" + s.parts.cov.toFixed(0) +
           "</td><td data-label='触发频率'>" + s.parts.trig.toFixed(0) + "</td><td data-label='年化波动'>" + (s.vol * 100).toFixed(1) +
           "%</td><td data-label='ADX'>" + (s.adx ? s.adx.toFixed(1) : "-") + "</td><td data-label='ER'>" + (s.er ? s.er.toFixed(2) : "-") + "</td><td data-label='年触发'>" +
-          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#94A3B8;font-size:11px'>" +
+          (s.parts.perY ? s.parts.perY.toFixed(0) : "-") + "</td></tr><tr><td colspan='12' data-label='' style='color:#9FB0C3;font-size:11px'>" +
           (p0 ? "区间 [" + (p0.lower).toFixed(3) + ", " + (p0.upper).toFixed(3) + "] · 格距 " + p0.step.toFixed(3) + " · " + p0.nLevels +
           " 格 · 每格 " + p0.perLevelAmt.toFixed(0) + " 元 · 底仓 " + p0.baseAmt.toFixed(0) + " 元 · σ" + ((p0.sig || 0) * 100).toFixed(2) + "%·振" + ((p0.amp || 0) * 100).toFixed(2) + "% " + warns : "") + "</td></tr>";
       });
       html += "</tbody></table>";
-      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#CBD5E1;margin:4px 0">适配度评分 · Top ' + top.length + "（达标≥" + thr + " 分）</div>" + html + "</div>";
+      el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#D8E2EF;margin:4px 0">适配度评分 · Top ' + top.length + "（达标≥" + thr + " 分）</div>" + html + "</div>";
     },
     refreshStat: function () {
       var self = this;
@@ -5493,19 +5493,19 @@ function showStrategyDetail(name) {
       var el = $("gridStressResult"); if (!el) return;
       var res = this._stressRes; if (!res) return;
       var h = '';
-      h += '<div style="font-size:13px;color:#E2E8F0;font-weight:600;margin:8px 0 4px">历史极端段回放（网格策略段内表现，破网即冻结：跌破区间下限后停止买入、持有等回升）</div>';
+      h += '<div style="font-size:13px;color:#F1F5F9;font-weight:600;margin:8px 0 4px">历史极端段回放（网格策略段内表现，破网即冻结：跌破区间下限后停止买入、持有等回升）</div>';
       h += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
       res.segs.forEach(function (r) {
-        var d = r.status ? '<div style="font-size:12px;color:#64748B">' + r.status + '</div>' :
-          '<div style="font-size:12px;color:#CBD5E1">' + r.start + ' ~ ' + r.end + ' · ' + r.n_days + ' 个交易日</div>' +
-          '<div style="font-size:12px;color:#CBD5E1;margin-top:2px">段收益 <span style="color:' + (r.total_return >= 0 ? '#34D399' : '#F87171') + ';font-weight:600">' + gPct(r.total_return) + '</span></div>' +
-          '<div style="font-size:12px;color:#CBD5E1">最大浮亏 <span style="color:#F87171">' + gPct(r.max_dd) + '</span></div>' +
-          '<div style="font-size:12px;color:#CBD5E1">补仓 ' + r.buy_trades + ' 次 · 破网 ' + r.broke + ' 次</div>';
-        h += '<div style="flex:1;min-width:220px;background:#111827;border:1px solid #334155;border-radius:8px;padding:8px 10px">' +
+        var d = r.status ? '<div style="font-size:12px;color:#7C8DA1">' + r.status + '</div>' :
+          '<div style="font-size:12px;color:#D8E2EF">' + r.start + ' ~ ' + r.end + ' · ' + r.n_days + ' 个交易日</div>' +
+          '<div style="font-size:12px;color:#D8E2EF;margin-top:2px">段收益 <span style="color:' + (r.total_return >= 0 ? '#34D399' : '#F87171') + ';font-weight:600">' + gPct(r.total_return) + '</span></div>' +
+          '<div style="font-size:12px;color:#D8E2EF">最大浮亏 <span style="color:#F87171">' + gPct(r.max_dd) + '</span></div>' +
+          '<div style="font-size:12px;color:#D8E2EF">补仓 ' + r.buy_trades + ' 次 · 破网 ' + r.broke + ' 次</div>';
+        h += '<div style="flex:1;min-width:220px;background:#202E3F;border:1px solid #3E4E63;border-radius:8px;padding:8px 10px">' +
           '<div style="font-size:12px;color:#93C5FD;font-weight:600;margin-bottom:2px">' + r.label + '</div>' + d + '</div>';
       });
       h += '</div>';
-      h += '<div style="font-size:11px;color:#64748B;margin-top:2px">极端情景假设，仅供风险评估，不代表真实收益。</div>';
+      h += '<div style="font-size:11px;color:#7C8DA1;margin-top:2px">极端情景假设，仅供风险评估，不代表真实收益。</div>';
       el.innerHTML = h;
     },
     nameOf: function (code) {
@@ -5515,7 +5515,7 @@ function showStrategyDetail(name) {
     renderParamsTable: function () {
       var self = this;
       var el = $("gridParamTable"); if (!el) return;
-      if (!this.lastScores || !this.lastScores.length) { el.innerHTML = '<div style="font-size:12px;color:#64748B">先执行适配度评分，自动生成每标的网格参数</div>'; return; }
+      if (!this.lastScores || !this.lastScores.length) { el.innerHTML = '<div style="font-size:12px;color:#7C8DA1">先执行适配度评分，自动生成每标的网格参数</div>'; return; }
       var html = '<table class="trades" style="width:100%"><thead><tr>' +
         "<th>代码</th><th>名称</th><th>区间下限</th><th>区间上限</th><th>格距</th><th>格数</th><th>底仓资金</th><th>每格资金</th><th>触发基准价</th><th>波动统计</th><th>档位预览</th></tr></thead><tbody>";
       this.lastScores.forEach(function (s) {
@@ -5528,17 +5528,17 @@ function showStrategyDetail(name) {
         var loL = tb + (0 - nD) * p.step, hiL = tb + (nL - 1 - nD) * p.step;
         var warns = p.warns ? p.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
         var unchg = p._changed === false;
-        var volCell = '<span data-k="volStat" data-c="' + s.code + '" style="color:#94A3B8;font-size:11px">σ' + ((p.sig || 0) * 100).toFixed(2) + '%·振' + ((p.amp || 0) * 100).toFixed(2) + '%</span>' + (unchg ? ' <span style="color:#64748B;font-size:10px">·未变</span>' : '');
+        var volCell = '<span data-k="volStat" data-c="' + s.code + '" style="color:#9FB0C3;font-size:11px">σ' + ((p.sig || 0) * 100).toFixed(2) + '%·振' + ((p.amp || 0) * 100).toFixed(2) + '%</span>' + (unchg ? ' <span style="color:#7C8DA1;font-size:10px">·未变</span>' : '');
         html += "<tr><td data-label='代码'>" + s.code + "</td><td data-label='名称'>" + gName(s.code) + "</td>" +
-          "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='格距'><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:62px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:48px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='底仓资金'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:76px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
-          "<td data-label='每格资金'><span data-k='perL' data-c='" + s.code + "' style='color:#CBD5E1;font-size:12px'>" + perL.toFixed(0) + " 元</span></td>" +
-          "<td data-label='触发基准价'><input type='number' step='0.001' data-k='triggerBase' data-c='" + s.code + "' value='" + tb.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #334155;border-radius:3px;background:#111827;color:#E2E8F0'></td>" +
+          "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
+          "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
+          "<td data-label='格距'><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:62px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
+          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:48px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
+          "<td data-label='底仓资金'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:76px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
+          "<td data-label='每格资金'><span data-k='perL' data-c='" + s.code + "' style='color:#D8E2EF;font-size:12px'>" + perL.toFixed(0) + " 元</span></td>" +
+          "<td data-label='触发基准价'><input type='number' step='0.001' data-k='triggerBase' data-c='" + s.code + "' value='" + tb.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
           "<td data-label='波动统计'>" + volCell + "</td>" +
-          "<td data-label='档位预览'><span data-k='lvlPrev' data-c='" + s.code + "' style='color:#64748B;font-size:11px'>" + loL.toFixed(3) + " ~ " + hiL.toFixed(3) + "</span></td></tr>" +
+          "<td data-label='档位预览'><span data-k='lvlPrev' data-c='" + s.code + "' style='color:#7C8DA1;font-size:11px'>" + loL.toFixed(3) + " ~ " + hiL.toFixed(3) + "</span></td></tr>" +
           (warns ? "<tr><td colspan='10' data-label='' style='color:#FBBF24;font-size:11px'>" + warns + "</td></tr>" : "");
       });
       html += "</tbody></table>";
@@ -5660,9 +5660,9 @@ function showStrategyDetail(name) {
       c.setOption({
         backgroundColor: "transparent",
         grid: { left: 46, right: 14, top: 18, bottom: 26 },
-        tooltip: { trigger: "axis", backgroundColor: "#0F172A", borderColor: "#334155", textStyle: { color: "#E2E8F0", fontSize: 11 } },
-        xAxis: { type: "category", data: x, axisLine: { lineStyle: { color: "#334155" } }, axisLabel: { color: "#94A3B8", fontSize: 10 } },
-        yAxis: { type: "value", scale: true, axisLabel: { color: "#94A3B8", fontSize: 10 }, splitLine: { lineStyle: { color: "#1E293B" } } },
+        tooltip: { trigger: "axis", backgroundColor: "#1B2634", borderColor: "#3E4E63", textStyle: { color: "#F1F5F9", fontSize: 11 } },
+        xAxis: { type: "category", data: x, axisLine: { lineStyle: { color: "#3E4E63" } }, axisLabel: { color: "#9FB0C3", fontSize: 10 } },
+        yAxis: { type: "value", scale: true, axisLabel: { color: "#9FB0C3", fontSize: 10 }, splitLine: { lineStyle: { color: "#243244" } } },
         series: [{ name: name, type: "line", data: y, showSymbol: false, lineStyle: { width: 1.4, color: color }, areaStyle: { opacity: 0.06, color: color } }]
       });
       this._charts[id] = c;
@@ -5674,9 +5674,9 @@ function showStrategyDetail(name) {
       c.setOption({
         backgroundColor: "transparent",
         grid: { left: 46, right: 14, top: 18, bottom: 26 },
-        tooltip: { trigger: "axis", backgroundColor: "#0F172A", borderColor: "#334155", textStyle: { color: "#E2E8F0", fontSize: 11 }, valueFormatter: function (v) { return (v * 100).toFixed(1) + "%"; } },
-        xAxis: { type: "category", data: x, axisLine: { lineStyle: { color: "#334155" } }, axisLabel: { color: "#94A3B8", fontSize: 10 } },
-        yAxis: { type: "value", axisLabel: { color: "#94A3B8", fontSize: 10, formatter: function (v) { return (v * 100).toFixed(0) + "%"; } }, splitLine: { lineStyle: { color: "#1E293B" } } },
+        tooltip: { trigger: "axis", backgroundColor: "#1B2634", borderColor: "#3E4E63", textStyle: { color: "#F1F5F9", fontSize: 11 }, valueFormatter: function (v) { return (v * 100).toFixed(1) + "%"; } },
+        xAxis: { type: "category", data: x, axisLine: { lineStyle: { color: "#3E4E63" } }, axisLabel: { color: "#9FB0C3", fontSize: 10 } },
+        yAxis: { type: "value", axisLabel: { color: "#9FB0C3", fontSize: 10, formatter: function (v) { return (v * 100).toFixed(0) + "%"; } }, splitLine: { lineStyle: { color: "#243244" } } },
         series: [{ name: name, type: "line", data: y, showSymbol: false, lineStyle: { width: 1.2, color: color }, areaStyle: { opacity: 0.12, color: color } }]
       });
       this._charts[id] = c;
@@ -5814,14 +5814,14 @@ function showStrategyDetail(name) {
     var keys = Object.keys(m);
     box.innerHTML = "";
     if (!keys.length) {
-      box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:10px 2px">暂无已保存策略。<br>请先在「回测」页调好参数并保存，再到此页组合多个策略。</div>';
+      box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:10px 2px">暂无已保存策略。<br>请先在「回测」页调好参数并保存，再到此页组合多个策略。</div>';
       return;
     }
     var ds = $("comboStart"), de = $("comboEnd");
     if (D && D.calendar && D.calendar.length) { ds.value = D.calendar[0]; de.value = D.calendar[D.calendar.length - 1]; }
     keys.forEach(function (nm) {
       var row = document.createElement("label");
-      row.style.cssText = "display:flex;align-items:center;gap:6px;font-size:12px;color:#E2E8F0;padding:4px 6px;cursor:pointer;background:#111827;border:1px solid #1E293B;border-radius:5px";
+      row.style.cssText = "display:flex;align-items:center;gap:6px;font-size:12px;color:#F1F5F9;padding:4px 6px;cursor:pointer;background:#202E3F;border:1px solid #243244;border-radius:5px";
       var cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "comboCk"; cb.checked = true;
       cb.style.cssText = "flex:0 0 auto";
       var nmEl = document.createElement("span");
@@ -5830,8 +5830,8 @@ function showStrategyDetail(name) {
       nmEl.title = nm + ((m[nm].mode === "rebalance") ? "（再平衡策略）" : "（动量策略）");
       var wt = document.createElement("input");
       wt.type = "number"; wt.min = 0; wt.max = 100; wt.step = 1; wt.className = "comboWt";
-      wt.style.cssText = "flex:0 0 52px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0";
-      var wlab = document.createElement("span"); wlab.textContent = "%"; wlab.style.cssText = "color:#64748B;font-size:11px";
+      wt.style.cssText = "flex:0 0 52px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9";
+      var wlab = document.createElement("span"); wlab.textContent = "%"; wlab.style.cssText = "color:#7C8DA1;font-size:11px";
       cb.addEventListener("change", function () { balanceComboWeights(); });
       row.appendChild(cb); row.appendChild(nmEl); row.appendChild(wt); row.appendChild(wlab);
       box.appendChild(row);
@@ -5935,14 +5935,14 @@ function showStrategyDetail(name) {
     var kpiData = [["组合累计收益", _pct(met.total)], ["组合年化", _pct(met.cagr)], ["最大回撤", _pct(met.mdd)], ["组合夏普", met.sharpe.toFixed(2)]];
     kpiData.forEach(function (kv) {
       var c = document.createElement("div");
-      c.style.cssText = "background:#111827;border:1px solid #1E293B;border-radius:8px;padding:10px 12px;text-align:center";
-      c.innerHTML = '<div style="font-size:11px;color:#64748B">' + kv[0] + '</div><div style="font-size:17px;color:#38BDF8;font-weight:600;margin-top:2px">' + kv[1] + '</div>';
+      c.style.cssText = "background:#202E3F;border:1px solid #243244;border-radius:8px;padding:10px 12px;text-align:center";
+      c.innerHTML = '<div style="font-size:11px;color:#7C8DA1">' + kv[0] + '</div><div style="font-size:17px;color:#4FC3F7;font-weight:600;margin-top:2px">' + kv[1] + '</div>';
       kpi.appendChild(c);
     });
     // 净值曲线
     _disposeCombo("comboChart");
-    var palette = ["#38BDF8", "#F59E0B", "#34D399", "#A78BFA", "#F472B6", "#FBBF24", "#60A5FA", "#4ADE80"];
-    var series = [{ name: "组合", type: "line", showSymbol: false, lineStyle: { width: 3, color: "#38BDF8" }, itemStyle: { color: "#38BDF8" }, data: cal.map(function (t, i) { return [t, +(combo[i]).toFixed(5)]; }) }];
+    var palette = ["#4FC3F7", "#F59E0B", "#34D399", "#A78BFA", "#F472B6", "#FBBF24", "#60A5FA", "#4ADE80"];
+    var series = [{ name: "组合", type: "line", showSymbol: false, lineStyle: { width: 3, color: "#4FC3F7" }, itemStyle: { color: "#4FC3F7" }, data: cal.map(function (t, i) { return [t, +(combo[i]).toFixed(5)]; }) }];
     resList.forEach(function (r, idx) {
       var col = palette[(idx + 1) % palette.length];
       series.push({ name: names[idx], type: "line", showSymbol: false, lineStyle: { width: 1.5, color: col }, itemStyle: { color: col }, data: r.nav.map(function (v, i) { return [cal[i], +v.toFixed(5)]; }) });
@@ -5951,10 +5951,10 @@ function showStrategyDetail(name) {
     _comboCharts["comboChart"] = ch;
     ch.setOption({
       backgroundColor: "transparent", tooltip: { trigger: "axis" },
-      legend: { textStyle: { color: "#CBD5E1" }, top: 0 },
+      legend: { textStyle: { color: "#D8E2EF" }, top: 0 },
       grid: { left: 45, right: 20, top: 34, bottom: 24, containLabel: true },
-      xAxis: { type: "category", data: cal, axisLabel: { color: "#94A3B8", hideOverlap: true } },
-      yAxis: { type: "value", scale: true, axisLabel: { color: "#94A3B8", formatter: function (v) { return v.toFixed(2); } }, splitLine: { lineStyle: { color: "#1E293B" } } },
+      xAxis: { type: "category", data: cal, axisLabel: { color: "#9FB0C3", hideOverlap: true } },
+      yAxis: { type: "value", scale: true, axisLabel: { color: "#9FB0C3", formatter: function (v) { return v.toFixed(2); } }, splitLine: { lineStyle: { color: "#243244" } } },
       series: series
     });
     // 相关矩阵（日收益率相关）
@@ -5971,10 +5971,10 @@ function showStrategyDetail(name) {
     hm.setOption({
       backgroundColor: "transparent", tooltip: { position: "top", formatter: function (p) { return names[p.value[0]] + " ↔ " + names[p.value[1]] + "<br>相关系数 " + p.value[2]; } },
       grid: { left: 120, right: 30, top: 30, bottom: 80 },
-      xAxis: { type: "category", data: names, axisLabel: { color: "#CBD5E1", rotate: 40 } },
-      yAxis: { type: "category", data: names, axisLabel: { color: "#CBD5E1" } },
-      visualMap: { min: -1, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 6, textStyle: { color: "#94A3B8" }, inRange: { color: ["#7F1D1D", "#1E293B", "#14532D"] } },
-      series: [{ type: "heatmap", data: cells, label: { show: true, color: "#E2E8F0", fontSize: 11 }, itemStyle: { borderColor: "#0F172A", borderWidth: 1 } }]
+      xAxis: { type: "category", data: names, axisLabel: { color: "#D8E2EF", rotate: 40 } },
+      yAxis: { type: "category", data: names, axisLabel: { color: "#D8E2EF" } },
+      visualMap: { min: -1, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 6, textStyle: { color: "#9FB0C3" }, inRange: { color: ["#7F1D1D", "#243244", "#14532D"] } },
+      series: [{ type: "heatmap", data: cells, label: { show: true, color: "#F1F5F9", fontSize: 11 }, itemStyle: { borderColor: "#1B2634", borderWidth: 1 } }]
     });
     // 目标权重
     _disposeCombo("comboWeight");
@@ -5983,8 +5983,8 @@ function showStrategyDetail(name) {
     var lg = $("comboWeightLegend"); lg.innerHTML = "";
     names.forEach(function (nm, i) {
       var it = document.createElement("span");
-      it.style.cssText = "display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#E2E8F0";
-      it.innerHTML = '<span style="width:10px;height:10px;border-radius:2px;background:' + palette[i % palette.length] + ';flex:0 0 auto"></span>' + nm + ' <span style="color:#94A3B8">' + (w[i] * 100).toFixed(2) + '%</span>';
+      it.style.cssText = "display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#F1F5F9";
+      it.innerHTML = '<span style="width:10px;height:10px;border-radius:2px;background:' + palette[i % palette.length] + ';flex:0 0 auto"></span>' + nm + ' <span style="color:#9FB0C3">' + (w[i] * 100).toFixed(2) + '%</span>';
       lg.appendChild(it);
     });
     _disposeCombo("comboWeight");
@@ -5992,7 +5992,7 @@ function showStrategyDetail(name) {
     _comboCharts["comboWeight"] = pie;
     pie.setOption({
       backgroundColor: "transparent", tooltip: { trigger: "item", formatter: function (p) { return p.name + "<br>权重 " + p.percent + "%"; } },
-      series: [{ type: "pie", radius: ["42%", "64%"], center: ["50%", "50%"], avoidLabelOverlap: true, label: { color: "#E2E8F0", formatter: "{d}%", fontSize: 11 }, data: names.map(function (nm, i) { return { name: nm, value: +(w[i] * 100).toFixed(2), itemStyle: { color: palette[i % palette.length] } }; }) }]
+      series: [{ type: "pie", radius: ["42%", "64%"], center: ["50%", "50%"], avoidLabelOverlap: true, label: { color: "#F1F5F9", formatter: "{d}%", fontSize: 11 }, data: names.map(function (nm, i) { return { name: nm, value: +(w[i] * 100).toFixed(2), itemStyle: { color: palette[i % palette.length] } }; }) }]
     });
   }
   $("comboRun").addEventListener("click", function () { runCombo(); });
@@ -6148,7 +6148,7 @@ function showStrategyDetail(name) {
           : "✅ 参数相对稳健：窗口±5日收益区间 <b>" + FMT.pct(mn, 1) + " ~ " + FMT.pct(mx, 1) + "</b>，结果对窗口微调不敏感。");
       var rows = variants.map(function (v) {
         return "<div style=\"display:flex;justify-content:space-between;gap:12px;padding:1px 0\"><span>" + v.label + "</span><b style=\"color:" +
-          (v.total < mn + span * 0.25 ? "#F87171" : (v.total > mx - span * 0.25 ? "#34D399" : "#CBD5E1")) + "\">" + FMT.pct(v.total, 1) + "</b></div>";
+          (v.total < mn + span * 0.25 ? "#F87171" : (v.total > mx - span * 0.25 ? "#34D399" : "#D8E2EF")) + "\">" + FMT.pct(v.total, 1) + "</b></div>";
       }).join("");
       box.style.display = "";
       box.innerHTML = "<div style=\"font-weight:700;margin-bottom:4px\">参数稳健性检查（原收益 " + FMT.pct(base, 1) + "，扰动 " + variants.length + " 组）</div>" +
@@ -6428,27 +6428,27 @@ function showStrategyDetail(name) {
 
     // 单个指标项（标签 + 值）
     function item(label, valText, valColor) {
-      return '<span style="font-size:12px;color:#94A3B8;white-space:nowrap">' + label +
+      return '<span style="font-size:12px;color:#9FB0C3;white-space:nowrap">' + label +
         ' <b style="color:' + valColor + '">' + valText + '</b></span>';
     }
 
     // 一行（卡片式，flex-wrap 在窄屏自动换行）
     function row(idx, desc, m, isBase, combo) {
-      var rank = '<span style="color:#64748B;width:22px;font-size:12px;text-align:center">' + idx + '</span>';
-      var name = '<span style="font-size:12px;' + (isBase ? "color:#94A3B8" : "color:#CBD5E1") + ';min-width:130px;flex:1;flex-basis:120px;word-break:break-all">' + desc + '</span>';
-      var cells = item(objLabel, scoreText(m), "#38BDF8") +
+      var rank = '<span style="color:#7C8DA1;width:22px;font-size:12px;text-align:center">' + idx + '</span>';
+      var name = '<span style="font-size:12px;' + (isBase ? "color:#9FB0C3" : "color:#D8E2EF") + ';min-width:130px;flex:1;flex-basis:120px;word-break:break-all">' + desc + '</span>';
+      var cells = item(objLabel, scoreText(m), "#4FC3F7") +
         item("研究段", pct(m.stTotal), "#F59E0B") +
-        item("验证段", pct(m.valTotal), "#E2E8F0") +
+        item("验证段", pct(m.valTotal), "#F1F5F9") +
         item("累计", pct(m.total), "#F87171") +
-        item("年化", pct(m.cagr), "#E2E8F0") +
+        item("年化", pct(m.cagr), "#F1F5F9") +
         item("回撤", pct(m.dd), "#34D399") +
-        item("夏普", (isFinite(m.sharpe) ? m.sharpe.toFixed(2) : "—"), "#E2E8F0") +
-        item("验证段", pct(m.valTotal), "#E2E8F0");
-      var btn = combo ? '<button type="button" class="tuneApply" data-combo="' + JSON.stringify(combo).replace(/"/g, "&quot;") + '" style="padding:2px 10px;font-size:12px;border-radius:4px;border:1px solid #334155;background:#111827;color:#E2E8F0;cursor:pointer">应用</button>' : '';
-      return '<div style="display:flex;flex-wrap:wrap;gap:3px 12px;align-items:center;padding:6px 2px;border-top:1px solid #1E293B">' + rank + name + cells + btn + '</div>';
+        item("夏普", (isFinite(m.sharpe) ? m.sharpe.toFixed(2) : "—"), "#F1F5F9") +
+        item("验证段", pct(m.valTotal), "#F1F5F9");
+      var btn = combo ? '<button type="button" class="tuneApply" data-combo="' + JSON.stringify(combo).replace(/"/g, "&quot;") + '" style="padding:2px 10px;font-size:12px;border-radius:4px;border:1px solid #3E4E63;background:#202E3F;color:#F1F5F9;cursor:pointer">应用</button>' : '';
+      return '<div style="display:flex;flex-wrap:wrap;gap:3px 12px;align-items:center;padding:6px 2px;border-top:1px solid #243244">' + rank + name + cells + btn + '</div>';
     }
 
-    var html = '<div style="font-size:11px;color:#64748B;padding:2px 2px 6px">加粗蓝为所选优化目标（研究段指标）；正收益红、回撤绿，点「应用」回填参数。验证段只检验、不参与排序</div>';
+    var html = '<div style="font-size:11px;color:#7C8DA1;padding:2px 2px 6px">加粗蓝为所选优化目标（研究段指标）；正收益红、回撤绿，点「应用」回填参数。验证段只检验、不参与排序</div>';
     if (bm) html += row("基线", "基线 · 当前参数", bm, true, null);
     var shown = Math.min(25, results.length);
     for (var i = 0; i < shown; i++) {
@@ -6509,10 +6509,10 @@ function showStrategyDetail(name) {
     var chart = echarts.getInstanceByDom(chEl) || echarts.init(chEl);
     chart.setOption({
       tooltip: { trigger: "axis", triggerOn: "click", renderMode: "richText", confine: true },
-      legend: { type: "scroll", textStyle: { color: "#94A3B8", fontSize: 10 }, top: 4, height: 22, iconSize: 9 },
+      legend: { type: "scroll", textStyle: { color: "#9FB0C3", fontSize: 10 }, top: 4, height: 22, iconSize: 9 },
       grid: { left: 44, right: 16, top: 62, bottom: 26, containLabel: true },
-      xAxis: { type: "category", data: xlabels, axisLabel: { color: "#64748B", fontSize: 10 } },
-      yAxis: { type: "value", axisLabel: { color: "#64748B", fontSize: 10, formatter: function (v) { return v + "%"; } }, splitLine: { lineStyle: { color: "#1E293B" } } },
+      xAxis: { type: "category", data: xlabels, axisLabel: { color: "#7C8DA1", fontSize: 10 } },
+      yAxis: { type: "value", axisLabel: { color: "#7C8DA1", fontSize: 10, formatter: function (v) { return v + "%"; } }, splitLine: { lineStyle: { color: "#243244" } } },
       series: series
     }, true);
     chart.resize();
@@ -6552,7 +6552,7 @@ function showStrategyDetail(name) {
 (function () {
   if (window.CorrView) return;
   var $ = function (id) { return document.getElementById(id); };
-  var COLOR = "#38BDF8";
+  var COLOR = "#4FC3F7";
   var checked = [];  // 默认不勾选任何标的（可全选 / 推荐分散组合一键勾选）
   var inited = false;
 
@@ -6707,7 +6707,7 @@ function showStrategyDetail(name) {
       var a = codes[p.a], b = codes[p.b];
       var tr = document.createElement("tr");
       tr.className = p.v < 0.5 ? "low" : "";
-      tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + nameOf(a) + ' <span style="color:#64748B;font-size:10px">' + a + '</span></td><td>' + nameOf(b) + ' <span style="color:#64748B;font-size:10px">' + b + '</span></td><td class="c" style="color:' + (p.v < 0.5 ? "#34D399" : "inherit") + '">' + fmt(p.v) + '</td><td>' + groupOf(a) + '</td><td>' + groupOf(b) + "</td>";
+      tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + nameOf(a) + ' <span style="color:#7C8DA1;font-size:10px">' + a + '</span></td><td>' + nameOf(b) + ' <span style="color:#7C8DA1;font-size:10px">' + b + '</span></td><td class="c" style="color:' + (p.v < 0.5 ? "#34D399" : "inherit") + '">' + fmt(p.v) + '</td><td>' + groupOf(a) + '</td><td>' + groupOf(b) + "</td>";
       body.appendChild(tr);
     });
   }
@@ -7067,12 +7067,12 @@ function showStrategyDetail(name) {
       if (!show) return;
       if (!(p.code in icSel)) icSel[p.code] = false;   // 首次默认不勾选
       var lab = document.createElement("label");
-      lab.style.cssText = "display:flex;align-items:center;gap:8px;font-size:12px;color:#CBD5E1;cursor:pointer;padding:3px 0";
-      lab.innerHTML = "<input type='checkbox' value='" + p.code + "' " + (icSel[p.code] ? "checked" : "") + "> <span style='color:#E2E8F0'>" + p.name + "</span><span style='color:#64748B;font-size:10px'>" + p.code + "</span>";
+      lab.style.cssText = "display:flex;align-items:center;gap:8px;font-size:12px;color:#D8E2EF;cursor:pointer;padding:3px 0";
+      lab.innerHTML = "<input type='checkbox' value='" + p.code + "' " + (icSel[p.code] ? "checked" : "") + "> <span style='color:#F1F5F9'>" + p.name + "</span><span style='color:#7C8DA1;font-size:10px'>" + p.code + "</span>";
       pool.appendChild(lab);
       any = true;
     });
-    if (!any) { var e2 = document.createElement("div"); e2.style.cssText = "font-size:12px;color:#94A3B8"; e2.textContent = "无匹配标的"; pool.appendChild(e2); }
+    if (!any) { var e2 = document.createElement("div"); e2.style.cssText = "font-size:12px;color:#9FB0C3"; e2.textContent = "无匹配标的"; pool.appendChild(e2); }
     Array.prototype.forEach.call(pool.querySelectorAll("input[type=checkbox]"), function (cb) {
       cb.addEventListener("change", function () { icSel[this.value] = this.checked; });
     });
@@ -7092,9 +7092,9 @@ function showStrategyDetail(name) {
       if (!(k in fSel)) fSel[k] = false;   // 首次默认不勾选
       if (!(k in fWinVals)) fWinVals[k] = defaultWin(k);
       var lab = document.createElement("label");
-      lab.style.cssText = "display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#CBD5E1;cursor:pointer;padding:3px 7px;border:1px solid #1E293B;border-radius:4px;margin:2px";
+      lab.style.cssText = "display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#D8E2EF;cursor:pointer;padding:3px 7px;border:1px solid #243244;border-radius:4px;margin:2px";
       lab.innerHTML = "<input type='checkbox' value='" + k + "' " + (fSel[k] ? "checked" : "") + "> " + label +
-        "<input type='number' class='icw' data-k='" + k + "' value='" + fWinVals[k] + "' title='该因子窗口' style='width:52px;height:20px;box-sizing:border-box;padding:0 4px;font-size:11px;background:#0F172A;border:1px solid #334155;border-radius:4px;color:#E2E8F0;text-align:center'>";
+        "<input type='number' class='icw' data-k='" + k + "' value='" + fWinVals[k] + "' title='该因子窗口' style='width:52px;height:20px;box-sizing:border-box;padding:0 4px;font-size:11px;background:#1B2634;border:1px solid #3E4E63;border-radius:4px;color:#F1F5F9;text-align:center'>";
       fbox.appendChild(lab);
     });
     Array.prototype.forEach.call(fbox.querySelectorAll("input[type=checkbox]"), function (cb) {
@@ -7220,10 +7220,10 @@ function showStrategyDetail(name) {
     });
     var option = {
       tooltip: { trigger: "axis", triggerOn: "click", renderMode: "richText", confine: true },
-      legend: { type: "scroll", textStyle: { color: "#94A3B8", fontSize: 10 }, top: 26, height: 26, iconSize: 9, pageIconColor: "#94A3B8", pageTextStyle: { color: "#94A3B8" } },
+      legend: { type: "scroll", textStyle: { color: "#9FB0C3", fontSize: 10 }, top: 26, height: 26, iconSize: 9, pageIconColor: "#9FB0C3", pageTextStyle: { color: "#9FB0C3" } },
       grid: { left: 44, right: 14, top: 58, bottom: 28, containLabel: true },
-      xAxis: { type: "category", data: dates, axisLabel: { color: "#64748B", fontSize: 10, interval: "auto", formatter: function (v) { return (v || "").slice(0, 4); } } },
-      yAxis: { type: "value", axisLabel: { color: "#64748B", fontSize: 10 }, splitLine: { lineStyle: { color: "#1E293B" } } },
+      xAxis: { type: "category", data: dates, axisLabel: { color: "#7C8DA1", fontSize: 10, interval: "auto", formatter: function (v) { return (v || "").slice(0, 4); } } },
+      yAxis: { type: "value", axisLabel: { color: "#7C8DA1", fontSize: 10 }, splitLine: { lineStyle: { color: "#243244" } } },
       series: series
     };
     var chart = echarts.getInstanceByDom(el) || echarts.init(el);
@@ -7252,10 +7252,10 @@ function showStrategyDetail(name) {
     });
     var option = {
       tooltip: { trigger: "axis", triggerOn: "click", renderMode: "richText", confine: true },
-      legend: { type: "scroll", textStyle: { color: "#94A3B8", fontSize: 10 }, top: 26, height: 26, iconSize: 9, pageIconColor: "#94A3B8", pageTextStyle: { color: "#94A3B8" } },
+      legend: { type: "scroll", textStyle: { color: "#9FB0C3", fontSize: 10 }, top: 26, height: 26, iconSize: 9, pageIconColor: "#9FB0C3", pageTextStyle: { color: "#9FB0C3" } },
       grid: { left: 44, right: 16, top: 58, bottom: 28, containLabel: true },
-      xAxis: { type: "category", data: futNs.map(function (n) { return n + "日"; }), axisLabel: { color: "#64748B", fontSize: 10 } },
-      yAxis: { type: "value", axisLabel: { color: "#64748B", fontSize: 10 }, splitLine: { lineStyle: { color: "#1E293B" } } },
+      xAxis: { type: "category", data: futNs.map(function (n) { return n + "日"; }), axisLabel: { color: "#7C8DA1", fontSize: 10 } },
+      yAxis: { type: "value", axisLabel: { color: "#7C8DA1", fontSize: 10 }, splitLine: { lineStyle: { color: "#243244" } } },
       series: series
     };
     var chart = echarts.getInstanceByDom(el) || echarts.init(el);
@@ -7273,18 +7273,18 @@ function showStrategyDetail(name) {
 
 <!-- 因子说明弹窗 -->
 <div id="factorHelpModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(2,6,23,.72);z-index:9999;overflow:auto;padding:16px">
-  <div style="max-width:820px;margin:24px auto;background:#0B1220;border:1px solid #334155;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #1E293B">
+  <div style="max-width:820px;margin:24px auto;background:#0B1220;border:1px solid #3E4E63;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #243244">
       <div style="font-size:15px;font-weight:600">因子说明</div>
       <button type="button" id="factorHelpClose" style="font-size:18px;line-height:1;padding:4px 10px;border-radius:6px">&times;</button>
     </div>
-    <div style="padding:10px 16px 0;font-size:12px;color:#94A3B8">系统支持的全部因子类型（含自定义公式因子的基础类型），公式按引擎 factorValue 实际实现口径书写。窗口参数 N/M/O 可在因子管理与排名条件中调整；所有价格均为后复权口径。</div>
+    <div style="padding:10px 16px 0;font-size:12px;color:#9FB0C3">系统支持的全部因子类型（含自定义公式因子的基础类型），公式按引擎 factorValue 实际实现口径书写。窗口参数 N/M/O 可在因子管理与排名条件中调整；所有价格均为后复权口径。</div>
     <div style="padding:12px 16px 16px;overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
-        <thead><tr style="color:#94A3B8;text-align:left">
-          <th style="padding:6px 8px;border-bottom:1px solid #334155;width:18%">因子</th>
-          <th style="padding:6px 8px;border-bottom:1px solid #334155;width:32%">含义</th>
-          <th style="padding:6px 8px;border-bottom:1px solid #334155;width:50%">公式（引擎口径）</th>
+        <thead><tr style="color:#9FB0C3;text-align:left">
+          <th style="padding:6px 8px;border-bottom:1px solid #3E4E63;width:18%">因子</th>
+          <th style="padding:6px 8px;border-bottom:1px solid #3E4E63;width:32%">含义</th>
+          <th style="padding:6px 8px;border-bottom:1px solid #3E4E63;width:50%">公式（引擎口径）</th>
         </tr></thead>
         <tbody id="factorHelpBody"></tbody>
       </table>
@@ -7295,29 +7295,29 @@ function showStrategyDetail(name) {
 
 <!-- 网格适配度评分标准弹窗 -->
 <div id="gridScoreHelpModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(2,6,23,.72);z-index:9999;overflow:auto;padding:16px">
-  <div style="max-width:680px;margin:20px auto;background:#0B1220;border:1px solid #334155;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #1E293B">
+  <div style="max-width:680px;margin:20px auto;background:#0B1220;border:1px solid #3E4E63;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #243244">
       <div style="font-size:15px;font-weight:600">网格适配度评分标准</div>
       <button type="button" id="gridScoreHelpClose" style="font-size:18px;line-height:1;padding:4px 10px;border-radius:6px">&times;</button>
     </div>
-    <div style="padding:12px 16px 16px;font-size:12.5px;color:#CBD5E1;line-height:1.7">
-      <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-bottom:10px">
+    <div style="padding:12px 16px 16px;font-size:12.5px;color:#D8E2EF;line-height:1.7">
+      <div style="background:#1B2634;border:1px solid #3E4E63;border-radius:8px;padding:8px 12px;margin-bottom:10px">
         <b style="color:#F59E0B">硬门槛（任一不满足直接剔除）</b><br>
         上市 ≥ 250 个交易日 ｜ 年化波动率 8% ~ 55% ｜ ADX14 ≤ 40（&gt;40 趋势过强剔除）
       </div>
-      <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-bottom:10px">
-        <b style="color:#38BDF8">四维权重与公式</b>
+      <div style="background:#1B2634;border:1px solid #3E4E63;border-radius:8px;padding:8px 12px;margin-bottom:10px">
+        <b style="color:#4FC3F7">四维权重与公式</b>
         <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12px">
-          <thead><tr style="color:#94A3B8;text-align:left"><th style="padding:5px 6px;border-bottom:1px solid #334155;width:22%">维度</th><th style="padding:5px 6px;border-bottom:1px solid #334155;width:10%">权重</th><th style="padding:5px 6px;border-bottom:1px solid #334155;width:68%">公式（引擎口径）</th></tr></thead>
+          <thead><tr style="color:#9FB0C3;text-align:left"><th style="padding:5px 6px;border-bottom:1px solid #3E4E63;width:22%">维度</th><th style="padding:5px 6px;border-bottom:1px solid #3E4E63;width:10%">权重</th><th style="padding:5px 6px;border-bottom:1px solid #3E4E63;width:68%">公式（引擎口径）</th></tr></thead>
           <tbody>
-            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">① 震荡度</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">25%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">0.34×效率比率分 + 0.33×ADX分 + 0.33×动量分<br>效率比率分 = (1 − ER20/60均值) × 100；ADX分 = 100 − ADX14×4（ADX&gt;25 归 0 分）；动量分 = 100 − |20日涨幅|×12</td></tr>
-            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">② 波动空间</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">25%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">年化波动率 15%~30% 满分100；10%~15% 线性升至100；30%~45% 线性降至0；&lt;10% 或 &gt;45% 归 0 分</td></tr>
-            <tr><td style="padding:5px 6px;border-bottom:1px solid #1E293B">③ 区间覆盖</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">25%</td><td style="padding:5px 6px;border-bottom:1px solid #1E293B">近250日收盘价落在 P10~P90 区间内的天数占比 × 100</td></tr>
+            <tr><td style="padding:5px 6px;border-bottom:1px solid #243244">① 震荡度</td><td style="padding:5px 6px;border-bottom:1px solid #243244">25%</td><td style="padding:5px 6px;border-bottom:1px solid #243244">0.34×效率比率分 + 0.33×ADX分 + 0.33×动量分<br>效率比率分 = (1 − ER20/60均值) × 100；ADX分 = 100 − ADX14×4（ADX&gt;25 归 0 分）；动量分 = 100 − |20日涨幅|×12</td></tr>
+            <tr><td style="padding:5px 6px;border-bottom:1px solid #243244">② 波动空间</td><td style="padding:5px 6px;border-bottom:1px solid #243244">25%</td><td style="padding:5px 6px;border-bottom:1px solid #243244">年化波动率 15%~30% 满分100；10%~15% 线性升至100；30%~45% 线性降至0；&lt;10% 或 &gt;45% 归 0 分</td></tr>
+            <tr><td style="padding:5px 6px;border-bottom:1px solid #243244">③ 区间覆盖</td><td style="padding:5px 6px;border-bottom:1px solid #243244">25%</td><td style="padding:5px 6px;border-bottom:1px solid #243244">近250日收盘价落在 P10~P90 区间内的天数占比 × 100</td></tr>
             <tr><td style="padding:5px 6px">④ 触发频率</td><td style="padding:5px 6px">25%</td><td style="padding:5px 6px">按 5% 线性格距的年穿越次数：15~60 次/年 满分；&lt;15 按比例降；&gt;60 线性降</td></tr>
           </tbody>
         </table>
       </div>
-      <div style="background:#0F172A;border:1px solid #334155;border-radius:8px;padding:8px 12px">
+      <div style="background:#1B2634;border:1px solid #3E4E63;border-radius:8px;padding:8px 12px">
         <b style="color:#A78BFA">综合分公式</b>：0.25×震荡度 + 0.25×波动空间 + 0.25×区间覆盖 + 0.25×触发频率（权重均分；已删除 T+0 加分）
       </div>
     </div>
