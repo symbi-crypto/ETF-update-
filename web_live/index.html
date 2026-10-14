@@ -207,12 +207,17 @@ footer b{color:#94A3B8}
 <div class="psec" id="psecRebW">
       <h3>目标权重来源</h3>
       <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
-        <option value="equal" selected>等比例（所有标等权，不填比例）</option>
-        <option value="custom">自定义比例（按标的池手填 %）</option>
+        <option value="fixed" selected>比例（按标的池比例输入）</option>
         <option value="inv_vol">逆波动率（近20日，低波多配）</option>
         <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
       </select>
-      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">等比例：全部标的等权再平衡；自定义比例：调仓日按标的池手填比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，比例输入不生效</div>
+      <div id="rebStyleBox" style="margin-top:6px;font-size:12px;color:#64748B">比例方式
+        <select id="rebStyleSel" style="width:62%;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827">
+          <option value="equal" selected>等比例（所有标等权，不填比例）</option>
+          <option value="custom">自定义比例（按标的池手填 %）</option>
+        </select>
+      </div>
+      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">比例：等比例=全部标的等权再平衡，自定义=调仓日按标的池手填比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，比例输入不生效</div>
     </div>
 <div id="rebSh1Slot"></div>
 </div>
@@ -360,8 +365,13 @@ footer b{color:#94A3B8}
         </div>
         </div></div>
       <div class="psec" id="rebSetPsec">
-        <h3 style="margin-top:10px">再平衡设置 <span class="v" id="rebUnit"></span></h3>
-        <div style="font-size:11.5px;color:#94A3B8;margin:2px 0 4px">周期调仓或实际权重偏离目标范围任一触发再平衡（按目标比例重新平衡）</div>
+        <h3 style="margin-top:10px">调仓周期 <span class="v" id="rebUnit"></span></h3>
+        <div style="font-size:11.5px;color:#94A3B8;margin:2px 0 4px">勾选调仓方式：周期决策日或实际权重偏离目标范围任一触发再平衡（按目标比例重新平衡）</div>
+        <div style="margin-top:4px;font-size:12px;color:#64748B;display:flex;gap:14px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="rebPeriodOn" checked style="width:14px;height:14px;accent-color:#F59E0B">调仓周期</label>
+          <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="rebBandOn" checked style="width:14px;height:14px;accent-color:#F59E0B">偏离目标范围</label>
+        </div>
+        <div id="rebPeriodBox" style="margin-top:2px">
         <div class="chips" id="rebChips"></div>
         <div class="chips" id="rebAnchorChips" style="margin-top:3px"></div>
         <div class="row" style="margin-top:4px;font-size:12px;color:#64748B">每
@@ -369,10 +379,13 @@ footer b{color:#94A3B8}
                  style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
           个单位
         </div>
+        </div>
+        <div id="rebBandBox" style="margin-top:2px">
         <div class="row" style="margin-top:6px;font-size:12px;color:#64748B">偏离目标范围
           <input id="rebDevIn" type="number" min="0" max="100" step="1" value="10"
                  style="width:52px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
           %（任一标的目标权重偏离超该值触发再平衡）
+        </div>
         </div>
         <h3 style="margin-top:10px">回测区间</h3>
         <label class="row">起始日期
@@ -2219,7 +2232,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       // ---- 1) 收盘后决策（次日开盘执行，杜绝前视）----
       // 再平衡偏离触发：非周期日实际权重偏离目标权重任一标的大于 reb_dev_pct 即触发再平衡（逐日检查，基于当日漂移后实际权重）
       var rebDevTrig = false;
-      if (isReb && targetW && params.reb_dev_pct) {
+      if (isReb && targetW && params.reb_dev_pct && params.reb_band_on !== false) {
         var devThr = (+params.reb_dev_pct) / 100;
         for (var dkR = 0; dkR < nAssets; dkR++) {
           if (wOld[dkR] > 0 || targetW[dkR] > 0) {
@@ -2227,7 +2240,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           }
         }
       }
-      if ((decisionIdx[i] || rebDevTrig) && i + 1 < n) {
+      // 勾选触发：调仓周期(reb_period_on)或偏离目标范围(reb_band_on)任一触发；i === startPos 首日强制建仓决策（不受勾选限制，保证初始仓位成立）
+      if (((((params.reb_period_on !== false) && decisionIdx[i]) || ((params.reb_band_on !== false) && rebDevTrig)) || i === startPos) && i + 1 < n) {
         var ic, mv;
         // 市场状态风控（合并走弱期机制 + 大盘择时）：统一状态机
         // 1) 对选中指数逐日判弱：rollingMA 比较，按触发模式（any=任一跌破 / all=全部跌破）聚合为「当日看弱」
@@ -2367,12 +2381,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         if (isReb) {
           // 再平衡：比例（reb_weights）或 动态权重（inv_vol/risk_parity，按决策日数据算目标权重再平衡）
           var rwM = params.reb_weights || {};
-          var rwm2 = params.reb_weight_mode || "equal";
-          if (rwm2 === "fixed") rwm2 = "custom";
+          var rwm2 = params.reb_weight_mode || "fixed";
+          var rsty = params.reb_style || "equal";
           var codesH2 = [];
           for (var ckR0 = 0; ckR0 < nAssets; ckR0++) if ((rwM[codes[ckR0]] || 0) > 0) codesH2.push(codes[ckR0]);
-          // 等权/自定义但无可填比例（旧策略无比例数据/全 0）：按已上市全部标等权兜底
-          if (codesH2.length === 0 && (rwm2 === "equal" || rwm2 === "custom")) {
+          // 比例模式无有效比例数据（旧策略无比例/手填全 0/等比例时权重已在 getParams 组好）：按已上市全部标等权兜底
+          if (codesH2.length === 0 && rwm2 === "fixed") {
             for (var ckR0b = 0; ckR0b < nAssets; ckR0b++) codesH2.push(codes[ckR0b]);
           }
           // P2-13 已上市检查：决策日尚无有效行情（未上市/停牌）的标的不参与再平衡，避免静默贡献 0 收益
@@ -2840,10 +2854,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var cic = $("cICCard"); if (cic) cic.style.display = isReb ? "none" : "";
     // ③择时管理（市场状态风控）不适用再平衡模式：整块隐藏，切回轮动恢复
     var exeB = $("sfg-exe"); if (exeB) exeB.style.display = isReb ? "none" : "";
-    var dyn = isReb && $("rebWeightMode") && $("rebWeightMode").value !== "custom";
-    // 「再平衡设置」为再平衡专属模块：轮动视图隐藏（轮动引擎无周期概念）
+    var rwm = $("rebWeightMode") ? $("rebWeightMode").value : "fixed";
+    var rst = $("rebStyleSel") ? $("rebStyleSel").value : "equal";
+    var dyn = isReb && rwm === "fixed" && rst === "custom";
+    // 二级「比例方式」仅「比例」模式显示；轮动视图隐藏调仓周期模块（轮动引擎无周期概念）
+    var rsb = $("rebStyleBox"); if (rsb) rsb.style.display = (isReb && rwm === "fixed") ? "" : "none";
     var rsp = $("rebSetPsec"); if (rsp) rsp.style.display = isReb ? "" : "none";
-    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = (isReb && !dyn) ? "flex" : "none"; });
+    // 比例输入框仅「比例-自定义」模式显示；等比例/逆波动率/风险平价均隐藏（等比例等权、动态模式不读手填）
+    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = dyn ? "flex" : "none"; });
     if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = isReb ? "none" : ""; });
     var ws = $("wSum"); if (ws) ws.style.display = (isReb && !dyn) ? "" : "none";
     if (isReb && !dyn) { syncWIn(); updateWSum(); }
@@ -3694,6 +3712,7 @@ function buildChips() {
   if ($("hwSel")) $("hwSel").addEventListener("change", scheduleRun);
   if ($("tierSw")) $("tierSw").addEventListener("change", scheduleRun);
   if ($("rebWeightMode")) $("rebWeightMode").addEventListener("change", function () { applyModeUI(); scheduleRun(); });
+  if ($("rebStyleSel")) $("rebStyleSel").addEventListener("change", function () { applyModeUI(); scheduleRun(); });
 
   var startOptions = ["2016-06-01", "2017-01-01", "2018-01-01", "2019-01-01", "2020-01-01", "2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01"];
   var sdEl = $("startSel");
@@ -3870,13 +3889,14 @@ function buildChips() {
       mode: activeView === "rebalance" ? "rebalance" : "rotation",
       reb_weights: (function () {
         var o = {}, n = checkedCodes().length;
-        var wm = $("rebWeightMode") ? $("rebWeightMode").value : "equal";
+        var wm = $("rebWeightMode") ? $("rebWeightMode").value : "fixed";
+        var rst = $("rebStyleSel") ? $("rebStyleSel").value : "equal";
         checkedCodes().forEach(function (p) {
-          if (wm === "equal") { o[p.code] = n > 0 ? 1 / n : 0; }
+          if (wm === "fixed" && rst === "equal") { o[p.code] = n > 0 ? 1 / n : 0; }
           else { o[p.code] = Math.round(wFor(p.code, n) * 100) / 10000; }
         });
         // 自定义比例手填全 0 / 无比例数据：等权兜底
-        if (wm === "custom" && n > 0) {
+        if (wm === "fixed" && rst === "custom" && n > 0) {
           var anyW = false;
           for (var wk in o) if (o[wk] > 0) { anyW = true; break; }
           if (!anyW) checkedCodes().forEach(function (p) { o[p.code] = 1 / n; });
@@ -3902,7 +3922,10 @@ function buildChips() {
       mm_hedge_pool: [],
       mm_weak_ma: $("mmWeakMa") ? $("mmWeakMa").checked : false,
       fallback_when_no_signal: "cash",
+      reb_style: $("rebStyleSel") ? $("rebStyleSel").value : "equal",
       reb_dev_pct: +($("rebDevIn") ? $("rebDevIn").value : 10) || 0,
+      reb_period_on: !$("rebPeriodOn") || $("rebPeriodOn").checked,
+      reb_band_on: !$("rebBandOn") || $("rebBandOn").checked,
       commission_rate: (+$("cmIn").value) / 10000,
       slippage_rate: (+$("slIn").value) / 10000,
       tiered_slippage: $("tierSw") ? $("tierSw").checked : false,
@@ -4030,8 +4053,20 @@ function buildChips() {
     if ($("realPoolSw")) $("realPoolSw").checked = p.use_real_pool !== false;
     if ($("minCmIn")) $("minCmIn").value = +(p.min_commission) || 0;
     if ($("hwSel")) $("hwSel").value = p.holding_weight || "equal";
-    if ($("rebWeightMode")) $("rebWeightMode").value = (p.reb_weight_mode === "fixed" || !p.reb_weight_mode) ? "equal" : p.reb_weight_mode;
+    if ($("rebWeightMode")) {
+      // 旧策略兼容：上轮 equal/custom（比例模式拆分前的字段）→ 映射回 fixed + reb_style
+      var rwmOld = p.reb_weight_mode || "fixed";
+      if (rwmOld === "equal" || rwmOld === "custom") {
+        $("rebWeightMode").value = "fixed";
+        if ($("rebStyleSel")) $("rebStyleSel").value = rwmOld;
+      } else {
+        $("rebWeightMode").value = rwmOld;
+        if ($("rebStyleSel")) $("rebStyleSel").value = p.reb_style || "equal";
+      }
+    }
     if ($("rebDevIn")) $("rebDevIn").value = +(p.reb_dev_pct) || 10;
+    if ($("rebPeriodOn")) $("rebPeriodOn").checked = p.reb_period_on !== false;
+    if ($("rebBandOn")) $("rebBandOn").checked = p.reb_band_on !== false;
     // 市场状态风控（合并走弱期机制+大盘择时）：参数恢复 + 老策略迁移
     if ($("mmOn") && $("mmWinIn")) {
       var oldRF = p.use_regime_filter, oldWP = p.weak_period_mode, oldMt = p.mt_on;
