@@ -228,7 +228,7 @@ footer b{color:#94A3B8}
 </div>
 <div id="sharedCfg" style="display:none">
 <div id="sh1"><div class="psec" id="psecPool">
-      <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
+      <h3><span style="white-space:nowrap">标的池</span> <span class="v" id="poolCount" style="white-space:nowrap"></span><span class="v" id="wSum" style="display:none"></span></h3>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
         <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
         <button class="corr-mini" id="poolAll" type="button">全选</button>
@@ -2844,8 +2844,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var el = $("wSum");
     if (!el) return;
     if (!n) { el.textContent = ""; return; }
-    el.textContent = " | 权重合计 " + (Math.round(s * 100) / 100) + "%" +
-      (Math.abs(s - 100) > 0.01 ? (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") : "");
+    // 两行结构：第一行「 | 权重合计 X%」（nowrap），余量/超限提示放第二行（整行 nowrap，不折词；权重合计=100% 时无第二行）
+    el.innerHTML = "<span style='white-space:nowrap'> | 权重合计 " + (Math.round(s * 100) / 100) + "%</span>" +
+      (Math.abs(s - 100) > 0.01 ? "<br><span style='white-space:nowrap;color:#94A3B8'>" + (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") + "</span>" : "");
   }
   function applyModeUI() {
     // 视图拆分后：轮动/再平衡面板已物理分离，此处仅处理共享块内按视图切换的显隐
