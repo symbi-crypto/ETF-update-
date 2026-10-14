@@ -732,7 +732,7 @@ footer b{color:#94A3B8}
         <span class="n" style="font-size:12.5px;color:#CBD5E1">最新投资额 <b id="stLatestCap">—</b> 元</span>
         <span class="n" style="font-size:11.5px;color:#94A3B8">最新投资额按策略净值自起始日起的变化计算；修改后自动更新该策略</span>
       </div>
-      <div class="card" style="border:none;padding:0;margin-bottom:14px"><h2>当前持仓 · 买入份额</h2><div id="stPosBuy"></div></div><div class="card" style="border:none;padding:0;margin-bottom:14px"><h2>交易明细 · 未复权买入价 <span class="n">逐笔实盘成交价（未复权）与整手数量，可对照券商成交单</span></h2><div id="stTx"></div></div>
+      <div class="card" style="border:none;padding:0;margin-bottom:14px"><h2>当前交易 <span class="n">逐笔买卖（未复权价 · 整手份额），可对照券商成交单</span></h2><div id="stPosBuy"></div></div>
       <div class="skpis" id="stKpis"></div>
       <div class="card" style="border:none;padding:0"><h2>收益曲线 <span class="n">策略 vs 沪深300</span></h2><div class="chart" id="stChart"></div></div>
       <div class="card" style="border:none;padding:0;margin-top:14px"><h2>按年度收益 <span class="n">策略 / 沪深300 / 超额</span></h2>
@@ -4716,14 +4716,11 @@ function buildChips() {
     keys.forEach(function (k) {
       var row = document.createElement("div");
       row.className = "srow";
-      var tag = m[k].type === "grid" ? '<span class="tag" style="color:#FBBF24;border:1px solid #FBBF24;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">网格</span>' : "";
+      var tag = m[k].type === "grid" ? '<span class="tag" style="color:#FBBF24;border:1px solid #FBBF24;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">网格</span>' : (m[k].mode === "rebalance" ? '<span class="tag" style="color:#A78BFA;border:1px solid #A78BFA;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">再平衡</span>' : '<span class="tag" style="color:#38BDF8;border:1px solid #38BDF8;border-radius:3px;font-size:10px;padding:0 3px;margin-left:4px">轮动</span>');
       row.innerHTML = '<div class="nm">' + k.replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }) + tag +
-        (m[k].type === "grid" ? '<span class="txLk" style="cursor:pointer;font-size:10.5px;color:#38BDF8;margin-left:6px">详情·交易明细</span>' : '') +
         '</div><div class="meta"><span>创建：' + fmtDate(m[k]._saved_at) + '</span><span class="ld">计算中…</span></div>' +
         '<div class="pos">回测中…</div>';
-      row.addEventListener("click", function () { if (m[k].type === "grid") applyGridStrategy(k); else showStrategyDetail(k); });
-      var txLk = row.querySelector(".txLk");
-      if (txLk) txLk.addEventListener("click", function (ev) { ev.stopPropagation(); showStrategyDetail(k); });
+      row.addEventListener("click", function () { showStrategyDetail(k); });
       rows[k] = row;
       box.appendChild(row);
     });
@@ -4795,97 +4792,38 @@ function buildChips() {
     return px;
   }
   function lotShares(amt, px) { return (px && px > 0) ? Math.floor(amt / px / 100) * 100 : null; }
-  function renderTxDetail(name) {
-    var box = $("stTx"); if (!box) return;
-    var res = stRes[name];
-    if (!res) { box.innerHTML = ""; return; }
-    var m2 = loadStored();
-    var tx = (m2[name] && m2[name].type === "grid") ? (res.trades || []) : (res.tx || []);
-    if (!tx.length) { box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:4px 0">回测区间内无成交记录</div>'; return; }
-    var rows = tx.map(function (t) {
-      var d = String(t.d || "").slice(0, 10);
-      var buy = t.side === "BUY";
-      var rp = t.raw_px && t.raw_px > 0 ? t.raw_px : null;
-      var amt = +t.amt || 0;
-      var sh = rp ? Math.floor(amt / rp / 100) * 100 : null;   // 数量=金额÷未复权价，整手100份取整
-      var pxTxt = rp ? rp.toFixed(4) : "—";
-      var shTxt = sh ? sh.toLocaleString("zh-CN") : "—";
-      var amtTxt = (buy ? "-" : "+") + Math.round(amt).toLocaleString("zh-CN");
-      return "<tr><td>" + d + "</td><td class='" + (buy ? "buy" : "sell") + "'>" + (buy ? "买" : "卖") + "</td><td class='fc'>" + gName(t.code) + "</td><td>" + pxTxt + "</td><td>" + shTxt + "</td><td>" + amtTxt + "</td></tr>";
-    }).join("");
-    box.innerHTML = '<div class="tblwrap"><table class="trades" style="table-layout:fixed;width:100%;min-width:560px"><colgroup><col style="width:15%"><col style="width:8%"><col style="width:27%"><col style="width:17%"><col style="width:17%"><col style="width:16%"></colgroup><thead><tr><th>日期</th><th>方向</th><th class="fc">标的</th><th>未复权价</th><th>数量（份）</th><th>金额</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
-  }
   function renderPosBuy(name) {
     var box = $("stPosBuy"); if (!box) return;
     var m = loadStored(), res = stRes[name];
     if (!res) { box.innerHTML = ""; return; }
-    if (m[name] && m[name].type === "grid") { box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:4px 0">网格策略持仓明细请在「网格回测」页查看（此处展示交易明细）</div>'; return; }
-    var base = latestCap(name, res);          // 按最新投资额分配
-    var isReb = m[name].mode === "rebalance";
-    var rwM = isReb ? (m[name].reb_weights || {}) : null;
-    var t = res.trades[res.trades.length - 1];
-    var holds = (t && t.to) || [];
-    var html = '<table class="trades" style="margin-top:4px;table-layout:fixed;width:100%"><colgroup><col style="width:36%"><col style="width:21%"><col style="width:21%"><col style="width:22%"></colgroup><thead><tr><th class="fc">买入标的</th><th>买入金额</th><th>最新未复权价</th><th>买入份额</th></tr></thead><tbody>';
-    if (!holds.length) {
-      var cashAll = base;
-      // 修复口径：空仓（未持任何标的）时仅当兜底为货币ETF 才按 511990 份额展示；否则显示「现金（不持有）」，与引擎空仓收益=0 一致
+    var isGrid = m[name] && m[name].type === "grid";
+    var tx = isGrid ? (res.trades || []) : (res.tx || []);
+    if (!tx.length) {
+      // 空仓/无成交：现金（不持有）展示，与引擎空仓收益=0 口径一致
+      var cap = latestCap(name, res);
       var fb3 = (m[name] && m[name].fallback_when_no_signal) || "cash";
-      var cpx0 = lastRawClose("511990.SH");
-      var cs0 = lotShares(cashAll, cpx0);
       if (fb3 === "money") {
-        html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAll) + "</td><td>" + (cpx0 ? cpx0.toFixed(4) : "—") + "</td><td>" + (cs0 ? fmtN(cs0) : "—") + "</td></tr>";
+        var cpx0 = lastRawClose("511990.SH");
+        var cs0 = lotShares(cap, cpx0);
+        box.innerHTML = '<table class="trades" style="margin-top:4px;table-layout:fixed;width:100%"><thead><tr><th class="fc">当前交易</th><th>金额</th><th>最新未复权价</th><th>份额</th></tr></thead><tbody><tr><td class="fc">货币ETF</td><td>' + fmtN(cap) + '</td><td>' + (cpx0 ? cpx0.toFixed(4) : "—") + '</td><td>' + (cs0 ? fmtN(cs0) : "—") + '</td></tr></tbody></table>';
       } else {
-        html += "<tr><td class='fc'>现金（不持有）</td><td>" + fmtN(cashAll) + "</td><td>—</td><td>—</td></tr>";
+        box.innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:6px 0">现金（不持有）· 回测区间内无成交记录</div>';
       }
-    } else if (isReb) {
-      var sw = 0;
-      holds.forEach(function (c) { sw += (rwM[c] || 0); });
-      holds.forEach(function (c) {
-        var px = lastRawClose(c);
-        var amt = base * (rwM[c] || 0);
-        var sh = lotShares(amt, px);
-        html += "<tr><td class='fc'>" + codeName(c) + "</td><td>" + fmtN(amt) + "</td><td>" + (px ? px.toFixed(4) : "—") + "</td><td>" + (sh ? fmtN(sh) : "—") + "</td></tr>";
-      });
-      if (sw < 1 - 1e-6) {
-        var cashAmt2 = base * (1 - sw);
-        var cpx2 = lastRawClose("511990.SH");
-        var cs2 = lotShares(cashAmt2, cpx2);
-        html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAmt2) + "</td><td>" + (cpx2 ? cpx2.toFixed(4) : "—") + "</td><td>" + (cs2 ? fmtN(cs2) : "—") + "</td></tr>";
-      }
-    } else {
-      var rNv = Math.max(1, +(m[name].rank_n) || 1);
-      var rMv = Math.max(rNv, +(m[name].rank_m) || (m[name].top_n ? Math.max(rNv, +(m[name].top_n) || 1) : rNv));
-      var nHold = Math.max(1, rMv - rNv + 1);
-      var per = base / nHold;
-      holds.forEach(function (c) {
-        var px = lastRawClose(c);
-        var sh = lotShares(per, px);
-        html += "<tr><td class='fc'>" + codeName(c) + "</td><td>" + fmtN(per) + "</td><td>" + (px ? px.toFixed(4) : "—") + "</td><td>" + (sh ? fmtN(sh) : "—") + "</td></tr>";
-      });
-      if (holds.length < nHold) {
-        var cashAmt = (nHold - holds.length) * per;
-        var fb4 = (m[name] && m[name].fallback_when_no_signal) || "cash";
-        if (fb4 === "money") {
-          var cpx = lastRawClose("511990.SH");
-          var cs = lotShares(cashAmt, cpx);
-          html += "<tr><td class='fc'>货币ETF</td><td>" + fmtN(cashAmt) + "</td><td>" + (cpx ? cpx.toFixed(4) : "—") + "</td><td>" + (cs ? fmtN(cs) : "—") + "</td></tr>";
-        } else {
-          html += "<tr><td class='fc'>现金（未持有）</td><td>" + fmtN(cashAmt) + "</td><td>—</td><td>—</td></tr>";
-        }
-      }
+      return;
     }
-    html += "</tbody></table>";
-    if (!isReb && holds.length && holds.length < nHold) {
-      html += '<div style="font-size:11.5px;color:#94A3B8;margin-top:4px">持有 ' + holds.length + ' 只 &lt; 排名区间 ' + rNv + '-' + rMv + '，其余 ' + (nHold - holds.length) + ' 份资金买入货币ETF（511990）</div>';
-    }
-    if (isReb && holds.length) {
-      var sw2 = 0;
-      holds.forEach(function (c) { sw2 += (rwM[c] || 0); });
-      if (sw2 < 1 - 1e-6) html += '<div style="font-size:11.5px;color:#94A3B8;margin-top:4px">再平衡权重合计 ' + (Math.round(sw2 * 10000) / 100) + '%，剩余 ' + (Math.round((1 - sw2) * 10000) / 100) + '% 资金买入货币ETF</div>';
-    }
-    box.innerHTML = html;
+    var total = tx.length;
+    var rows = tx.slice(-20).map(function (t) {
+      var d = String(t.d || "").slice(0, 10);
+      var buy = t.side === "BUY";
+      var rp = t.raw_px && t.raw_px > 0 ? t.raw_px : null;
+      var amt = +t.amt || 0;
+      var sh = rp ? Math.floor(amt / rp / 100) * 100 : null;
+      return "<tr><td>" + d + "</td><td class='fc'>" + gName(t.code) + "</td><td class='" + (buy ? "buy" : "sell") + "'>" + (buy ? "买" : "卖") + "</td><td>" + (rp ? rp.toFixed(4) : "—") + "</td><td>" + (sh ? sh.toLocaleString("zh-CN") : "—") + "</td><td>" + (buy ? "-" : "+") + Math.round(amt).toLocaleString("zh-CN") + "</td></tr>";
+    }).join("");
+    var moreTip = total > 20 ? '<div style="font-size:11.5px;color:#94A3B8;margin-top:4px">共 ' + total + ' 笔成交，仅显示最近 20 笔（完整逐笔见回测成交表）</div>' : "";
+    box.innerHTML = '<div class="tblwrap"><table class="trades" style="margin-top:4px;table-layout:fixed;width:100%;min-width:560px"><colgroup><col style="width:15%"><col style="width:27%"><col style="width:8%"><col style="width:17%"><col style="width:17%"><col style="width:16%"></colgroup><thead><tr><th>日期</th><th class="fc">标的</th><th>方向</th><th>未复权价</th><th>数量（份）</th><th>金额</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + moreTip;
   }
-  function showStrategyDetail(name) {
+function showStrategyDetail(name) {
     var m = loadStored();
     if (!m[name]) return;
     if (!D) { $("stDetail").style.display = "block"; $("stName2").textContent = name; $("stKpis").innerHTML = '<div style="font-size:12px;color:#94A3B8;padding:8px">正在加载行情数据并计算策略详情…</div>'; }
@@ -4893,15 +4831,27 @@ function buildChips() {
     stCurName = name;
     $("stDetail").style.display = "block";
     $("stDetail").scrollIntoView({ behavior: "smooth", block: "start" });
-    var res = stRes[name];
-    if (!res) {
-      if (m[name] && m[name].type === "grid") {
-        var g0 = m[name].grid || {}, gs0 = g0.settings || {};
-        res = WufuEngine.backtestGrid(D, { codes: (g0.codes || []).slice(), initial_capital: gs0.capital || 1000000, mgmt: gs0.mgmt || "B", period_n: gs0.period_n || 12, period_unit: gs0.period_unit || "周", commission_rate: gs0.comm || 0.00025, slippage_rate: gs0.slip || 0.0005, min_commission: gs0.min_comm || 0, vol_win: g0.vol_win || 60, top_n: g0.top_n || (g0.codes || []).length, gridOverrides: g0.overrides || {} });
-      } else {
-        res = engine.backtest(D, m[name]);
+    var res = null;
+    try {
+      res = stRes[name];
+      if (!res) {
+        if (m[name] && m[name].type === "grid") {
+          var g0 = m[name].grid || {}, gs0 = g0.settings || {};
+          res = WufuEngine.backtestGrid(D, { codes: (g0.codes || []).slice(), initial_capital: gs0.capital || 1000000, mgmt: gs0.mgmt || "B", period_n: gs0.period_n || 12, period_unit: gs0.period_unit || "周", commission_rate: gs0.comm || 0.00025, slippage_rate: gs0.slip || 0.0005, min_commission: gs0.min_comm || 0, vol_win: g0.vol_win || 60, top_n: g0.top_n || (g0.codes || []).length, gridOverrides: g0.overrides || {} });
+        } else {
+          res = engine.backtest(D, m[name]);
+        }
+        stRes[name] = res;
       }
-      stRes[name] = res;
+    } catch (e2) {
+      // 回测异常兜底：页面内友好提示，不冒泡到全局 error 红条；保留用户已选日期
+      var eMsg = ((e2 && e2.message) || "回测失败") + "";
+      $("stDetail").style.display = "block";
+      $("stName2").textContent = name;
+      var kb2 = $("stKpis");
+      if (kb2) kb2.innerHTML = '<div style="font-size:12px;color:#FBBF24;background:#3A2A12;border:1px dashed #F59E0B;border-radius:8px;padding:10px 12px;margin:8px 0;line-height:1.7">回测失败：' + eMsg + '。若是「回测区间过短/结束日期早于起始」，请选择更早的起始日期或更晚的结束日期后再试。</div>';
+      ["stPosBuy", "stTx"].forEach(function (id) { var el2 = $(id); if (el2) el2.innerHTML = ""; });
+      return;
     }
     $("stName2").textContent = name;
     var mt = res.metrics;
@@ -4972,7 +4922,6 @@ function buildChips() {
       };
     }
     renderPosBuy(name);
-    renderTxDetail(name);
     updateLatestCap();
     // 收益曲线（策略 vs 基准）
     var dats = (res.calendar || res.dates || []).map(function (t, i) { return t; });
