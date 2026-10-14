@@ -652,7 +652,7 @@ footer b{color:#9FB0C3}
           <span style="font-size:12px;color:#9FB0C3">（默认60日：σ/振幅统计窗口，改动后重算格距）</span>
         </div>
         <div id="gridParamTable"></div>
-        <div style="font-size:11px;color:#9FB0C3;margin-top:4px">推荐规则：区间=[近250日收盘P10, P90]；格距=max(收盘涨跌幅σ, 日内波幅均值)×中间价；格数=区间宽÷格距（5~10）；底仓资金=投资总金额÷组合标的数（均分，可手动覆盖单个；参与数不足时剩余资金按「剩余资金买入」兜底）；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
+        <div style="font-size:11px;color:#9FB0C3;margin-top:4px">推荐规则：区间=[观察区间（默认60日，可配）收盘价 min, max]（取极值，网格中轴线=(min+max)/2）；每格价格幅度 ≥ 1%（格数=区间宽÷(中间价×1%)，自适应取最大格数，至少 1 格；区间幅度不足 1% 时按 1% 处理并注明）；每格资金=底仓资金÷格数（自动计算，随底仓/格数联动）；触发基准价默认=当前价，档位以基准价为中心对称铺开（±k×格距），手动覆盖后档位刷新。校验提示：成本占格收益>30%→格距偏密；ADX>25→趋势过强；年触发<20→太疏。</div>
       </div>
       <div class="psec">
         <h3>③ 回测设置</h3>
@@ -668,6 +668,13 @@ footer b{color:#9FB0C3}
             <option value="B" selected>B 体检式轮动（默认）</option>
             <option value="A">A 长持网格（仅重锚定）</option>
           </select>
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#D8E2EF">回测起始时间</span>
+          <input id="gridStart" type="date" value="2016-06-01" style="font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
+          <span style="font-size:12px;color:#D8E2EF">回测结束时间</span>
+          <input id="gridEnd" type="date" value="2026-10-09" style="font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
+          <span style="font-size:12px;color:#9FB0C3">（默认=数据全区间；仅信号/成交在该区间内生效，指标预热不受影响）</span>
         </div>
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#D8E2EF">投资总金额</span>
@@ -1127,25 +1134,26 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var D = gridData();
     var sArr = D.series[code];
     var cArr = sArr.close, hArr = sArr.high, lArr = sArr.low;
-    var lo = Math.max(0, i - volWin + 1);   // P10/P90 区间窗口跟随「波动统计区间」volWin（原固定 GRID_LOOK=250）
-    var p10 = gridQuantile(cArr, lo, i, 0.10), p90 = gridQuantile(cArr, lo, i, 0.90);
+    var lo = Math.max(0, i - volWin + 1);   // 价格区间观察窗口跟随「波动统计区间」volWin（默认60日，可配）：取观察期收盘价极值 max/min
+    var minV = gridQuantile(cArr, lo, i, 0), maxV = gridQuantile(cArr, lo, i, 1);
     var cur = cArr[i];
-    if (isNaN(p10) || isNaN(p90) || !(p90 > p10) || isMiss(cur)) return null;
-    var mid = (p10 + p90) / 2;
+    if (isNaN(minV) || isNaN(maxV) || !(maxV > minV) || isMiss(cur)) return null;
+    var mid = (minV + maxV) / 2;   // 网格中轴线 = (上界 + 下界) / 2
     var sig = gridStd(cArr, Math.max(1, i - (volWin - 1)), i);
     var ampSum = 0, ampN = 0, j;
     for (j = Math.max(0, i - (volWin - 1)); j <= i; j++) { if (!isMiss(hArr[j]) && !isMiss(lArr[j]) && !isMiss(cArr[j]) && cArr[j] > 0) { ampSum += (hArr[j] - lArr[j]) / cArr[j]; ampN++; } }
     var amp = ampN ? ampSum / ampN : sig;
     var stepRatio = Math.max(isNaN(sig) ? 0 : sig, isNaN(amp) ? 0 : amp);
     if (!(stepRatio > 0)) stepRatio = 0.02;
-    var step = stepRatio * mid;
-    var nLev = Math.max(5, Math.min(10, Math.round((p90 - p10) / step)));
-    step = (p90 - p10) / nLev;
+    // 每格价格幅度 ≥ 1%：格数自适应为满足每格 ≥ 1% 的最大格数（至少 1 格）；区间幅度不足 1% 时按 1% 处理并注明
+    var nLev = Math.max(1, Math.floor((maxV - minV) / (mid * 0.01)));
+    var step = (maxV - minV) / nLev;
     var perLevelAmt = invest / nLev;
     // 投资总金额均分：每标的底仓资金 = 该标的投入额（总金额÷标的数，不再按当前价位置比例）
     var baseAmt = invest;
-    var p = { code: code, lower: p10, upper: p90, mid: mid, step: step, nLevels: nLev, perLevelAmt: perLevelAmt, baseAmt: baseAmt, cur: cur, stepRatio: stepRatio, sig: sig, amp: amp };
+    var p = { code: code, lower: minV, upper: maxV, mid: mid, step: step, nLevels: nLev, perLevelAmt: perLevelAmt, baseAmt: baseAmt, cur: cur, stepRatio: stepRatio, sig: sig, amp: amp };
     p.warns = [];
+    if (maxV - minV < mid * 0.01) p.warns.push("区间幅度不足 1%，按每格 1% 处理（格数=1）");
     var adx = gridADX(hArr, lArr, cArr, i, 14);
     if (adx > 25) p.warns.push("ADX=" + adx.toFixed(1) + ">25，趋势过强，网格可能长期单边套牢");
     if (costRt === undefined) costRt = 0.00075;
@@ -1161,9 +1169,13 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     if (!codes.length) return null;
     var cal = Dd.calendar, n = cal.length;
     var rawPxOf = function (cd, ix) { var ss = Dd.series[cd]; var r = ss && ss.raw_open ? ss.raw_open[ix] : 0; return (r > 0) ? r : null; };
-    // 预热：需要 GRID_LOOK+60 日窗口计算评分/参数（默认起点=第310个交易日，约2017年中）
-    var startIdx = params.start_idx !== undefined ? params.start_idx : GRID_LOOK + 60;
-    var endIdx = params.end_idx !== undefined ? params.end_idx : n - 1;
+    // 回测起止（用户可配，默认=数据全区间）：仅信号/成交在 [startIdx, endIdx] 内生效
+    var startIdx = params.start_idx !== undefined ? Math.max(0, params.start_idx) : 0;
+    var endIdx = params.end_idx !== undefined ? Math.min(n - 1, params.end_idx) : n - 1;
+    if (startIdx > endIdx) startIdx = endIdx;
+    // 预热：需要 GRID_LOOK+60 日窗口计算评分/参数（默认起点=第310个交易日，约2017年中）；warm_start_idx=策略保存时固化的预热起点（详情页改起始日不更新）；交易起点 = max(用户起始, 预热起点)，预热期不建仓（指标预热不受影响，与轮动 warm_start 语义一致）
+    var warmIdx = params.warm_start_idx !== undefined ? Math.max(0, params.warm_start_idx) : GRID_LOOK + 60;
+    startIdx = Math.max(startIdx, warmIdx);
     var invest = params.initial_capital || 1000000;
     // 均分分母 = 组合标的数（第一步 Top N）：每标的底仓资金 = 总金额 ÷ 组合标的数
     var topN = Math.max(1, +params.top_n || codes.length);
@@ -1455,9 +1467,34 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       if (sd > 0) sharpe = mu / sd * Math.sqrt(252);
       volA = sd * Math.sqrt(252);
     }
+    // 末态持仓（网格详情视图用）：pos>0 的标的一行—— 含档位/参数/最新价/加权买入均价（成本）
+    var holdings = [];
+    var seenH = {};
+    codes.forEach(function (c2) {
+      var s = st[c2];
+      if (!s || !(s.pos > 0)) return;
+      if (Math.round(s.pos) <= 0) return;   // 过滤换仓残留碎股尘埃（dust），避免"持仓 0 份"行
+      if (seenH[c2]) return;                 // 轮动换仓会把候选标的重复推入 codes，去重
+      seenH[c2] = true;
+      var sArr = Dd.series[c2];
+      var cur = sArr.close[endIdx]; if (isMiss(cur) || !(cur > 0)) cur = sArr.close[endIdx - 1];
+      var avgCost = 0, avgSh = 0;
+      for (var ti = 0; ti < trades.length; ti++) {
+        var t2 = trades[ti];
+        if (t2.code !== c2 || t2.side !== "BUY") continue;
+        avgSh += (t2.sh || 0); avgCost += ((t2.px || 0) * (t2.sh || 0));
+      }
+      holdings.push({
+        code: c2, pos: s.pos, cash: s.cash, lower: s.lower, upper: s.upper, step: s.step,
+        levels: (s.levels || []).slice(), perLevelAmt: s.perLevelAmt, mid: (s.lower + s.upper) / 2,
+        cur: cur, avgCost: avgSh > 0 ? avgCost / avgSh : (s.lower + s.upper) / 2,
+        baseShares: s.baseShares || 0, triggerBase: s.triggerBase !== undefined ? s.triggerBase : null
+      });
+    });
     return {
       metrics: { total_return: total, cagr: cagr, max_dd: maxDD, sharpe: sharpe, win_rate: tot ? win / tot : 0, vol: volA, n_trades: trades.length },
       nav: navArr, drawdown: drawdown, trades: trades, health: health, codes: codes,
+      holdings: holdings,
       dates: cal.slice(startIdx + 1, endIdx + 1)   // 与 nav 对齐（估值从建仓日次日/startIdx+1 起）
     };
   }
@@ -4893,7 +4930,49 @@ function buildChips() {
     var m = loadStored(), res = stRes[name];
     if (!res) { box.innerHTML = ""; return; }
     var isGrid = m[name] && m[name].type === "grid";
-    var tx = isGrid ? (res.trades || []) : (res.tx || []);
+    if (isGrid) {
+      // 网格策略：当前持有标的列表（点击任意一行进入该标的网格详情视图；流水明细仍见下方「交易记录」区）
+      var holds = res.holdings || [];
+      if (!holds.length) {
+        box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:6px 0">现金（不持有）· 网格策略当前无持仓标的（全部已卖出或区间内无成交）</div>';
+        return;
+      }
+      var rowHtml = holds.map(function (h) {
+        var nm = gName(h.code);
+        var pnl = (h.cur > 0 && h.avgCost > 0) ? (h.cur / h.avgCost - 1) : 0;
+        var pnlTxt = pnl > 0.0005 ? "盈利" : (pnl < -0.0005 ? "亏损" : "持平");
+        var pnlCls = pnl > 0.0005 ? "#F87171" : (pnl < -0.0005 ? "#34D399" : "#D8E2EF");
+        var pnlPct = (pnl * 100).toFixed(2);
+        return '<div class="gh-row" data-code="' + h.code + '" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border:1px solid #3E4E63;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#202E3F">'
+          + '<span style="font-weight:600;color:#F1F5F9;flex:1;min-width:150px">' + nm + '<span style="color:#9FB0C3;font-weight:400;margin-left:4px">' + h.code + '</span></span>'
+          + '<span style="font-size:12px;color:#D8E2EF">持仓 <b style="color:#F1F5F9">' + fmtN(Math.round(h.pos)) + '</b> 份</span>'
+          + '<span style="font-size:12px;color:#D8E2EF">现价 <b style="color:#F1F5F9">' + (h.cur ? h.cur.toFixed(4) : "—") + '</b></span>'
+          + '<span style="font-size:12px;color:' + pnlCls + '">' + pnlTxt + ' ' + (pnlPct >= 0 ? "+" : "") + pnlPct + '%</span>'
+          + '<span style="font-size:11px;color:#7C8DA1">查看网格详情 →</span></div>';
+      }).join("");
+      box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;margin:4px 0 8px">当前持有标的（点击任意一行查看该标的网格详情）</div>' + rowHtml
+        + '<div id="gridHoldDetail" style="display:none;margin-top:10px"></div>';
+      var rowsEl = box.querySelectorAll(".gh-row");
+      for (var ri = 0; ri < rowsEl.length; ri++) {
+        (function (el) {
+          el.addEventListener("click", function () {
+            var code = el.getAttribute("data-code");
+            var hh = null;
+            for (var ki = 0; ki < holds.length; ki++) if (holds[ki].code === code) hh = holds[ki];
+            if (!hh) return;
+            var dBox = document.getElementById("gridHoldDetail");
+            if (!dBox) return;
+            dBox.style.display = "block";
+            dBox.innerHTML = gridHoldDetailHtml(hh);
+            var bk = dBox.querySelector(".gh-back");
+            if (bk) bk.addEventListener("click", function () { dBox.style.display = "none"; });
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        })(rowsEl[ri]);
+      }
+      return;
+    }
+    var tx = res.tx || [];
     if (!tx.length) {
       // 空仓/无成交：现金（不持有）展示，与引擎空仓收益=0 口径一致
       var cap = latestCap(name, res);
@@ -4919,6 +4998,54 @@ function buildChips() {
     var moreTip = total > 20 ? '<div style="font-size:11.5px;color:#9FB0C3;margin-top:4px">共 ' + total + ' 笔成交，仅显示最近 20 笔（完整逐笔见回测成交表）</div>' : "";
     box.innerHTML = '<div class="tblwrap"><table class="trades" style="margin-top:4px;table-layout:fixed;width:100%;min-width:560px"><colgroup><col style="width:15%"><col style="width:27%"><col style="width:8%"><col style="width:17%"><col style="width:17%"><col style="width:16%"></colgroup><thead><tr><th>日期</th><th class="fc">标的</th><th>方向</th><th>未复权价</th><th>数量（份）</th><th>金额</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + moreTip;
   }
+    // 网格详情视图（持有标的一行点击后渲染）：① 网格参数（按引擎实际参数逐行展示）② 网格表（中轴线红标注 / 最新收盘价蓝标注）
+  function gridHoldDetailHtml(h) {
+    var nm = gName(h.code);
+    var nLev = (h.levels && h.levels.length) || 1;
+    var perLevel = h.perLevelAmt || 0;
+    var sellBase = h.baseShares > 0 ? h.baseShares : h.pos;
+    var stepPct = (h.step / (h.mid || 1) * 100);
+    var lv2 = h.levels || [];
+    var buyQtyAt = function (px) { return perLevel > 0 ? Math.floor(perLevel / px / 100) * 100 : 0; };
+    var sellQty = sellBase > 0 ? Math.floor(sellBase / (nLev + 1) / 100) * 100 : 0;
+    // 现价蓝标注：取离 h.cur 最近的一档（现价不必然落在某档 ±step/2 内）
+    var curIdx = -1, curDist = Infinity;
+    if (h.cur > 0) {
+      for (var ci = 0; ci < lv2.length; ci++) {
+        var dd = Math.abs(lv2[ci] - h.cur);
+        if (dd < curDist) { curDist = dd; curIdx = ci; }
+      }
+    }
+    var rows = lv2.map(function (lv, idx) {
+      var bq = buyQtyAt(lv);
+      var isMid = Math.abs(lv - h.mid) <= (h.step || 0) / 2;
+      var isCur = curIdx === idx;
+      var st = "";
+      var lab = "";
+      if (isMid && isCur) { st = "background:rgba(248,113,113,.14);color:#F87171;font-weight:600"; lab = ' <span style="font-size:10.5px">▲中轴 ◆现价</span>'; }
+      else if (isMid) { st = "background:rgba(248,113,113,.14);color:#F87171;font-weight:600"; lab = ' <span style="font-size:10.5px">▲中轴</span>'; }
+      else if (isCur) { st = "background:rgba(79,195,247,.16);color:#4FC3F7;font-weight:600"; lab = ' <span style="font-size:10.5px">◆现价</span>'; }
+      return '<tr style="' + st + '"><td style="padding:4px;border:1px solid #3E4E63;text-align:center">' + (idx + 1) + '</td><td style="padding:4px;border:1px solid #3E4E63">' + lv.toFixed(4) + lab + '</td><td style="padding:4px;border:1px solid #3E4E63;text-align:right">' + (bq ? bq.toLocaleString("zh-CN") : "—") + '</td><td style="padding:4px;border:1px solid #3E4E63;text-align:right">' + (sellQty ? sellQty.toLocaleString("zh-CN") : "—") + '</td></tr>';
+    }).join("");
+    var paramRows = [
+      ["委托总金额", (perLevel ? fmtN(Math.round(perLevel)) + " 元/格 × " + nLev + " 格（每格资金）" : "—")],
+      ["价格区间", h.lower.toFixed(4) + " ~ " + h.upper.toFixed(4) + "（中轴线 " + h.mid.toFixed(4) + "）"],
+      ["交易条件", "上涨 +" + stepPct.toFixed(2) + "% 触发卖出约 " + (sellQty ? sellQty.toLocaleString("zh-CN") : "0") + " 股 / 下跌 -" + stepPct.toFixed(2) + "% 触发买入约 " + (perLevel > 0 ? buyQtyAt(h.lower).toLocaleString("zh-CN") : "0") + " 股"],
+      ["委托价格规则", "按触发档位价限价委托（每格价格 = 中轴线 ± 格距步进）"],
+      ["倍数委托开关", "系统网格引擎无倍数委托参数（每次触发单格委托）"],
+      ["截止时间", "无截止时间，网格持续运行至回测结束"]
+    ].map(function (pr) {
+      return '<div style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px dashed #3E4E63"><span style="font-size:12px;color:#7C8DA1;min-width:96px">' + pr[0] + '</span><span style="font-size:12.5px;color:#F1F5F9;flex:1">' + pr[1] + '</span></div>';
+    }).join("");
+    return '<div style="border:1px solid #3E4E63;border-radius:10px;padding:10px 12px;background:#243244">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><b style="color:#F1F5F9;font-size:13px">' + nm + ' 网格详情</b><span style="color:#7C8DA1;font-size:11.5px">' + h.code + '</span>'
+      + '<button type="button" class="gh-back" style="margin-left:auto;font-size:12px;padding:2px 10px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#D8E2EF;cursor:pointer">← 返回持有列表</button></div>'
+      + '<div style="font-size:12px;color:#9FB0C3;margin:6px 0 4px">① 网格参数</div>' + paramRows
+      + '<div style="font-size:12px;color:#9FB0C3;margin:10px 0 4px">② 网格表（红色=网格中轴线所在格，蓝色=当前最新收盘价所在格）</div>'
+      + '<div class="tblwrap"><table style="table-layout:fixed;width:100%;min-width:420px;border-collapse:collapse;font-size:12px;color:#D8E2EF"><colgroup><col style="width:18%"><col style="width:32%"><col style="width:25%"><col style="width:25%"></colgroup><thead><tr style="color:#D8E2EF"><th style="padding:4px;border:1px solid #3E4E63">网格序号</th><th style="padding:4px;border:1px solid #3E4E63">价格</th><th style="padding:4px;border:1px solid #3E4E63">买入股数</th><th style="padding:4px;border:1px solid #3E4E63">卖出股数</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+      + '<div style="font-size:11.5px;color:#7C8DA1;margin-top:6px;line-height:1.6">低于中轴线建仓，价格越低建仓收益率越高（网格下沿买入、上沿卖出）。</div>'
+      + '</div>';
+  }
 function showStrategyDetail(name) {
     var m = loadStored();
     if (!m[name]) return;
@@ -4933,7 +5060,11 @@ function showStrategyDetail(name) {
       if (!res) {
         if (m[name] && m[name].type === "grid") {
           var g0 = m[name].grid || {}, gs0 = g0.settings || {};
-          res = WufuEngine.backtestGrid(D, { codes: (g0.codes || []).slice(), initial_capital: gs0.capital || 1000000, mgmt: gs0.mgmt || "B", period_n: gs0.period_n || 12, period_unit: gs0.period_unit || "周", commission_rate: gs0.comm || 0.00025, slippage_rate: gs0.slip || 0.0005, min_commission: gs0.min_comm || 0, vol_win: g0.vol_win || 60, top_n: g0.top_n || (g0.codes || []).length, gridOverrides: g0.overrides || {} });
+          var gPrm2 = { codes: (g0.codes || []).slice(), initial_capital: gs0.capital || 1000000, mgmt: gs0.mgmt || "B", period_n: gs0.period_n || 12, period_unit: gs0.period_unit || "周", commission_rate: gs0.comm || 0.00025, slippage_rate: gs0.slip || 0.0005, min_commission: gs0.min_comm || 0, vol_win: g0.vol_win || 60, top_n: g0.top_n || (g0.codes || []).length, gridOverrides: g0.overrides || {} };
+          if (gs0.start) { var ix0 = D.calendar.indexOf(gs0.start); if (ix0 < 0) { var lo0 = 0, hi0 = D.calendar.length - 1, a0 = D.calendar.length - 1; while (lo0 <= hi0) { var md0 = (lo0 + hi0) >> 1; if (D.calendar[md0] >= gs0.start) { a0 = md0; hi0 = md0 - 1; } else lo0 = md0 + 1; } ix0 = a0; } gPrm2.start_idx = ix0; }
+          if (gs0.end) { var ix1 = D.calendar.indexOf(gs0.end); if (ix1 < 0) { var lo1 = 0, hi1 = D.calendar.length - 1, a1 = 0; while (lo1 <= hi1) { var md1 = (lo1 + hi1) >> 1; if (D.calendar[md1] <= gs0.end) { a1 = md1; lo1 = md1 + 1; } else hi1 = md1 - 1; } ix1 = a1; } gPrm2.end_idx = ix1; }
+          if (g0._warm_start) { var ix2 = D.calendar.indexOf(g0._warm_start); if (ix2 >= 0) gPrm2.warm_start_idx = ix2; }
+          res = WufuEngine.backtestGrid(D, gPrm2);
         } else {
           res = engine.backtest(D, m[name]);
         }
@@ -5528,6 +5659,7 @@ function showStrategyDetail(name) {
         var tb = p.triggerBase !== undefined && +p.triggerBase > 0 ? +p.triggerBase : p.cur;
         var nD = Math.floor((nL - 1) / 2);
         var loL = tb + (0 - nD) * p.step, hiL = tb + (nL - 1 - nD) * p.step;
+        var perPct = (p.step / ((p.mid && p.mid > 0) ? p.mid : ((p.lower + p.upper) / 2))) * 100;
         var warns = p.warns ? p.warns.map(function (w) { return '<span style="color:#FBBF24">⚠ ' + w + "</span>"; }).join("") : "";
         var unchg = p._changed === false;
         var volCell = '<span data-k="volStat" data-c="' + s.code + '" style="color:#9FB0C3;font-size:11px">σ' + ((p.sig || 0) * 100).toFixed(2) + '%·振' + ((p.amp || 0) * 100).toFixed(2) + '%</span>' + (unchg ? ' <span style="color:#7C8DA1;font-size:10px">·未变</span>' : '');
@@ -5535,7 +5667,7 @@ function showStrategyDetail(name) {
           "<td data-label='区间下限'><input type='number' step='0.001' data-k='lower' data-c='" + s.code + "' value='" + p.lower.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
           "<td data-label='区间上限'><input type='number' step='0.001' data-k='upper' data-c='" + s.code + "' value='" + p.upper.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
           "<td data-label='格距'><input type='number' step='0.0005' data-k='step' data-c='" + s.code + "' value='" + p.step.toFixed(3) + "' style='width:62px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
-          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:48px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
+          "<td data-label='格数'><input type='number' step='1' min='1' data-k='nLevels' data-c='" + s.code + "' value='" + p.nLevels + "' style='width:48px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'><span style='color:#9FB0C3;font-size:10px;margin-left:3px'>每格 " + perPct.toFixed(2) + "%</span></td>" +
           "<td data-label='底仓资金'><input type='number' step='100' data-k='baseAmt' data-c='" + s.code + "' value='" + p.baseAmt.toFixed(0) + "' style='width:76px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
           "<td data-label='每格资金'><span data-k='perL' data-c='" + s.code + "' style='color:#D8E2EF;font-size:12px'>" + perL.toFixed(0) + " 元</span></td>" +
           "<td data-label='触发基准价'><input type='number' step='0.001' data-k='triggerBase' data-c='" + s.code + "' value='" + tb.toFixed(3) + "' style='width:70px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;background:#202E3F;color:#F1F5F9'></td>" +
@@ -5601,6 +5733,8 @@ function showStrategyDetail(name) {
         vol_win: Math.max(20, +($("gridVolWin").value) || 60),
         top_n: Math.max(1, +($("gridTopN").value) || codes.length),
         idle_buy: $("gridIdleSel") ? $("gridIdleSel").value : "cash",
+        start_idx: (function () { var v = $("gridStart") ? $("gridStart").value : ""; if (!v || !D) return undefined; var ix = D.calendar.indexOf(v); if (ix >= 0) return ix; var lo = 0, hi = D.calendar.length - 1, ans = D.calendar.length - 1; while (lo <= hi) { var mid = (lo + hi) >> 1; if (D.calendar[mid] >= v) { ans = mid; hi = mid - 1; } else lo = mid + 1; } return ans; })(),
+        end_idx: (function () { var v = $("gridEnd") ? $("gridEnd").value : ""; if (!v || !D) return undefined; var ix = D.calendar.indexOf(v); if (ix >= 0) return ix; var lo = 0, hi = D.calendar.length - 1, ans = 0; while (lo <= hi) { var mid = (lo + hi) >> 1; if (D.calendar[mid] <= v) { ans = mid; lo = mid + 1; } else hi = mid - 1; } return ans; })(),
         gridOverrides: overrides
       };
       var stEl = $("gridRunState"); stEl.textContent = "计算中…";
@@ -5744,6 +5878,8 @@ function showStrategyDetail(name) {
         overrides: self.lastParams || {},
         vol_win: Math.max(20, +($("gridVolWin").value) || 60),
         settings: {
+          start: $("gridStart") ? $("gridStart").value : "",
+          end: $("gridEnd") ? $("gridEnd").value : "",
           period_n: Math.max(1, +($("gridPeriodN").value) || 12),
           period_unit: $("gridPeriodUnit") ? $("gridPeriodUnit").value : "周",
           mgmt: $("gridMgmt") ? $("gridMgmt").value : "B",
@@ -5758,6 +5894,7 @@ function showStrategyDetail(name) {
       var self = this;
       var cfg = self.collectCfg();
       if (!cfg.codes.length) { showNotice("请先勾选至少 1 只标的"); return; }
+      cfg._warm_start = cfg.settings.start || "";   // 固化预热起点 = 保存那一刻的「回测起始时间」（详情页改起始日不更新预热起点）
       if (!self.lastScores || !self.lastScores.length) { showNotice("请先计算适配度评分（保存参数覆盖需评分后的网格参数）"); return; }
       var name = ($("gridStName").value || "").trim() || ("网格·" + cfg.codes.length + "标的·Top" + cfg.top_n + "·" + new Date().toLocaleDateString());
       var m = loadStored();
@@ -5773,6 +5910,8 @@ function showStrategyDetail(name) {
       if ($("gridTopN")) $("gridTopN").value = cfg.top_n || 10;
       if ($("gridIdleSel") && cfg.idle_buy) $("gridIdleSel").value = cfg.idle_buy;
       var s = cfg.settings || {};
+      if ($("gridStart") && s.start) $("gridStart").value = s.start;
+      if ($("gridEnd") && s.end) $("gridEnd").value = s.end;
       if ($("gridPeriodN")) $("gridPeriodN").value = s.period_n || 12;
       if ($("gridPeriodUnit") && s.period_unit) $("gridPeriodUnit").value = s.period_unit;
       if ($("gridMgmt") && s.mgmt) $("gridMgmt").value = s.mgmt;
