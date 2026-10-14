@@ -171,6 +171,7 @@ footer b{color:#94A3B8}
 .corr-kpi .s{font-size:10px;color:#94A3B8;margin-top:2px}
 #corrResult table.trades td.low:first-child{color:#34D399}
 #corrResult table.trades td.c{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){ html,body{max-width:100%;overflow-x:hidden} }
 </style>
 </head>
 <body>
@@ -194,8 +195,105 @@ footer b{color:#94A3B8}
 <div id="rotSh1Slot"></div>
 </div>
 </div>
-<div id="step2" style="display:none"><div class="sfold">
-        <button type="button" class="sfold-h" data-g="fac"><b>② 因子与选股</b><span class="sf-a">点击展开</span></button>
+<div id="step2" style="display:none">
+<div id="rotOnlyStep2" style="display:none"><div class="psec"><div id="topnRow">
+        <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
+          第 <input id="rankNIn" type="number" min="1" max="60" step="1" value="1"
+               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          名 至 第 <input id="rankMIn" type="number" min="1" max="60" step="1" value="3"
+               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
+          名
+        </div>
+        </div></div><div class="psec" id="psecTune">
+        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <span style="width:16px;flex:0 0 16px"></span>
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
+          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+            <option value="total" selected>研究段累计收益</option>
+            <option value="sharpe">研究段夏普比率</option>
+            <option value="calmar">研究段收益/回撤比</option>
+          </select>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
+          <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
+          <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
+          <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
+          <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
+                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0;resize:vertical"></textarea>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
+          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">开始调优</button>
+          <span class="st" id="tuneState" style="font-size:11px">就绪</span>
+        </div>
+        <div id="tuneProg" style="display:none;margin:4px 0 2px">
+          <div style="height:6px;background:#1E293B;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#38BDF8;transition:width .2s"></div></div>
+          <span id="tuneProgTxt" style="font-size:11px;color:#94A3B8"></span>
+        </div>
+        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
+          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
+          <div id="tuneGrid" style="display:block;margin-top:4px"></div>
+          <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
+          <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
+          <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
+        </div>
+      </div></div>
+<div id="rotSh2Slot"></div>
+</div>
+</div>
+<div id="viewRebalance" style="display:none">
+<div id="step1">
+<div class="s1card">
+<h2>第一步：选择标的与目标权重</h2>
+<div class="psec" id="psecRebW">
+      <h3>目标权重来源</h3>
+      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
+        <option value="fixed">比例（按标的池比例输入）</option>
+        <option value="inv_vol">逆波动率（近20日，低波多配）</option>
+        <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
+      </select>
+      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">比例：调仓日按标的池填写的比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，标的池比例输入不生效</div>
+    </div>
+<div id="rebSh1Slot"></div>
+</div>
+</div>
+<div id="step2" style="display:none">
+<div id="rebSh2Slot"></div>
+</div>
+</div>
+<div id="sharedCfg" style="display:none">
+<div id="sh1"><div class="psec" id="psecPool">
+      <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
+        <button class="corr-mini" id="poolAll" type="button">全选</button>
+        <button class="corr-mini" id="poolNone" type="button">清空</button>
+      </div>
+      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
+      <div class="notice" id="survivorTip" style="display:none"></div>
+    </div><div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div></div>
+<div id="sh2"><div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div><div class="s2sel" id="selSummary" style="display:none"></div><div class="wrap">
+<aside id="panel"><div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div><div class="sfold">
+        <button type="button" class="sfold-h" data-g="fac"><b>① 因子与选股</b><span class="sf-a">点击展开</span></button>
         <div class="sfold-b hide" id="sfg-fac">
       <div class="psec" id="psecFactor">
         <h3 style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>因子管理</span>
@@ -307,105 +405,8 @@ footer b{color:#94A3B8}
         </div>
       </div>
         </div><!-- /因子与选股 -->
-      </div>
-<div id="rotOnlyStep2" style="display:none"><div class="psec"><div id="topnRow">
-        <h3>持有排名区间 <span class="v" id="topnV">1-3</span></h3>
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
-          第 <input id="rankNIn" type="number" min="1" max="60" step="1" value="1"
-               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-          名 至 第 <input id="rankMIn" type="number" min="1" max="60" step="1" value="3"
-               style="width:56px;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px">
-          名
-        </div>
-        </div></div><div class="psec" id="psecTune">
-        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
-        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <span style="width:16px;flex:0 0 16px"></span>
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
-          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
-            <option value="total" selected>研究段累计收益</option>
-            <option value="sharpe">研究段夏普比率</option>
-            <option value="calmar">研究段收益/回撤比</option>
-          </select>
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
-          <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
-          <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
-          <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
-        </div>
-        <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
-          <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
-                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0;resize:vertical"></textarea>
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
-          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">开始调优</button>
-          <span class="st" id="tuneState" style="font-size:11px">就绪</span>
-        </div>
-        <div id="tuneProg" style="display:none;margin:4px 0 2px">
-          <div style="height:6px;background:#1E293B;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#38BDF8;transition:width .2s"></div></div>
-          <span id="tuneProgTxt" style="font-size:11px;color:#94A3B8"></span>
-        </div>
-        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
-          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
-          <div id="tuneGrid" style="display:block;margin-top:4px"></div>
-          <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
-          <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
-          <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
-        </div>
-      </div></div>
-<div id="rotSh2Slot"></div>
-</div>
-</div>
-<div id="viewRebalance" style="display:none">
-<div id="step1">
-<div class="s1card">
-<h2>第一步：选择标的与目标权重</h2>
-<div class="psec" id="psecRebW">
-      <h3>目标权重来源</h3>
-      <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #334155;border-radius:4px;background:#111827">
-        <option value="fixed">比例（按标的池比例输入）</option>
-        <option value="inv_vol">逆波动率（近20日，低波多配）</option>
-        <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
-      </select>
-      <div id="rebWTip" style="font-size:11.5px;color:#94A3B8;margin:4px 0 0">比例：调仓日按标的池填写的比例（%）再平衡；动态权重模式：按调仓日及之前数据计算目标权重再平衡，标的池比例输入不生效</div>
-    </div>
-<div id="rebSh1Slot"></div>
-</div>
-</div>
-<div id="step2" style="display:none">
-<div id="rebSh2Slot"></div>
-</div>
-</div>
-<div id="sharedCfg" style="display:none">
-<div id="sh1"><div class="psec" id="psecPool">
-      <h3>标的池 <span class="v" id="poolCount"></span><span class="v" id="wSum" style="display:none"></span></h3>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-        <input id="poolSearch" type="text" placeholder="搜索代码 / 名称，如：510300、沪深300、黄金…" style="flex:1;min-width:160px;padding:5px 8px;font-size:12px;background:#0F172A;border:1px solid #334155;border-radius:6px;color:#E2E8F0">
-        <button class="corr-mini" id="poolAll" type="button">全选</button>
-        <button class="corr-mini" id="poolNone" type="button">清空</button>
-      </div>
-      <div id="poolBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px;max-height:340px;overflow:auto;border:1px solid #1E293B;border-radius:6px;padding:6px"></div>
-      <div class="notice" id="survivorTip" style="display:none"></div>
-    </div><div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div></div>
-<div id="sh2"><div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div><div class="s2sel" id="selSummary" style="display:none"></div><div class="wrap">
-<aside id="panel"><div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div><div class="sfold">
-        <button type="button" class="sfold-h" data-g="core"><b>① 交易参数</b><span class="sf-a">收起</span></button>
+      
+        <button type="button" class="sfold-h" data-g="core"><b>② 交易参数</b><span class="sf-a">收起</span></button>
         <div class="sfold-b" id="sfg-core">
       <div class="psec">
         
@@ -5079,6 +5080,8 @@ function showStrategyDetail(name) {
     if (togEl) togEl.style.display = reb ? "none" : "";
     var bs = document.querySelectorAll(".sfold-b");
     for (var c = 0; c < bs.length; c++) bs[c].classList.remove("hide");
+    // 因子与选股为轮动专属折叠区：再平衡视图不展示（保持原行为：轮动第二步因子区不进入再平衡）
+    if (reb) { var fB = document.getElementById("sfg-fac"); if (fB) fB.classList.add("hide"); }
     if (!reb) {
       var hh = localStorage.getItem("sf_grp");
       var openGrps = (hh === null) ? "fac" : hh.split(",").filter(function (x) { return x !== "exe"; }).join(",");
