@@ -2863,7 +2863,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     // 比例输入框仅「比例-自定义」模式显示；等比例/逆波动率/风险平价均隐藏（等比例等权、动态模式不读手填）
     if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = dyn ? "flex" : "none"; });
     if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = isReb ? "none" : ""; });
-    var ws = $("wSum"); if (ws) ws.style.display = (isReb && !dyn) ? "" : "none";
+    // 权重合计/余量提示仅非等比例显示（等比例等权，显示"权重合计 0%"易误导）；inv_vol/risk_parity 权重合计按比例输入框和（隐藏时为 0%，引擎按动态权重计算）
+    var ws = $("wSum"); if (ws) ws.style.display = (isReb && (rwm !== "fixed" || rst !== "equal")) ? "" : "none";
     if (isReb && !dyn) { syncWIn(); updateWSum(); }
   }
 
@@ -2960,7 +2961,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
   function updatePoolCount() {
     var n = 0;
-    POOL.forEach(function (p) { if (poolChecked[p.code]) n++; });
+    // 按当前视图计勾选数：再平衡读 rebalanceChecked，轮动读 poolChecked（此前固定读 poolChecked，再平衡视图恒显示 0 只）
+    var cmv = activeView === "rebalance" ? rebalanceChecked : poolChecked;
+    POOL.forEach(function (p) { if (cmv[p.code]) n++; });
     $("poolCount").textContent = n + " 只";
   }
 
