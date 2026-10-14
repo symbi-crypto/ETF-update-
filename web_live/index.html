@@ -5147,16 +5147,17 @@ function buildChips() {
     if (h.indexOf("ic") >= 0 || h.indexOf("factor") >= 0) return "ic";
     return "rotation";
   }
-  $("tabRotation").addEventListener("click", function () { location.hash = "#/rotation"; });
-  $("tabRebalance").addEventListener("click", function () { location.hash = "#/rebalance"; });
-  $("tabGrid").addEventListener("click", function () { location.hash = "#/grid"; });
+  $("tabRotation").addEventListener("click", function () { location.hash = "#/rotation"; showView("rotation"); });
+  $("tabRebalance").addEventListener("click", function () { location.hash = "#/rebalance"; showView("rebalance"); });
+  $("tabGrid").addEventListener("click", function () { location.hash = "#/grid"; showView("grid"); });
    var gsBtn = $("gridSaveBtn");
    if (gsBtn) gsBtn.addEventListener("click", function () { if (window.GridView) GridView.gridSave(); });
-  $("tabStrategies").addEventListener("click", function () { location.hash = "#/strategies"; });
-  $("tabCorr").addEventListener("click", function () { location.hash = "#/correlation"; });
-  $("tabCombo").addEventListener("click", function () { location.hash = "#/combo"; });
-  $("tabIc").addEventListener("click", function () { location.hash = "#/ic"; });
+  $("tabStrategies").addEventListener("click", function () { location.hash = "#/strategies"; showView("strategies"); });
+  $("tabCorr").addEventListener("click", function () { location.hash = "#/correlation"; showView("correlation"); });
+  $("tabCombo").addEventListener("click", function () { location.hash = "#/combo"; showView("combo"); });
+  $("tabIc").addEventListener("click", function () { location.hash = "#/ic"; showView("ic"); });
   window.addEventListener("hashchange", function () { showView(hashView()); });
+  window.addEventListener("load", function () { showView(hashView()); });   // 初始视图同步：浏览器/历史恢复 hash 晚于脚本执行时兜底（恢复不触发 hashchange）
 
   // ==================== 网格回测视图（GridView） ====================
   function gName(code) {
