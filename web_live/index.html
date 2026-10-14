@@ -196,63 +196,7 @@ footer b{color:#94A3B8}
 </div>
 </div>
 <div id="step2" style="display:none">
-<div id="rotOnlyStep2" style="display:none"><div class="psec" id="psecTune">
-        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
-        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
-
-        <h3>调优维度</h3>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
-          <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
-          <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
-        </div>
-      </div>
-        
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <span style="width:16px;flex:0 0 16px"></span>
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
-          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
-            <option value="total" selected>研究段累计收益</option>
-            <option value="sharpe">研究段夏普比率</option>
-            <option value="calmar">研究段收益/回撤比</option>
-          </select>
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
-          <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
-        </div>
-
-        <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
-          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
-          <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
-                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0;resize:vertical"></textarea>
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
-          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">开始调优</button>
-          <span class="st" id="tuneState" style="font-size:11px">就绪</span>
-        </div>
-        <div id="tuneProg" style="display:none;margin:4px 0 2px">
-          <div style="height:6px;background:#1E293B;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#38BDF8;transition:width .2s"></div></div>
-          <span id="tuneProgTxt" style="font-size:11px;color:#94A3B8"></span>
-        </div>
-        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
-          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
-          <div id="tuneGrid" style="display:block;margin-top:4px"></div>
-          <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
-          <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
-          <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
-        </div>
-      </div></div>
+</div>
 <div id="rotSh2Slot"></div>
 </div>
 </div>
@@ -288,7 +232,7 @@ footer b{color:#94A3B8}
       <div class="notice" id="survivorTip" style="display:none"></div>
     </div><div class="s1bar"><button id="nextBtn" type="button">下一步 · 开始回测</button></div></div>
 <div id="sh2"><div class="s2top"><button id="backBtn" type="button">← 修改标的</button><span class="s2tip">第二步：调整参数（可选）与查看回测结果</span></div><div class="s2sel" id="selSummary" style="display:none"></div><div class="wrap">
-<aside id="panel"><div class="phead"><b>参数设置</b><button id="collapseBtn" type="button">收起</button></div><div class="sfold">
+<aside id="panel"><div class="phead"><b>参数设置</b></div><div class="sfold">
         <button type="button" class="sfold-h" data-g="fac"><b>① 因子与选股</b><span class="sf-a">点击展开</span></button>
         <div class="sfold-b hide" id="sfg-fac">
       <div class="psec" id="psecFactor">
@@ -533,7 +477,74 @@ footer b{color:#94A3B8}
       </div>
       
         </div><!-- /策略与管理 -->
-      </div><div class="runbar">
+      </div>
+<div class="sfold">
+<button type="button" class="sfold-h" data-g="tune"><b>⑤ 参数调优</b><span class="sf-a">点击展开</span></button>
+<div class="sfold-b hide" id="sfg-tune"><div class="psec" id="psecTune">
+        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#64748B">约束版 · 固定因子结构</span></h3>
+        <div style="font-size:12px;color:#94A3B8;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
+
+        <h3>调优维度</h3>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
+          <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
+          <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+      </div>
+        
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <span style="width:16px;flex:0 0 16px"></span>
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
+          <select id="tuneObj" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#111827;color:#E2E8F0">
+            <option value="total" selected>研究段累计收益</option>
+            <option value="sharpe">研究段夏普比率</option>
+            <option value="calmar">研究段收益/回撤比</option>
+          </select>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
+          <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
+                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0">
+        </div>
+
+        <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
+          <span style="font-size:12px;color:#CBD5E1;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
+          <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
+                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #334155;border-radius:4px;background:#0F172A;color:#E2E8F0;resize:vertical"></textarea>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
+          <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#111827;cursor:pointer">开始调优</button>
+          <span class="st" id="tuneState" style="font-size:11px">就绪</span>
+        </div>
+        <div id="tuneProg" style="display:none;margin:4px 0 2px">
+          <div style="height:6px;background:#1E293B;border-radius:3px;overflow:hidden"><div id="tuneBar" style="width:0%;height:100%;background:#38BDF8;transition:width .2s"></div></div>
+          <span id="tuneProgTxt" style="font-size:11px;color:#94A3B8"></span>
+        </div>
+        <div id="tuneResult" style="display:none;margin:6px 0 0;border:1px solid #334155;border-radius:6px;padding:6px 8px">
+          <div style="font-weight:600;font-size:12px;margin-bottom:4px">调优结果 <span id="tuneCount" style="font-weight:400;color:#64748B"></span></div>
+          <div id="tuneGrid" style="display:block;margin-top:4px"></div>
+          <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
+          <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
+          <div style="font-size:11px;color:#64748B;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
+        </div>
+      
+<div class="robwrap" id="robwrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0">
+      <button id="robBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#111827;color:#CBD5E1;cursor:pointer">参数稳健性检查（窗口±5日）</button>
+      <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
+    </div>
+<div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#CBD5E1;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
+</div>
+</div>
+<div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
         <div class="runbar2">
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8;white-space:nowrap;flex:1 1 auto;min-width:0;overflow:hidden" title="自定义基准（默认沪深300全收益）">基准<select id="benchSel" style="flex:1;min-width:0;max-width:100%;text-overflow:ellipsis;font-size:11px;padding:3px 4px;border:1px solid #334155;border-radius:4px;color:#E2E8F0;background:#111827"><option value="H00300.CSI">沪深300全收益</option></select></label>
@@ -546,11 +557,8 @@ footer b{color:#94A3B8}
       <div style="font-weight:600;margin-bottom:4px">样本内外分割 <span style="font-weight:400;color:#64748B" id="segTip"></span></div>
       <div id="segGrid" style="display:grid;grid-template-columns:76px 1fr 1fr;gap:4px 12px;align-items:baseline"></div>
     </div>
-    <div class="robwrap" id="robwrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0">
-      <button id="robBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#111827;color:#CBD5E1;cursor:pointer">参数稳健性检查（窗口±5日）</button>
-      <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
-    </div>
-    <div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#CBD5E1;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
+    
+    
     <div class="cards">
       <div class="card" id="cICCard" style="display:none"><h2>组合因子 IC <span class="n">本次回测同口径（权重/标准化/候选池）· 主窗口 = 调仓周期</span></h2>
         <div id="cICWarn" style="display:none;background:#3B1D1D;border:1px solid #7F3A3A;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;color:#FCA5A5"></div>
@@ -2602,8 +2610,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           if (wOld[k] > 0) {
             code = codes[k];
             c0 = closes[code][i - 1]; c1 = closes[code][i];
-            if (!isMiss(c0) && !isMiss(c1) && c0 > 0) { var rkFall = (idleC === code && params.fallback_when_no_signal === "money") ? rfDaily : (c1 / c0 - 1); r += wOld[k] * rkFall; }
+            if (!isMiss(c0) && !isMiss(c1) && c0 > 0) { var rkFall = (idleC === code && params.fallback_when_no_signal === "money") ? rfDaily : (c1 / c0 - 1); r += wOld[k] * rkFall; if (isReb) wOld[k] *= (1 + rkFall); }
           }
+        }
+        // 再平衡修复：非调仓日（未执行）按各标的当日收益漂移真实权重——决策日目标比例 vs 漂移后权重产生调仓买卖，实现真正再平衡；归一化保持权重和为 1
+        if (isReb) {
+          var sWDr = 0;
+          for (k = 0; k < nAssets; k++) sWDr += wOld[k];
+          if (sWDr > 1e-9 && Math.abs(sWDr - 1) > 1e-9) for (k = 0; k < nAssets; k++) wOld[k] /= sWDr;
         }
       }
       dailyRet[i] = r;
@@ -3676,13 +3690,6 @@ function buildChips() {
   if (sdEl) sdEl.value = startDate;
   var edEl = $("endSel");
   if (edEl) edEl.value = endDate;
-
-  $("collapseBtn").addEventListener("click", function () {
-    var p = $("panel");
-    p.classList.toggle("closed");
-    this.textContent = p.classList.contains("closed") ? "展开" : "收起";
-    window.dispatchEvent(new Event("resize"));
-  });
 
   // ---------- 三组附加交易条件（买入附加 / 卖出 / 不卖） ----------
   var buyAdds = [], sellConds = [], holdConds = [];
@@ -5089,12 +5096,13 @@ function showStrategyDetail(name) {
     // 持有排名区间（实际交易参数）为轮动专属：再平衡视图不展示（保持原行为）
     var tp = document.getElementById("topnRow");
     if (tp) tp.style.display = reb ? "none" : "";
-    // 因子与选股为轮动专属折叠区：再平衡视图不展示（保持原行为：轮动第二步因子区不进入再平衡）
+    // 因子与选股、参数调优为轮动专属折叠区：再平衡视图不展示（保持原行为：轮动第二步因子区/参数调优不进入再平衡）
     if (reb) { var fB = document.getElementById("sfg-fac"); if (fB) fB.classList.add("hide"); }
+    if (reb) { var tB2 = document.getElementById("sfg-tune"); if (tB2) tB2.classList.add("hide"); }
     if (!reb) {
       var hh = localStorage.getItem("sf_grp");
       var openGrps = (hh === null) ? "fac" : hh.split(",").filter(function (x) { return x !== "exe"; }).join(",");
-      ["fac", "core", "exe", "mgmt"].forEach(function (g) {
+      ["fac", "core", "exe", "mgmt", "tune"].forEach(function (g) {
         var b = document.getElementById("sfg-" + g);
         if (!b) return;
         var open = openGrps.indexOf(g) >= 0;
@@ -5923,7 +5931,7 @@ function showStrategyDetail(name) {
 
   // ---------- 回测参数面板分区折叠（核心默认展开，其余折叠，状态记忆） ----------
   (function () {
-    var grps = ["fac", "core", "exe", "mgmt"];
+    var grps = ["fac", "core", "exe", "mgmt", "tune"];
     var H = localStorage.getItem("sf_grp");
     if (H === null) H = "fac"; // 默认只展开因子与选股
     else { var arrH = H.split(",").filter(function (x) { return x !== "exe"; }); H = arrH.join(",") || "fac"; } // ③择时管理默认收起（不记忆展开态）
