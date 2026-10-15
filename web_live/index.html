@@ -176,7 +176,7 @@ footer b{color:#9FB0C3}
   <button type="button" id="tabIc">因子IC</button>
   <button type="button" id="tabRotation" class="on">轮动回测</button>
   <button type="button" id="tabRebalance">再平衡回测</button>
-  <button type="button" id="tabDCA" style="color:var(--down)">定投</button>
+  <button type="button" id="tabDCA" style="color:var(--down)">定投回测</button>
   <button type="button" id="tabStrategies">我的策略</button>
   <button type="button" id="tabCombo">策略组合</button>
     </div>
@@ -2407,10 +2407,11 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       l.className = "corr-item";
       l.style.flexWrap = "wrap";
       var isRebNow = activeView === "rebalance";
+      var noRotCol = isRebNow || activeView === "dca";   // 仅轮动列为轮动专属：再平衡/定投视图不渲染
       var dynNow = isRebNow && $("rebWeightMode") && $("rebWeightMode").value === "fixed" && $("rebStyleSel") && $("rebStyleSel").value === "custom";
       l.innerHTML = '<input type="checkbox" class="pick" data-c="' + p.code + '">' +
         '<span class="corr-nm">' + p.name + "</span><span class='corr-cd'>" + p.code + "</span>" +
-        "<label class='rot' style='display:" + (isRebNow ? "none" : "") + "'><input type='checkbox' class='rotc'>仅轮动</label>" +
+        "<label class='rot' style='display:" + (noRotCol ? "none" : "") + "'><input type='checkbox' class='rotc'>仅轮动</label>" +
         "<label class='wlab' style='display:" + (dynNow ? "flex" : "none") + "'>比例<input type='number' class='wIn' data-code='" + p.code + "' min='0' max='100' step='0.1' style='width:52px;font-size:12px;padding:1px 3px;border:1px solid #3E4E63;border-radius:3px;text-align:right'>%</label>";
       if (cm[p.code]) l.querySelector(".pick").checked = true;
       if (onlyRot[p.code]) l.querySelector(".rotc").checked = true;
@@ -2440,13 +2441,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   if ($("poolSearch")) {
     $("poolSearch").addEventListener("input", function () { renderPool(); });
     $("poolAll").addEventListener("click", function () {
-      POOL.forEach(function (p) { cm[p.code] = true; });
+      var cmv = activeView === "rebalance" ? rebalanceChecked : (activeView === "dca" ? dcaChecked : poolChecked);
+      POOL.forEach(function (p) { cmv[p.code] = true; });
       renderPool(); updatePoolCount();
       if (activeView === "rebalance") { updateWSum(); }
       if (D) scheduleRun();
     });
     $("poolNone").addEventListener("click", function () {
-      POOL.forEach(function (p) { cm[p.code] = false; });
+      var cmv = activeView === "rebalance" ? rebalanceChecked : (activeView === "dca" ? dcaChecked : poolChecked);
+      POOL.forEach(function (p) { cmv[p.code] = false; });
       renderPool(); updatePoolCount();
       if (activeView === "rebalance") { updateWSum(); }
       if (D) scheduleRun();
@@ -3968,7 +3971,7 @@ function buildChips() {
           var px = s.close[i] * (1 + slip);
           var sh = alloc / px;
           var fee = Math.max(minComm, alloc * comm);
-          cash -= fee;
+          cash -= (alloc + fee);   // 部署本金+佣金：现金转为持仓（勿重复计入现金）
           shares[c] += sh; cost[c] += alloc + fee;
           buys.push({ date: cal[i], code: c, amount: alloc, price: s.close[i], shares: sh, fee: fee });
         });
@@ -4020,9 +4023,17 @@ function buildChips() {
     var yrs = (ts(cal[endI]) - ts(cal[firstBuyIdx])) / (365.25 * 86400000);
     if (yrs > 0 && T > 0 && lumpEnd > 0) lumpXirr = Math.pow(lumpEnd / T, 1 / yrs) - 1;
 
-    // 最大回撤（市值曲线）
-    var peak = -1e18, mdd = 0;
-    for (var i = si; i <= ei; i++) { if (pv[i] > peak) peak = pv[i]; var dd = peak > 0 ? (pv[i] - peak) / peak : 0; if (dd < mdd) mdd = dd; }
+    // 最大回撤（收益率口径）：以「每元累计投入的成长倍数」V(t)=市值_t/累计投入_t=1+r(t) 为净值序列，
+    // 取其运行峰值至其后谷值的归一化跌幅（跌幅=V/Vpeak−1）。该口径剔除每月新资金注入与止盈现金留存对市值的抬升，
+    // 反映真实浮亏；且作为平滑策略，其回撤不超过标的本身峰谷跌幅。
+    var pkV = -1e18, mdd = 0;
+    for (var i = si; i <= ei; i++) {
+      if (cumInv[i] <= 0) continue;
+      var V = pv[i] / cumInv[i];          // = 1 + r(t)
+      if (V > pkV) pkV = V;
+      var ddV = V / pkV - 1;              // 归一化峰值跌幅（负值）
+      if (ddV < mdd) mdd = ddV;
+    }
 
     $("runState").textContent = "已更新 · " + (Date.now() - t0state) + "ms · " + injIdx.length + " 期";
     renderDCA({
@@ -4049,7 +4060,7 @@ function buildChips() {
     cards += kcard("累计收益率", (R.cumRet * 100).toFixed(2) + "%", "(期末−累计投入)/累计投入", R.cumRet >= 0 ? "up" : "down");
     cards += kcard("期末市值", yuan(R.finalPV), "含现金留存", "");
     cards += kcard("累计投入", yuan(R.cum), R.nPeriods + " 期 × " + R.amount + "元", "");
-    cards += kcard("最大回撤", (R.mdd * 100).toFixed(2) + "%", "市值曲线峰值回撤", "down");
+    cards += kcard("最大回撤", (R.mdd * 100).toFixed(2) + "%", "收益率口径回撤（每元投入成长倍数 峰值至谷值跌幅）", "down");
     cards += kcard("vs 一次性买入", (excessAmt >= 0 ? "+" : "") + yuan(excessAmt), "定投期末 − 一次性期末", excessAmt >= 0 ? "up" : "down");
     cards += kcard("一次性·XIRR", lumpXStr, "同期对照年化", R.lumpXirr >= 0 ? "up" : "down");
     cards += kcard("一次性·累计收益", (R.lumpRet * 100).toFixed(2) + "%", "期末 " + yuan(R.lumpEnd), R.lumpRet >= 0 ? "up" : "down");
@@ -4093,7 +4104,7 @@ function buildChips() {
         "<td style='color:#F87171'>止盈</td><td>" + t.sellAmt.toFixed(2) + "</td><td>—</td><td>" + t.shares.toFixed(2) + "</td><td>" + t.fee.toFixed(2) + "</td><td style='color:#34D399'>+" + (t.ret * 100).toFixed(1) + "%</td></tr>";
     });
     tb.innerHTML = rows || '<tr><td colspan="8" style="color:#7C8DA1">无交易记录</td></tr>';
-    showNotice("口径说明：XIRR 为资金加权年化（每期投入为负、期末总市值为正，二分求解）；累计收益率=(期末市值−累计投入)/累计投入。一次性买入对照=累计投入总额在首个定投日等权买入持有到期末。");
+    showNotice("口径说明：XIRR 为资金加权年化（每期投入为负、期末总市值为正，二分求解）；累计收益率=(期末市值−累计投入)/累计投入；最大回撤为收益率口径（每元累计投入的成长倍数=市值/累计投入，取其运行峰值至谷值的归一化跌幅，剔除新资金注入与止盈现金留存影响）。一次性买入对照=累计投入总额在首个定投日等权买入持有到期末。");
   }
 
   function renderCompositeIC(res, params, D) {
