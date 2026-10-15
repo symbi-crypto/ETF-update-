@@ -484,9 +484,9 @@ footer b{color:#9FB0C3}
         </div><!-- /策略与管理 -->
       </div>
 <div class="sfold">
-<button type="button" class="sfold-h" data-g="tune"><b>⑤ 参数调优</b><span class="sf-a">点击展开</span></button>
+<button type="button" class="sfold-h" data-g="tune"><b>⑤ 参数调优与策略验证</b><span class="sf-a">点击展开</span></button>
 <div class="sfold-b hide" id="sfg-tune"><div class="psec" id="psecTune">
-        <h3>参数调优与策略验证 <span style="font-size:11px;font-weight:400;color:#7C8DA1">约束版 · 固定因子结构</span></h3>
+        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#7C8DA1">约束版 · 固定因子结构</span></h3>
         <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
 
         <h3>调优维度</h3>
@@ -539,7 +539,7 @@ footer b{color:#9FB0C3}
           <div id="tuneGrid" style="display:block;margin-top:4px"></div>
           <div id="tuneSense" style="font-size:11px;color:#F59E0B;margin:4px 0"></div>
           <div id="tuneSenseChart" style="display:none;height:220px;margin:4px 0"></div>
-          <div style="font-size:11px;color:#7C8DA1;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」「样本内外分割」综合判断。</div>
+          <div style="font-size:11px;color:#7C8DA1;margin-top:4px">提示：调优本质是在历史找最优，前几名大概率含过拟合，请结合「验证段累计」综合判断。</div>
         </div>
       
 <div class="robwrap" id="robwrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0">
@@ -560,8 +560,7 @@ footer b{color:#9FB0C3}
         <div class="tblwrap" style="max-height:320px;overflow-x:auto;margin-bottom:6px"><table class="swfo" id="wfoTable" style="table-layout:fixed;width:100%;border-collapse:collapse;font-size:12px"></table></div>
         <div id="wfoChart" style="height:230px;margin:6px 0 0"></div>
       </div>
-      <div style="font-size:11px;color:#7C8DA1;margin-top:4px">单次回测的研究/验证段对比见「策略详情」样本内外分割区；滚动样本外检验（WFO）在下方。</div>
-</div>
+      </div>
 </div>
 <div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
@@ -572,12 +571,6 @@ footer b{color:#9FB0C3}
       </div><div class="notice" id="notice"></div></aside>
 <main><main>
     <div class="kpis" id="kpis"></div>
-    <div class="segwrap" id="segBox" style="display:none;margin:8px 0 0;font-size:12px;color:#D8E2EF;background:#243244;border:1px solid #3E4E63;border-radius:8px;padding:8px 12px;line-height:1.7">
-      <div style="font-weight:600;margin-bottom:4px">样本内外分割 <span style="font-weight:400;color:#7C8DA1" id="segTip"></span></div>
-      <div id="segGrid" style="display:grid;grid-template-columns:76px 1fr 1fr;gap:4px 12px;align-items:baseline"></div>
-    </div>
-    
-    
     <div class="cards">
       <div class="card" id="cICCard" style="display:none"><h2>组合因子 IC <span class="n">本次回测同口径（权重/标准化/候选池）· 主窗口 = 调仓周期</span></h2>
         <div id="cICWarn" style="display:none;background:#3B1D1D;border:1px solid #7F3A3A;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;color:#FCA5A5"></div>
@@ -3984,27 +3977,6 @@ function buildChips() {
         '</div><div class="s">' + c.s + "</div></div>";
     });
     $("kpis").innerHTML = html;
-    // 样本内外分割（研究段 vs 验证段）
-    var seg = m.segments;
-    var segBox = $("segBox");
-    if (seg && seg.study && seg.validation) {
-      segBox.style.display = "block";
-      $("segTip").textContent = "验证段自 " + seg.v_start + " 起（最近3年冻结作样本外；此前为研究段）——滚动样本外验证（WFO）见「参数设置→参数调优与策略验证」";
-      var rows = [
-        ["累计收益", FMT.pct(seg.study.total), FMT.pct(seg.validation.total)],
-        ["年化收益", FMT.pct(seg.study.cagr), FMT.pct(seg.validation.cagr)],
-        ["最大回撤", FMT.pct(seg.study.max_dd), FMT.pct(seg.validation.max_dd)],
-        ["夏普比率", seg.study.sharpe.toFixed(2), seg.validation.sharpe.toFixed(2)],
-        ["交易日数", String(seg.study.n_days), String(seg.validation.n_days)]
-      ];
-      var cells = '<div style="color:#7C8DA1">指标</div><div style="text-align:right;color:#7C8DA1">研究段</div><div style="text-align:right;color:#7C8DA1;font-weight:600">验证段（样本外）</div>';
-      for (var ri = 0; ri < rows.length; ri++) {
-        cells += '<div style="color:#7C8DA1">' + rows[ri][0] + '</div><div style="text-align:right">' + rows[ri][1] + '</div><div style="text-align:right;font-weight:600">' + rows[ri][2] + "</div>";
-      }
-      $("segGrid").innerHTML = cells;
-    } else {
-      segBox.style.display = "none";
-    }
   }
 
   function ts(d) { return new Date(d + "T00:00:00+08:00").getTime(); }
