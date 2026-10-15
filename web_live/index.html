@@ -4170,6 +4170,7 @@ function buildChips() {
       applyParams(m[stCurName]);
       stepTo(2);
       moveRotOnly(activeView);
+      setFoldByMode();
       renderSelSummary();
       scheduleRun();
       $("stDetail").style.display = "none";
@@ -4974,9 +4975,12 @@ function showStrategyDetail(name) {
       tog.textContent = allOpen ? "收起全部" : "展开全部";
     }
     function apply() {
+      var isReb = typeof activeView !== "undefined" && activeView === "rebalance";
       grps.forEach(function (g) {
         var b = document.getElementById("sfg-" + g);
         if (!b) return;
+        // 再平衡视图：因子与选股、参数调优与策略验证为轮动专属，强制隐藏（折叠头已由 setFoldByMode 隐藏，此处防止 sf_grp 记忆将其内容重新展开）
+        if (isReb && (g === "fac" || g === "tune")) { b.classList.add("hide"); return; }
         var open = H.indexOf(g) >= 0;
         if (open) b.classList.remove("hide"); else b.classList.add("hide");
         var a = document.querySelector('.sfold-h[data-g="' + g + '"] .sf-a');
