@@ -547,6 +547,7 @@ footer b{color:#9FB0C3}
       <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
     </div>
 <div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#D8E2EF;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
+      <div id="rebTuneNote" style="display:none;font-size:11px;color:#9FB0C3;margin:6px 0 2px">参数调优与参数稳健性检查为轮动专属；再平衡视图仅提供滚动样本外检验（WFO，纯分段滚动）。</div>
       <div class="wfowrap" id="wfowrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;flex-wrap:wrap">
         <button id="wfoBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#202E3F;color:#D8E2EF;cursor:pointer">滚动样本外检验（WFO）</button>
         <label style="font-size:11px;color:#9FB0C3;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">训练<input id="wfoTrainIn" type="number" min="0.5" max="8" step="0.5" value="3" style="width:46px;font-size:11px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">年</label>
@@ -4640,9 +4641,21 @@ function showStrategyDetail(name) {
     // 持有排名区间（实际交易参数）为轮动专属：再平衡视图不展示（保持原行为）
     var tp = document.getElementById("topnRow");
     if (tp) tp.style.display = reb ? "none" : "";
-    // 因子与选股、参数调优为轮动专属折叠区：再平衡视图不展示（保持原行为：轮动第二步因子区/参数调优不进入再平衡）
+    // 因子与选股折叠区为轮动专属：再平衡视图不展示（保持原行为）
     if (reb) { var fB = document.getElementById("sfg-fac"); if (fB) fB.classList.add("hide"); }
-    if (reb) { var tB2 = document.getElementById("sfg-tune"); if (tB2) tB2.classList.add("hide"); }
+    // 参数调优与策略验证：再平衡视图显示折叠区但只保留 WFO 入口（调优/稳健性为轮动专属，隐藏并注明）
+    if (reb) {
+      var tB2 = document.getElementById("sfg-tune"); if (tB2) tB2.classList.remove("hide");
+      var pT = document.getElementById("psecTune"); if (pT) pT.style.display = "none";
+      var rW = document.getElementById("robwrap"); if (rW) rW.style.display = "none";
+      var rB = document.getElementById("robBox"); if (rB) rB.style.display = "none";
+      var tR = document.getElementById("tuneResult"); if (tR) tR.style.display = "none";
+      var rn2 = document.getElementById("rebTuneNote"); if (rn2) rn2.style.display = "";
+    } else {
+      var pT2 = document.getElementById("psecTune"); if (pT2) pT2.style.display = "";
+      var rW2 = document.getElementById("robwrap"); if (rW2) rW2.style.display = "";
+      var rn3 = document.getElementById("rebTuneNote"); if (rn3) rn3.style.display = "none";
+    }
     if (!reb) {
       var hh = localStorage.getItem("sf_grp");
       var openGrps = (hh === null) ? "fac" : hh.split(",").filter(function (x) { return x !== "exe"; }).join(",");
