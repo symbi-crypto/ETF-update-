@@ -547,7 +547,6 @@ footer b{color:#9FB0C3}
       <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
     </div>
 <div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#D8E2EF;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
-      <div id="rebTuneNote" style="display:none;font-size:11px;color:#9FB0C3;margin:6px 0 2px">参数调优与参数稳健性检查为轮动专属；再平衡视图仅提供滚动样本外检验（WFO，纯分段滚动）。</div>
       <div class="wfowrap" id="wfowrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;flex-wrap:wrap">
         <button id="wfoBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#202E3F;color:#D8E2EF;cursor:pointer">滚动样本外检验（WFO）</button>
         <label style="font-size:11px;color:#9FB0C3;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">训练<input id="wfoTrainIn" type="number" min="0.5" max="8" step="0.5" value="3" style="width:46px;font-size:11px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">年</label>
@@ -563,6 +562,23 @@ footer b{color:#9FB0C3}
       </div>
       </div>
 </div>
+      <div class="sfold" style="margin:0">
+        <button type="button" class="sfold-h" data-g="rebwfo"><b>滚动样本外检验（WFO）</b><span class="sf-a">点击展开</span></button>
+        <div class="sfold-b hide" id="sfg-rebwfo"><div class="psec">
+          <div style="font-size:12px;color:#9FB0C3;line-height:1.7">再平衡无因子预测，WFO 检验的是配置方案在滚动各段的稳健性与「调仓动作」是否持续创造正超额（相对买入持有，即同期不调仓组合）。</div>
+          <div class="wfowrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;flex-wrap:wrap">
+            <button id="rebWfoBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#202E3F;color:#D8E2EF;cursor:pointer">运行滚动样本外检验（WFO）</button>
+            <span class="st" id="rebWfoState" style="font-size:11px;color:var(--mut)"></span>
+          </div>
+          <div id="rebWfoBox" style="display:none;margin-top:6px">
+            <div id="rebWfoModeTag" style="font-size:11px;color:#9FB0C3"></div>
+            <div id="rebWfoNote" style="font-size:11.5px;color:#9FB0C3;margin:4px 0;line-height:1.7"></div>
+            <div id="rebWfoSummary" style="font-size:12px;color:#D8E2EF;margin:6px 0;line-height:1.8"></div>
+            <div style="overflow-x:auto"><table id="rebWfoTable" style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;min-width:520px"><colgroup><col style="width:9%"><col style="width:25%"><col style="width:15%"><col style="width:15%"><col style="width:18%"><col style="width:18%"></colgroup><tr><th>段</th><th>样本外区间</th><th>年化</th><th>最大回撤</th><th>vs 沪深300</th><th>相对买入持有</th></tr></table></div>
+            <div id="rebWfoChart" style="height:230px;margin:6px 0 0"></div>
+          </div>
+        </div></div>
+      </div>
 <div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
         <div class="runbar2">
@@ -2075,6 +2091,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     for (var fk = 0; fk < nAssets; fk++) if (wOld[fk] > 0) finalHold[codes[fk]] = wOld[fk];
     return {
       calendar: calS, nav: navV, bench_nav: benchV, ew_nav: ewV,
+      bh_nav: ewV,   // 买入持有对照：选中标的等权、不调仓（ewNav 切片），供再平衡 WFO 相对买入持有超额
       drawdown: ddV, bench_drawdown: benchDD, daily_ret: dailyR,
       holdings: holdV, regime: regV, exposure: expV,
       final_hold: finalHold,   // 末态持仓权重 {code: weight}（轮动/再平衡详情「当前持仓」数据源）
@@ -4633,29 +4650,27 @@ function showStrategyDetail(name) {
   window.setFoldByMode = function () {
     var reb = activeView === "rebalance";
     var hsEls = document.querySelectorAll(".sfold-h");
-    for (var a = 0; a < hsEls.length; a++) hsEls[a].style.display = reb ? "none" : "";
+    for (var a = 0; a < hsEls.length; a++) {
+      if (hsEls[a].getAttribute("data-g") === "rebwfo") { hsEls[a].style.display = reb ? "" : "none"; continue; }
+      hsEls[a].style.display = reb ? "none" : "";
+    }
     var togEl = document.getElementById("sfToggle");
     if (togEl) togEl.style.display = reb ? "none" : "";
     var bs = document.querySelectorAll(".sfold-b");
-    for (var c = 0; c < bs.length; c++) bs[c].classList.remove("hide");
+    for (var c = 0; c < bs.length; c++) {
+      if (bs[c].id === "sfg-rebwfo") {
+        if (!reb) bs[c].classList.add("hide");
+        else { var hh2 = localStorage.getItem("sf_grp"); if (hh2 && hh2.indexOf("rebwfo") >= 0) bs[c].classList.remove("hide"); else bs[c].classList.add("hide"); }
+        continue;
+      }
+      bs[c].classList.remove("hide");
+    }
     // 持有排名区间（实际交易参数）为轮动专属：再平衡视图不展示（保持原行为）
     var tp = document.getElementById("topnRow");
     if (tp) tp.style.display = reb ? "none" : "";
-    // 因子与选股折叠区为轮动专属：再平衡视图不展示（保持原行为）
+    // 因子与选股、参数调优与策略验证为轮动专属折叠区：再平衡视图不展示（保持原行为）；再平衡 WFO 为独立模块（见参数面板）
     if (reb) { var fB = document.getElementById("sfg-fac"); if (fB) fB.classList.add("hide"); }
-    // 参数调优与策略验证：再平衡视图显示折叠区但只保留 WFO 入口（调优/稳健性为轮动专属，隐藏并注明）
-    if (reb) {
-      var tB2 = document.getElementById("sfg-tune"); if (tB2) tB2.classList.remove("hide");
-      var pT = document.getElementById("psecTune"); if (pT) pT.style.display = "none";
-      var rW = document.getElementById("robwrap"); if (rW) rW.style.display = "none";
-      var rB = document.getElementById("robBox"); if (rB) rB.style.display = "none";
-      var tR = document.getElementById("tuneResult"); if (tR) tR.style.display = "none";
-      var rn2 = document.getElementById("rebTuneNote"); if (rn2) rn2.style.display = "";
-    } else {
-      var pT2 = document.getElementById("psecTune"); if (pT2) pT2.style.display = "";
-      var rW2 = document.getElementById("robwrap"); if (rW2) rW2.style.display = "";
-      var rn3 = document.getElementById("rebTuneNote"); if (rn3) rn3.style.display = "none";
-    }
+    if (reb) { var tB2 = document.getElementById("sfg-tune"); if (tB2) tB2.classList.add("hide"); }
     if (!reb) {
       var hh = localStorage.getItem("sf_grp");
       var openGrps = (hh === null) ? "fac" : hh.split(",").filter(function (x) { return x !== "exe"; }).join(",");
@@ -4948,7 +4963,7 @@ function showStrategyDetail(name) {
 
   // ---------- 回测参数面板分区折叠（核心默认展开，其余折叠，状态记忆） ----------
   (function () {
-    var grps = ["fac", "core", "exe", "mgmt", "tune"];
+    var grps = ["fac", "core", "exe", "mgmt", "tune", "rebwfo"];
     var H = localStorage.getItem("sf_grp");
     if (H === null) H = "fac"; // 默认只展开因子与选股
     else { var arrH = H.split(",").filter(function (x) { return x !== "exe"; }); H = arrH.join(",") || "fac"; } // ③择时管理默认收起（不记忆展开态）
@@ -5224,6 +5239,97 @@ function showStrategyDetail(name) {
     }
   }
 
+  // ===== 再平衡独立「滚动样本外检验（WFO）」：纯分段滚动（无训练段），含相对买入持有超额对照 =====
+  var rebWfoRunning = false;
+  function rebRunWFO() {
+    var state = $("rebWfoState");
+    if (rebWfoRunning) { if (state) state.textContent = "WFO 进行中…"; return; }
+    var box = $("rebWfoBox");
+    if (!D || !engine) { if (state) state.textContent = "请先进入回测"; return; }
+    var valY = Math.max(0.25, +($("rebWfoValIn") ? $("rebWfoValIn").value : 1) || 1);
+    var ann = 252, cal = D.calendar, n = cal.length;
+    var valN = Math.round(valY * ann);
+    var segs = [];
+    var k0 = 0;
+    while (k0 + valN <= n) { segs.push({ vs: k0, ve: k0 + valN, ws: k0 }); k0 += valN; }
+    if (!segs.length) { if (state) state.textContent = "历史长度不足以完成分段（每段 " + valY + " 年）"; return; }
+    if (state) state.textContent = "运行中（" + segs.length + " 段）…";
+    rebWfoRunning = true;
+    var base = getParams();
+    try {
+      for (var gi = 0; gi < segs.length; gi++) {
+        var sg = segs[gi];
+        var p = JSON.parse(JSON.stringify(base));
+        p.start_date = cal[sg.vs];
+        p.end_date = cal[sg.ve - 1];
+        p.warm_start = cal[sg.ws];
+        var r = engine.backtest(D, p);
+        var nav = r.nav, bench = r.bench_nav, bh = r.bh_nav;
+        var nn = nav.length;
+        var tot = nn > 1 ? nav[nn - 1] / nav[0] - 1 : 0;
+        var yrs = nn / ann;
+        var cg = (yrs > 0 && nav[0] > 0) ? Math.pow(nav[nn - 1] / nav[0], 1 / yrs) - 1 : 0;
+        var pk = nav[0], mdd = 0, si2;
+        for (si2 = 1; si2 < nn; si2++) { if (nav[si2] > pk) pk = nav[si2]; var dd2 = 1 - nav[si2] / pk; if (dd2 > mdd) mdd = dd2; }
+        var bTot = (bench && bench.length > 1) ? bench[bench.length - 1] / bench[0] - 1 : 0;
+        var bhTot = (bh && bh.length > 1) ? bh[bh.length - 1] / bh[0] - 1 : 0;
+        sg.res = { start: r.calendar[0], end: r.calendar[nn - 1], cagr: cg, max_dd: mdd, excess: tot - bTot, bh_excess: tot - bhTot, total: tot };
+        if (state) state.textContent = "运行中（" + (gi + 1) + "/" + segs.length + "）…";
+      }
+      renderRebWFO(segs, valY);
+      if (state) state.textContent = segs.length + " 段完成";
+    } catch (e) {
+      if (state) state.textContent = "WFO 失败：" + String((e && e.message) || e);
+    }
+    rebWfoRunning = false;
+  }
+  function renderRebWFO(segs, valY) {
+    var box = $("rebWfoBox"); if (!box) return;
+    box.style.display = "block";
+    var mt = $("rebWfoModeTag"); if (mt) mt.textContent = "（再平衡：纯分段滚动，无训练段，历史每 " + valY + " 年一段独立回测）";
+    var note = $("rebWfoNote");
+    if (note) note.innerHTML = "无前视说明：每段从段起点独立回测，只依赖段前及段内数据；年化按 252 交易日折算；超额 vs 沪深300（H00300.CSI）；相对买入持有 = 段内调仓组合收益 − 同期该配置标的等权买入持有（不调仓）组合收益，检验调仓动作是否创造正超额。";
+    var th = '<tr><th>段</th><th>样本外区间</th><th>年化</th><th>最大回撤</th><th>vs 沪深300</th><th>相对买入持有</th></tr>';
+    var rows = "";
+    for (var ri = 0; ri < segs.length; ri++) {
+      var s = segs[ri].res;
+      rows += '<tr><td>段' + (ri + 1) + '</td><td>' + s.start + ' ~ ' + s.end + '</td><td class="' + (s.cagr < 0 ? "down" : "up") + '">' + wfoPct(s.cagr) + '</td><td class="down">' + wfoPct(s.max_dd) + '</td><td class="' + (s.excess < 0 ? "down" : "up") + '">' + wfoPct(s.excess) + '</td><td class="' + (s.bh_excess < 0 ? "down" : "up") + '">' + wfoPct(s.bh_excess) + '</td></tr>';
+    }
+    var tb = $("rebWfoTable");
+    if (tb) {
+      tb.innerHTML = th + rows;
+      // 表头样式与行样式统一
+      var ths = tb.querySelectorAll("th"); for (var ti2 = 0; ti2 < ths.length; ti2++) ths[ti2].style.cssText = "color:#7C8DA1;text-align:left;font-weight:600;padding:4px 6px;border-bottom:1px solid #3E4E63";
+      var tds = tb.querySelectorAll("td"); for (var tj2 = 0; tj2 < tds.length; tj2++) tds[tj2].style.cssText = "padding:4px 6px;border-bottom:1px solid rgba(62,78,99,0.4)";
+    }
+    var cagrs = segs.map(function (s) { return s.res.cagr; });
+    var avg = cagrs.reduce(function (a, b) { return a + b; }, 0) / cagrs.length;
+    var wi = 0;
+    for (var w2 = 1; w2 < cagrs.length; w2++) if (cagrs[w2] < cagrs[wi]) wi = w2;
+    var worst = segs[wi].res;
+    var downRun = false;
+    for (var d2 = 1; d2 < cagrs.length - 1; d2++) { if (cagrs[d2] < cagrs[d2 - 1] && cagrs[d2 + 1] < cagrs[d2]) { downRun = true; break; } }
+    var posBH = segs.filter(function (s) { return s.res.bh_excess > 0; }).length;
+    var sm = $("rebWfoSummary");
+    if (sm) sm.innerHTML = "<b>汇总：</b>平均年化 " + wfoPct(avg) + " · 最差段 段" + (wi + 1) + "（" + worst.start + " ~ " + worst.end + "，" + wfoPct(worst.cagr) + "）· 调仓相对买入持有超额为正 " + posBH + "/" + segs.length + " 段（" + Math.round(posBH / segs.length * 100) + "%）· " +
+      (downRun ? '<span style="color:#F87171">存疑：存在连续两段收益转差，稳健性不足</span>' : '<span style="color:#34D399">稳健：无连续两段收益转差</span>');
+    var ch = $("rebWfoChart");
+    if (ch && typeof echarts !== "undefined") {
+      if (!charts["rebWfoChart"]) { charts["rebWfoChart"] = echarts.init(ch, "dark"); charts["rebWfoChart"].setOption({ backgroundColor: "transparent" }); }
+      charts["rebWfoChart"].setOption({
+        tooltip: { trigger: "axis", confine: true, renderMode: "richText" },
+        legend: { data: ["年化", "相对买入持有超额"], top: 0, textStyle: { fontSize: 11 } },
+        grid: { left: 58, right: 18, top: 30, bottom: 26 },
+        xAxis: { type: "category", data: segs.map(function (s, i) { return "段" + (i + 1); }), axisLabel: { fontSize: 10 } },
+        yAxis: { type: "value", axisLabel: { fontSize: 10, formatter: function (v) { return v + "%"; } } },
+        series: [
+          { name: "年化", type: "bar", barMaxWidth: 16, data: segs.map(function (s) { return +(s.res.cagr * 100).toFixed(2); }), itemStyle: { color: "#4FC3F7" } },
+          { name: "相对买入持有超额", type: "bar", barMaxWidth: 16, data: segs.map(function (s) { return +(s.res.bh_excess * 100).toFixed(2); }), itemStyle: { color: "#A78BFA" } }
+        ]
+      });
+    }
+  }
+
   function boot() {
     renderStrategyList();
     renderMfLib();
@@ -5246,6 +5352,8 @@ function showStrategyDetail(name) {
     if (rn) rn.addEventListener("click", run);
     var wb = $("wfoBtn");
     if (wb) wb.addEventListener("click", runWFO);
+    var rbw = $("rebWfoBtn");
+    if (rbw) rbw.addEventListener("click", rebRunWFO);
   })();
 
   // ===== 功能1/2/3：大盘择时·独立开关 / 指数数据源切换 / 自定义基准 =====
