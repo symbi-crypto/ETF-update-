@@ -1,0 +1,11 @@
+import re, base64, gzip, json
+src = open("web_live/index.html", encoding="utf-8").read()
+i = src.find('<script id="wufuDataGz" type="text/plain">')
+j = src.find("</script>", i)
+b64 = src[i+len('<script id="wufuDataGz" type="text/plain">'):j].replace("\n","")
+raw = base64.b64decode(b64)
+D = json.loads(gzip.decompress(raw))
+print("keys:", list(D.keys()))
+print("pool:", len(D.get("pool",[])), "series:", len(D.get("series",{})), "regime:", type(D.get("regime")).__name__ if D.get("regime") else None, "index:", len(D.get("index",{}) or {}), "calendar:", len(D.get("calendar",[])))
+json.dump(D, open("_tmp_grid/data_full.json","w"), ensure_ascii=False)
+print("saved data_full.json", len(b64)//1024, "KB b64")

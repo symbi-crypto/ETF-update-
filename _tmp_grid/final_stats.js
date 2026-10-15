@@ -1,0 +1,30 @@
+// 定稿模型全池统计：TOP15（auto 100万/10标的）+ ADX剔除 + 流动性剔除（auto vs 固定）
+const fs = require("fs");
+eval(fs.readFileSync("_tmp_grid/engine_now.js", "utf-8"));
+const D = JSON.parse(fs.readFileSync("_tmp_grid/data_full.json", "utf-8"));
+global.D = D;
+const E = global.WufuEngine || module.exports;
+const POOL = D.pool || [];
+const i = D.calendar.length - 1;
+const optAuto = { invest: 1000000, topN: 10, liqMode: "auto", liqFixed: 5000 };
+const optFixed = { invest: 1000000, topN: 10, liqMode: "fixed", liqFixed: 5000 };
+const rowsA = [], rowsF = [], gatesA = {}, gatesF = {}, gatesFix = {};
+POOL.forEach(p => {
+  const a = E.gridScore(p.code, i, optAuto);
+  const f = E.gridScore(p.code, i, optFixed);
+  if (!a) return;
+  if (a.gate.length) (gatesA[a.gate[0]] = gatesA[a.gate[0]] || []).push(p.code + (p.name ? " " + p.name : ""));
+  else rowsA.push({ code: p.code, name: p.name, score: +a.score.toFixed(1), osc: Math.round(a.parts.osc), vol: Math.round(a.parts.vol), cov: Math.round(a.parts.cov), trig: Math.round(a.parts.trig), liqP10: +a.parts.liqP10.toFixed(1), adx: a.adx ? +a.adx.toFixed(1) : NaN });
+  if (f.gate.length) (gatesF[f.gate[0]] = gatesF[f.gate[0]] || []).push(p.code);
+  else rowsF.push({ code: p.code, name: p.name, score: +f.score.toFixed(1) });
+});
+rowsA.sort((x, y) => y.score - x.score);
+console.log("=== 定稿模型 TOP15（auto：100万/10标的，门槛=10万×40=400万）===");
+rowsA.slice(0, 15).forEach((r, k) => console.log(String(k + 1).padStart(2), r.code.padEnd(10), r.name.padEnd(14), r.score.toFixed(1).padStart(6), "震" + r.osc + " 波" + r.vol + " 区" + r.cov + " 触" + r.trig, "60日P10:" + r.liqP10 + "万", "ADX:" + (isNaN(r.adx) ? "-" : r.adx.toFixed(0))));
+console.log("\n=== 硬门槛剔除统计（auto 100万/10）===");
+Object.keys(gatesA).forEach(k => console.log(k, ":", gatesA[k].length, "只 ->", gatesA[k].slice(0, 6).join(", ")));
+console.log("通过:", rowsA.length, "只");
+console.log("\n=== 固定 5000万 与 auto 400万 剔除差异 ===");
+const cA = Object.keys(gatesA).reduce((s, k) => s + gatesA[k].length, 0);
+const cF = Object.keys(gatesF).reduce((s, k) => s + gatesF[k].length, 0);
+console.log("auto 剔除:", cA, " fixed 剔除:", cF);

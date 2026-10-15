@@ -1,0 +1,12 @@
+const fs = require("fs");
+global.D = JSON.parse(fs.readFileSync("/home/user/Doubao/chats/38444992708406018/wufu_etf_system/_tmp_grid/data_full.json", "utf-8"));
+global.POOL = global.D.pool;
+const W = require("/home/user/Doubao/chats/38444992708406018/wufu_etf_system/_tmp_grid/engine_standalone.js");
+const D = global.D;
+const i = D.calendar.length - 1;
+console.log("日历末日:", D.calendar[i], "idx:", i);
+const s = W.gridScore("510300.SH", i);
+console.log("510300 gridScore:", JSON.stringify(s && { score: s.score, parts: s.parts, vol: s.vol, adx: s.adx, er: s.er, mom20: s.mom20, amtAvg: s.amtAvg, valid: s.validDays, gate: s.gate }, null, 0));
+const p = W.gridParams("510300.SH", i, 1000000, 0.00075);
+console.log("510300 gridParams:", JSON.stringify(p, null, 0));
+console.log("cur(后复权close 末值):", D.series["510300.SH"].close[i]);
