@@ -18,6 +18,10 @@ html{-webkit-text-size-adjust:100%}
 body{font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
 header{background:linear-gradient(135deg,#1B2634 0%,#0E7490 130%);color:#fff;padding:18px 24px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 header h1{font-size:20px;font-weight:700;letter-spacing:.5px}
+  header .databadge{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font-size:11px;line-height:1;color:#9FB0C3;background:rgba(14,116,144,.16);border:1px solid rgba(79,195,247,.3);border-radius:6px;padding:4px 9px;white-space:nowrap;box-sizing:border-box}
+  header .databadge .db-ver{color:#4FC3F7;font-weight:600;letter-spacing:.3px}
+  header .databadge .db-date{color:#9FB0C3}
+  @media (max-width:640px){header .databadge{font-size:10px;padding:3px 7px}}
 header h1 .fu{color:var(--acc2)}
 header .sub{font-size:12px;color:#BFDBFE;opacity:.9}
 header .tag{margin-left:auto;font-size:11px;color:#A5F3FC;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;white-space:nowrap}
@@ -164,6 +168,7 @@ footer b{color:#9FB0C3}
 <body>
 <header>
   <h1>ETF量化<span class="fu">回测系统</span></h1>
+  <div class="databadge" id="dataBadge" title="系统版本与内置数据截止日期"><span class="db-ver">v2.1</span><span class="db-date" id="dbDate">数据截至 —</span></div>
 </header>
 <div class="nav">
   <button type="button" id="tabCorr">相关性</button>
@@ -4855,6 +4860,19 @@ function showStrategyDetail(name) {
   // 行情数据懒加载：未进入第二步时（D=null）也可按需解析（策略详情/应用等）
   // 数据块为 gzip(base64) 内联（体积约减 63%），首屏不解析、不执行，进入第二步才解压
   var _dataWait = [], _dataLoading = false;
+  function updateDataBadge() {
+    var el = document.getElementById("dbDate"); if (!el) return;
+    var d = null;
+    try { d = (typeof globalThis !== "undefined" && globalThis.D) || D; } catch (e) { }
+    if (d && d.calendar && d.calendar.length) {
+      var last = d.calendar[d.calendar.length - 1];
+      el.textContent = "数据截至 " + String(last);
+    } else {
+      el.textContent = "数据截至 —";
+    }
+  }
+  if (document.readyState !== "loading") updateDataBadge();
+  else document.addEventListener("DOMContentLoaded", function () { updateDataBadge(); });
   function ensureData(cb) {
     if (D) { cb(); return; }
     if (_dataLoading) { _dataWait.push(cb); return; }
@@ -4878,6 +4896,7 @@ function showStrategyDetail(name) {
           D = JSON.parse(t);
           try { globalThis.D = D; } catch (e) { }
           if (D && D.pool) POOL = D.pool;   // 统一标的池：权威源=数据块，解析后全局池同步
+          updateDataBadge();
           _dataLoading = false;          // 复位解析锁：后续 ensureData 直接走 D 就绪分支（原实现漏复位导致二次调用排队卡死）
           var q = _dataWait; _dataWait = [];
           cb();
