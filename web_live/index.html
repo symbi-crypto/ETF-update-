@@ -112,6 +112,7 @@ footer b{color:#9FB0C3}
 .nav::-webkit-scrollbar{display:none}
 .nav button{font-size:11.5px;padding:6px 8px;flex:0 0 auto;white-space:nowrap;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--card);color:var(--mut);cursor:pointer;white-space:nowrap;flex:0 0 auto}
 .nav button.on{background:var(--acc);color:#fff;font-weight:600}
+.nav button#tabDCA.on{background:var(--down);color:#0B2E22}
 .slist{display:flex;flex-direction:column;gap:8px}
 .srow{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
 .srow:hover{border-color:var(--acc)}
@@ -175,6 +176,7 @@ footer b{color:#9FB0C3}
   <button type="button" id="tabIc">因子IC</button>
   <button type="button" id="tabRotation" class="on">轮动回测</button>
   <button type="button" id="tabRebalance">再平衡回测</button>
+  <button type="button" id="tabDCA" style="color:var(--down)">定投</button>
   <button type="button" id="tabStrategies">我的策略</button>
   <button type="button" id="tabCombo">策略组合</button>
     </div>
@@ -215,6 +217,17 @@ footer b{color:#9FB0C3}
 </div>
 <div id="step2" style="display:none">
 <div id="rebSh2Slot"></div>
+</div>
+</div>
+<div id="viewDCA" style="display:none">
+<div id="step1">
+<div class="s1card">
+<h2>第一步：选择定投标的</h2>
+<div id="dcaSh1Slot"></div>
+</div>
+</div>
+<div id="step2" style="display:none">
+<div id="dcaSh2Slot"></div>
 </div>
 </div>
 <div id="sharedCfg" style="display:none">
@@ -578,6 +591,47 @@ footer b{color:#9FB0C3}
             <div id="rebWfoChart" style="height:230px;margin:6px 0 0"></div>
           </div>
         </div></div>
+      </div>
+<div class="sfold" style="margin:0">
+<button type="button" class="sfold-h" data-g="dca"><b>定投设置</b><span class="sf-a">收起</span></button>
+<div class="sfold-b" id="sfg-dca"><div class="psec">
+        <h3>定投参数</h3>
+        <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">从起始日起按频率每期投入固定金额，当日收盘等权买入选中标的；收益口径为 XIRR（资金加权年化）。</div>
+        <label class="row">定投频率
+          <select id="dcaFreqSel" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
+            <option value="daily">日（每个交易日）</option>
+            <option value="weekly">周（每周首个交易日）</option>
+            <option value="monthly" selected>月（每月首个交易日）</option>
+            <option value="quarterly">季（每季首个交易日）</option>
+            <option value="yearly">年（每年首个交易日）</option>
+          </select>
+        </label>
+        <label class="row">每期金额(元)
+          <input id="dcaAmountIn" type="number" min="1" step="100" value="1000" style="width:90px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+        <label class="row">起始日期
+          <input id="dcaStartSel" type="date" value="2016-01-04" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+        <label class="row">结束日期
+          <input id="dcaEndSel" type="date" style="flex:1;min-width:0;font-size:12.5px;padding:2px 6px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+        <label class="row" style="margin-top:6px"><input id="dcaTpOn" type="checkbox" style="width:auto;margin:0"> <span>开启止盈（单标的累计收益达阈值即全部卖出，现金留存，后续定投照常）</span></label>
+        <label class="row" id="dcaTpRow" style="display:none">止盈阈值(%) <span class="v" id="dcaTpPctV" style="display:none">20</span>
+          <input id="dcaTpPctIn" type="number" min="1" max="200" step="1" value="20" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+      </div>
+      <div class="psec">
+        <h3>交易成本</h3>
+        <label class="row">佣金(单边,万分之)
+          <input id="dcaCmIn" type="number" min="0" max="50" step="0.5" value="2.5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+        <label class="row">滑点(单边,bp)
+          <input id="dcaSlIn" type="number" min="0" max="20" step="1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+        <label class="row">最低佣金(元/笔)
+          <input id="dcaMinCmIn" type="number" min="0" max="100" step="0.1" value="5" style="width:72px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
+        </label>
+      </div></div>
       </div>
 <div class="runbar">
         <button id="runBtn" type="button">运行回测</button>
@@ -2256,11 +2310,11 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   var charts = {};
 
   // ---------- 标的池渲染（第一步：仅用 POOL 元信息，无需行情数据） ----------
-  var poolChecked = {}, onlyRot = {}, rebalanceChecked = {};   // 轮动/再平衡视图各自独立勾选状态
-  POOL.forEach(function (p) { poolChecked[p.code] = false; rebalanceChecked[p.code] = false; onlyRot[p.code] = false; });
-  var activeView = "rotation";             // rotation | rebalance（视图路由）
+  var poolChecked = {}, onlyRot = {}, rebalanceChecked = {}, dcaChecked = {};   // 轮动/再平衡/定投视图各自独立勾选状态
+  POOL.forEach(function (p) { poolChecked[p.code] = false; rebalanceChecked[p.code] = false; dcaChecked[p.code] = false; onlyRot[p.code] = false; });
+  var activeView = "rotation";             // rotation | rebalance | dca（视图路由）
   var rebW = {};                           // 再平衡模式：code -> 用户手填比例（%），未手填用等权
-  function checkedCodes() { var cm = activeView === "rebalance" ? rebalanceChecked : poolChecked; return POOL.filter(function (p) { return cm[p.code]; }); }
+  function checkedCodes() { var cm = activeView === "rebalance" ? rebalanceChecked : (activeView === "dca" ? dcaChecked : poolChecked); return POOL.filter(function (p) { return cm[p.code]; }); }
   function wFor(code, n) { var v = rebW[code]; return (v !== undefined && v >= 0) ? v : 0; }
   function syncWIn() {
     POOL.forEach(function (p) {
@@ -2282,13 +2336,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       (Math.abs(s - 100) > 0.01 ? "<br><span style='white-space:nowrap;color:#9FB0C3'>" + (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") + "</span>" : "");
   }
   function applyModeUI() {
-    // 视图拆分后：轮动/再平衡面板已物理分离，此处仅处理共享块内按视图切换的显隐
+    // 视图拆分后：轮动/再平衡/定投面板已物理分离，此处仅处理共享块内按视图切换的显隐
     var isReb = activeView === "rebalance";
-    var robw = $("robwrap"); if (robw) robw.style.display = isReb ? "none" : "";
-    if (isReb) { var rb = $("robBox"); if (rb) rb.style.display = "none"; }
-    var cic = $("cICCard"); if (cic) cic.style.display = isReb ? "none" : "";
-    // ③择时管理（市场状态风控）不适用再平衡模式：整块隐藏，切回轮动恢复
-    var exeB = $("sfg-exe"); if (exeB) exeB.style.display = isReb ? "none" : "";
+    var isDca = activeView === "dca";
+    var noRot = isReb || isDca;   // 轮动专属（稳健性/IC/择时）在再平衡与定投下均隐藏
+    var robw = $("robwrap"); if (robw) robw.style.display = noRot ? "none" : "";
+    if (noRot) { var rb = $("robBox"); if (rb) rb.style.display = "none"; }
+    var cic = $("cICCard"); if (cic) cic.style.display = noRot ? "none" : "";
+    // ③择时管理（市场状态风控）不适用再平衡/定投模式：整块隐藏，切回轮动恢复
+    var exeB = $("sfg-exe"); if (exeB) exeB.style.display = noRot ? "none" : "";
     var rwm = $("rebWeightMode") ? $("rebWeightMode").value : "fixed";
     var rst = $("rebStyleSel") ? $("rebStyleSel").value : "equal";
     var dyn = isReb && rwm === "fixed" && rst === "custom";
@@ -2296,16 +2352,20 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var rsb = $("rebStyleBox"); if (rsb) rsb.style.display = (isReb && rwm === "fixed") ? "" : "none";
     var rsp = $("rebSetPsec"); if (rsp) rsp.style.display = isReb ? "" : "none";
     // 比例输入框仅「比例-自定义」模式显示；等比例/逆波动率/风险平价均隐藏（等比例等权、动态模式不读手填）
-    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = dyn ? "flex" : "none"; });
-    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = isReb ? "none" : ""; });
+    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = (dyn && !isDca) ? "flex" : "none"; });
+    if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = noRot ? "none" : ""; });
     // 权重合计/余量提示仅非等比例显示（等比例等权，显示"权重合计 0%"易误导）；inv_vol/risk_parity 权重合计按比例输入框和（隐藏时为 0%，引擎按动态权重计算）
     var ws = $("wSum"); if (ws) ws.style.display = (isReb && (rwm !== "fixed" || rst !== "equal")) ? "" : "none";
     if (isReb && !dyn) { syncWIn(); updateWSum(); }
+    // 定投模式：隐藏 回撤/年度/月度 图表卡（整卡，含标题）与基准选择（定投用专属曲线与对照），显示止盈阈值行
+    ["cDD", "cYear", "cMonth"].forEach(function (cid) { var ce = $(cid); if (ce && ce.closest(".card")) ce.closest(".card").style.display = isDca ? "none" : ""; });
+    var bsel = $("benchSel"); if (bsel) bsel.parentElement.style.display = isDca ? "none" : "";
+    var dtr = $("dcaTpRow"); if (dtr) dtr.style.display = (isDca && $("dcaTpOn") && $("dcaTpOn").checked) ? "flex" : "none";
   }
 
   var poolBox = $("poolBox");
   function renderPool() {
-  var cm = activeView === "rebalance" ? rebalanceChecked : poolChecked;
+  var cm = activeView === "rebalance" ? rebalanceChecked : (activeView === "dca" ? dcaChecked : poolChecked);
   poolBox.innerHTML = "";
   var kw = ($("poolSearch").value || "").trim().toLowerCase();
   var groups = [], frag = document.createDocumentFragment();
@@ -2396,8 +2456,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
   function updatePoolCount() {
     var n = 0;
-    // 按当前视图计勾选数：再平衡读 rebalanceChecked，轮动读 poolChecked（此前固定读 poolChecked，再平衡视图恒显示 0 只）
-    var cmv = activeView === "rebalance" ? rebalanceChecked : poolChecked;
+    // 按当前视图计勾选数：再平衡读 rebalanceChecked，定投读 dcaChecked，轮动读 poolChecked
+    var cmv = activeView === "rebalance" ? rebalanceChecked : (activeView === "dca" ? dcaChecked : poolChecked);
     POOL.forEach(function (p) { if (cmv[p.code]) n++; });
     $("poolCount").textContent = n + " 只";
   }
@@ -3164,6 +3224,11 @@ function buildChips() {
   if (sdEl) sdEl.value = startDate;
   var edEl = $("endSel");
   if (edEl) edEl.value = endDate;
+  // 定投止盈开关联动：勾选才显示阈值输入
+  var dtpOn = $("dcaTpOn");
+  if (dtpOn) dtpOn.addEventListener("change", function () {
+    var r = $("dcaTpRow"); if (r) r.style.display = this.checked ? "flex" : "none";
+  });
 
   // ---------- 三组附加交易条件（买入附加 / 卖出 / 不卖） ----------
   var buyAdds = [], sellConds = [], holdConds = [];
@@ -3760,6 +3825,7 @@ function buildChips() {
   }
 
   function run() {
+    if (activeView === "dca") { runDCA(); return; }
     var params = getParams();
     if (params.codes.length === 0) {
       showNotice("请至少勾选 1 只标的");
@@ -3809,6 +3875,225 @@ function buildChips() {
       renderTrades(res, getParams());
       renderCompositeIC(res, getParams(), D);
     });
+  }
+
+  // ---------- 定投（DCA）：现金流引擎 + XIRR + 一次性买入对照 ----------
+  function getISOWeek(d) {
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var dayNum = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+    var yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+  }
+  // XIRR：对现金流序列(日期 ms, 带符号金额)用二分法求年化 r，使 NPV=0
+  function xirr(cfs, dts) {
+    if (!cfs || cfs.length < 2) return null;
+    var t0 = dts[0], MSPY = 365.25 * 86400000;
+    function npv(r) {
+      var s = 0, i;
+      for (i = 0; i < cfs.length; i++) {
+        if (!cfs[i]) continue;
+        var y = (dts[i] - t0) / MSPY;
+        s += cfs[i] / Math.pow(1 + r, y);
+      }
+      return s;
+    }
+    var hasNeg = false, hasPos = false, k;
+    for (k = 0; k < cfs.length; k++) { if (cfs[k] < 0) hasNeg = true; else if (cfs[k] > 0) hasPos = true; }
+    if (!hasNeg || !hasPos) return null;
+    var lo = -0.9, hi = 5, flo = npv(lo), fhi = npv(hi), g = 0;
+    while (((flo > 0) === (fhi > 0)) && g < 80) {
+      if (fhi > 0) { hi = hi * 1.5 + 1; fhi = npv(hi); }
+      else { lo = lo + (lo + 1) / 2; flo = npv(lo); }
+      g++;
+    }
+    if (((flo > 0) === (fhi > 0))) return null;
+    for (var it = 0; it < 200; it++) {
+      var mid = (lo + hi) / 2, fm = npv(mid);
+      if (Math.abs(fm) < 1e-10) return mid;
+      if ((flo > 0) === (fm > 0)) { lo = mid; flo = fm; } else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  function runDCA() {
+    if (!D || !D.calendar) { ensureData(function () { runDCA(); }); return; }
+    var sel = checkedCodes();
+    if (!sel.length) { showNotice("请至少勾选 1 只定投标的"); return; }
+    var codes = sel.map(function (p) { return p.code; });
+    var freq = $("dcaFreqSel").value;
+    var amount = Math.max(1, +$("dcaAmountIn").value || 1000);
+    var sd = $("dcaStartSel").value, ed = $("dcaEndSel").value || D.calendar[D.calendar.length - 1];
+    var tpOn = $("dcaTpOn").checked;
+    var tpPct = Math.max(1, (+$("dcaTpPctIn").value || 20)) / 100;
+    var comm = (+$("dcaCmIn").value || 0) / 10000;
+    var slip = (+$("dcaSlIn").value || 0) / 10000;
+    var minComm = (+$("dcaMinCmIn").value || 0);
+    if (!sd) { showNotice("请选择定投起始日期"); return; }
+    var cal = D.calendar, n = cal.length;
+    var si = 0; while (si < n && cal[si] < sd) si++;
+    var ei = n - 1; while (ei >= 0 && cal[ei] > ed) ei--;
+    if (si >= ei) { showNotice("定投区间无效（起始晚于结束或超出数据范围）"); return; }
+    // 至少一只标的在区间内有行情
+    var anyData = codes.some(function (c) { var s = D.series[c]; return s && s.close && s.close[si] > 0; });
+    if (!anyData) { showNotice("所选标的在起始日附近尚无行情数据，请调整起始日期"); return; }
+
+    // 生成定投日：按频率取每个周期桶的首个交易日
+    var injSet = {}, injIdx = [], lastKey = null;
+    for (var i = si; i <= ei; i++) {
+      var d = cal[i], key;
+      if (freq === "daily") key = "d" + i;
+      else if (freq === "weekly") { var dt = new Date(d + "T00:00:00+08:00"); key = "w" + dt.getUTCFullYear() + "-" + getISOWeek(dt); }
+      else if (freq === "monthly") key = "m" + d.slice(0, 7);
+      else if (freq === "quarterly") key = "q" + d.slice(0, 4) + "-" + (Math.floor((+d.slice(5, 7) - 1) / 3) + 1);
+      else key = "y" + d.slice(0, 4);
+      if (key !== lastKey) { injSet[i] = true; injIdx.push(i); lastKey = key; }
+    }
+
+    // 模拟
+    var shares = {}, cost = {}; codes.forEach(function (c) { shares[c] = 0; cost[c] = 0; });
+    var cash = 0, cum = 0;
+    var buys = [], tps = [];
+    var cfs = [], cfd = [];
+    var pv = new Array(n).fill(0), cumInv = new Array(n).fill(0), lumpArr = new Array(n).fill(0);
+    var firstBuyIdx = injIdx[0];
+    var t0state = Date.now();
+    for (var i = si; i <= ei; i++) {
+      if (injSet[i]) {
+        cash += amount; cum += amount;
+        cfs.push(-amount); cfd.push(ts(cal[i]));
+        var alloc = amount / codes.length;
+        codes.forEach(function (c) {
+          var s = D.series[c]; if (!s || !s.close || !s.close[i] || s.close[i] <= 0) return;
+          var px = s.close[i] * (1 + slip);
+          var sh = alloc / px;
+          var fee = Math.max(minComm, alloc * comm);
+          cash -= fee;
+          shares[c] += sh; cost[c] += alloc + fee;
+          buys.push({ date: cal[i], code: c, amount: alloc, price: s.close[i], shares: sh, fee: fee });
+        });
+      }
+      // 收盘后逐标的止盈检查
+      if (tpOn) {
+        codes.forEach(function (c) {
+          if (shares[c] <= 0) return;
+          var s = D.series[c]; if (!s || !s.close || !s.close[i] || s.close[i] <= 0) return;
+          var mv = shares[c] * s.close[i];
+          if (cost[c] > 0 && (mv - cost[c]) / cost[c] >= tpPct) {
+            var spx = s.close[i] * (1 - slip);
+            var gross = shares[c] * spx;
+            var fee = Math.max(minComm, gross * comm);
+            var net = gross - fee;
+            cash += net;
+            tps.push({ date: cal[i], code: c, mv: mv, cost: cost[c], ret: (mv - cost[c]) / cost[c], sellAmt: net, fee: fee, shares: shares[c] });
+            shares[c] = 0; cost[c] = 0;
+          }
+        });
+      }
+      // 每日盯市
+      var eq = 0;
+      codes.forEach(function (c) { var s = D.series[c]; if (s && s.close && s.close[i] > 0) eq += shares[c] * s.close[i]; });
+      pv[i] = cash + eq; cumInv[i] = cum;
+    }
+    var endI = ei;
+    var finalPV = pv[endI];
+    cfs.push(finalPV); cfd.push(ts(cal[endI]));
+    var xirrV = xirr(cfs, cfd);
+    var cumRet = cum > 0 ? (finalPV - cum) / cum : 0;
+
+    // 同期一次性买入：T=累计投入，在首个定投日等权买入持有到期末
+    var T = cum, lShares = {}; codes.forEach(function (c) { lShares[c] = 0; });
+    var lAlloc = T / codes.length;
+    codes.forEach(function (c) {
+      var s = D.series[c]; if (!s || !s.close || !s.close[firstBuyIdx] || s.close[firstBuyIdx] <= 0) return;
+      lShares[c] = lAlloc / (s.close[firstBuyIdx] * (1 + slip));
+    });
+    var lumpEnd = 0;
+    for (var i = si; i <= ei; i++) {
+      var v = 0;
+      codes.forEach(function (c) { var s = D.series[c]; if (s && s.close && s.close[i] > 0) v += lShares[c] * s.close[i]; });
+      lumpArr[i] = v;
+      if (i === endI) lumpEnd = v;
+    }
+    var lumpRet = T > 0 ? (lumpEnd - T) / T : 0;
+    var lumpXirr = null;
+    var yrs = (ts(cal[endI]) - ts(cal[firstBuyIdx])) / (365.25 * 86400000);
+    if (yrs > 0 && T > 0 && lumpEnd > 0) lumpXirr = Math.pow(lumpEnd / T, 1 / yrs) - 1;
+
+    // 最大回撤（市值曲线）
+    var peak = -1e18, mdd = 0;
+    for (var i = si; i <= ei; i++) { if (pv[i] > peak) peak = pv[i]; var dd = peak > 0 ? (pv[i] - peak) / peak : 0; if (dd < mdd) mdd = dd; }
+
+    $("runState").textContent = "已更新 · " + (Date.now() - t0state) + "ms · " + injIdx.length + " 期";
+    renderDCA({
+      cal: cal, si: si, ei: ei, pv: pv, cumInv: cumInv, lumpArr: lumpArr,
+      finalPV: finalPV, cum: cum, cumRet: cumRet, xirrV: xirrV, mdd: mdd,
+      nPeriods: injIdx.length, lumpEnd: lumpEnd, lumpRet: lumpRet, lumpXirr: lumpXirr,
+      tps: tps, buys: buys, tpOn: tpOn, codes: codes, freq: freq, amount: amount
+    });
+  }
+
+  function renderDCA(R) {
+    var dates = [];
+    for (var i = R.si; i <= R.ei; i++) dates.push([ts(R.cal[i]), i]);
+    // KPI 卡片
+    function kcard(t, v, s, cls) {
+      return '<div class="kpi"><div class="t">' + t + '</div><div class="v ' + (cls || "") + '">' + v + '</div><div class="s">' + s + '</div></div>';
+    }
+    function yuan(v) { return "¥" + v.toLocaleString("zh-CN", { maximumFractionDigits: 0 }); }
+    var xStr = R.xirrV == null ? "—" : (R.xirrV * 100).toFixed(2) + "%";
+    var lumpXStr = R.lumpXirr == null ? "—" : (R.lumpXirr * 100).toFixed(2) + "%";
+    var excessAmt = R.finalPV - R.lumpEnd;
+    var cards = "";
+    cards += kcard("XIRR 年化", xStr, "资金加权（含现金流时点）", R.xirrV >= 0 ? "up" : "down");
+    cards += kcard("累计收益率", (R.cumRet * 100).toFixed(2) + "%", "(期末−累计投入)/累计投入", R.cumRet >= 0 ? "up" : "down");
+    cards += kcard("期末市值", yuan(R.finalPV), "含现金留存", "");
+    cards += kcard("累计投入", yuan(R.cum), R.nPeriods + " 期 × " + R.amount + "元", "");
+    cards += kcard("最大回撤", (R.mdd * 100).toFixed(2) + "%", "市值曲线峰值回撤", "down");
+    cards += kcard("vs 一次性买入", (excessAmt >= 0 ? "+" : "") + yuan(excessAmt), "定投期末 − 一次性期末", excessAmt >= 0 ? "up" : "down");
+    cards += kcard("一次性·XIRR", lumpXStr, "同期对照年化", R.lumpXirr >= 0 ? "up" : "down");
+    cards += kcard("一次性·累计收益", (R.lumpRet * 100).toFixed(2) + "%", "期末 " + yuan(R.lumpEnd), R.lumpRet >= 0 ? "up" : "down");
+    if (R.tpOn) cards += kcard("止盈次数", R.tps.length + " 次", "逐标的达阈值清仓", "up");
+    $("kpis").innerHTML = cards;
+
+    // 曲线：定投市值 / 累计投入 / 一次性买入市值
+    var cNavEl = $("cNav"); if (cNavEl) cNavEl.style.height = "340px";   // 防止 ECharts 在容器未布局时 init 写入 0 高
+    var cNavCard = document.querySelector("#cNav") ? document.getElementById("cNav").closest(".card") : null;
+    if (cNavCard) cNavCard.querySelector("h2").innerHTML = "定投市值曲线 <span class='n'>定投市值 / 累计投入线 / 同期一次性买入</span>";
+    initChart("cNav").setOption({
+      tooltip: baseChart().tooltip,
+      legend: { data: ["定投市值", "累计投入", "一次性买入"], top: 4, textStyle: { fontSize: 12 } },
+      grid: { left: 64, right: 20, top: 36, bottom: 40, containLabel: true },
+      xAxis: { type: "time", minInterval: 365 * 24 * 3600 * 1000, axisLabel: { fontSize: 11, formatter: function (v) { return "" + new Date(v).getFullYear(); } } },
+      yAxis: { type: "value", scale: true, axisLabel: { fontSize: 11, formatter: function (v) { return (v / 10000).toFixed(1) + "万"; } } },
+      dataZoom: [{ type: "inside", start: 0, end: 100 }, { type: "slider", start: 0, end: 100, height: 16, bottom: 6 }],
+      series: [
+        { name: "定投市值", type: "line", showSymbol: false, lineStyle: { width: 2.5, color: "#34D399" }, itemStyle: { color: "#34D399" }, data: dates.map(function (d) { return [d[0], +R.pv[d[1]].toFixed(0)]; }) },
+        { name: "累计投入", type: "line", showSymbol: false, lineStyle: { width: 1.6, color: "#9FB0C3", type: "dashed" }, itemStyle: { color: "#9FB0C3" }, data: dates.map(function (d) { return [d[0], +R.cumInv[d[1]].toFixed(0)]; }) },
+        { name: "一次性买入", type: "line", showSymbol: false, lineStyle: { width: 1.8, color: "#FBBF24" }, itemStyle: { color: "#FBBF24" }, data: dates.map(function (d) { return [d[0], +R.lumpArr[d[1]].toFixed(0)]; }) }
+      ]
+    });
+    if (charts["cNav"]) charts["cNav"].resize();
+
+    // 明细表：买入记录 + 止盈记录
+    var names = {}; POOL.forEach(function (p) { names[p.code] = p.name; });
+    var th = $("tradeTable").querySelector("thead"), tb = $("tradeTable").querySelector("tbody");
+    var h2 = $("tradeTable").closest(".card").querySelector("h2");
+    if (h2) h2.innerHTML = "定投明细 <span class='n'>买入 " + R.buys.length + " 笔" + (R.tpOn ? " · 止盈 " + R.tps.length + " 次" : "") + "</span>";
+    th.innerHTML = "<tr><th style='width:14%'>日期</th><th class='fc' style='width:20%'>标的</th><th style='width:12%'>类型</th><th style='width:13%'>金额(元)</th><th style='width:11%'>价格</th><th style='width:14%'>份额</th><th style='width:9%'>费用</th><th style='width:7%'>收益</th></tr>";
+    var rows = "";
+    // 买入记录（倒序）
+    R.buys.slice().reverse().forEach(function (b) {
+      rows += "<tr><td>" + b.date + "</td><td class='fc'>" + (names[b.code] || b.code) + " <span style='color:#7C8DA1;font-size:10px'>" + b.code + "</span></td>" +
+        "<td>买入</td><td>" + b.amount.toFixed(2) + "</td><td>" + b.price.toFixed(3) + "</td><td>" + b.shares.toFixed(2) + "</td><td>" + b.fee.toFixed(2) + "</td><td>—</td></tr>";
+    });
+    // 止盈记录（倒序）
+    R.tps.slice().reverse().forEach(function (t) {
+      rows += "<tr><td>" + t.date + "</td><td class='fc'>" + (names[t.code] || t.code) + " <span style='color:#7C8DA1;font-size:10px'>" + t.code + "</span></td>" +
+        "<td style='color:#F87171'>止盈</td><td>" + t.sellAmt.toFixed(2) + "</td><td>—</td><td>" + t.shares.toFixed(2) + "</td><td>" + t.fee.toFixed(2) + "</td><td style='color:#34D399'>+" + (t.ret * 100).toFixed(1) + "%</td></tr>";
+    });
+    tb.innerHTML = rows || '<tr><td colspan="8" style="color:#7C8DA1">无交易记录</td></tr>';
+    showNotice("口径说明：XIRR 为资金加权年化（每期投入为负、期末总市值为正，二分求解）；累计收益率=(期末市值−累计投入)/累计投入。一次性买入对照=累计投入总额在首个定投日等权买入持有到期末。");
   }
 
   function renderCompositeIC(res, params, D) {
@@ -4573,7 +4858,12 @@ function showStrategyDetail(name) {
   }
 
   // ---------- 视图路由与共享步骤切换 ----------
-  function curChecked() { return activeView === "rebalance" ? rebalanceChecked : poolChecked; }
+  function curChecked() { return activeView === "rebalance" ? rebalanceChecked : (activeView === "dca" ? dcaChecked : poolChecked); }
+  function viewSlots() {
+    if (activeView === "rebalance") return { s1: $("rebSh1Slot"), s2: $("rebSh2Slot") };
+    if (activeView === "dca") return { s1: $("dcaSh1Slot"), s2: $("dcaSh2Slot") };
+    return { s1: $("rotSh1Slot"), s2: $("rotSh2Slot") };
+  }
   function moveRotOnly(v) {
     var ro = $("rotOnlyStep2"); if (!ro) return;
     if (v === "rotation") {
@@ -4587,14 +4877,13 @@ function showStrategyDetail(name) {
     } else { ro.style.display = "none"; }
   }
   function switchView(v) {
-    var target = (v === "rebalance") ? "rebalance" : "rotation";
+    var target = (v === "rebalance" || v === "dca") ? v : "rotation";
     var changed = activeView !== target;
     activeView = target;
     var sh1 = $("sh1"), sh2 = $("sh2");
-    var s1 = activeView === "rebalance" ? $("rebSh1Slot") : $("rotSh1Slot");
-    var s2 = activeView === "rebalance" ? $("rebSh2Slot") : $("rotSh2Slot");
-    if (sh1 && s1 && sh1.parentNode !== s1) s1.appendChild(sh1);
-    if (sh2 && s2 && sh2.parentNode !== s2) s2.appendChild(sh2);
+    var sl = viewSlots();
+    if (sh1 && sl.s1 && sh1.parentNode !== sl.s1) sl.s1.appendChild(sh1);
+    if (sh2 && sl.s2 && sh2.parentNode !== sl.s2) sl.s2.appendChild(sh2);
     // 仅视图真正切换时重置到第一步；同视图内（boot/goNext 流程）保持当前步骤
     if (changed) {
       stepTo(1);
@@ -4608,9 +4897,8 @@ function showStrategyDetail(name) {
   }
   function stepTo(n) {
     // 当前视图 step1/step2 双层容器切换（slot 的父级=step，外加 sharedCfg 的 sh1/sh2）
-    var s1 = activeView === "rebalance" ? $("rebSh1Slot") : $("rotSh1Slot");
-    var s2 = activeView === "rebalance" ? $("rebSh2Slot") : $("rotSh2Slot");
-    var p1 = s1 ? s1.parentElement : null, p2 = s2 ? s2.parentElement : null;
+    var sl = viewSlots();
+    var p1 = sl.s1 ? sl.s1.parentElement : null, p2 = sl.s2 ? sl.s2.parentElement : null;
     var sh1 = $("sh1"), sh2 = $("sh2");
     if (n === 2) {
       if (p1) p1.style.display = "none";
@@ -4650,15 +4938,21 @@ function showStrategyDetail(name) {
   // 折叠标题按视图显隐：再平衡视图参数少无需折叠（隐藏标题、全部展开）；轮动视图恢复折叠状态
   window.setFoldByMode = function () {
     var reb = activeView === "rebalance";
+    var dca = activeView === "dca";
     var hsEls = document.querySelectorAll(".sfold-h");
     for (var a = 0; a < hsEls.length; a++) {
-      if (hsEls[a].getAttribute("data-g") === "rebwfo") { hsEls[a].style.display = reb ? "" : "none"; continue; }
+      var g = hsEls[a].getAttribute("data-g");
+      if (dca) { hsEls[a].style.display = (g === "dca") ? "" : "none"; continue; }
+      if (g === "dca") { hsEls[a].style.display = "none"; continue; }   // 定投折叠头仅定投视图可见
+      if (g === "rebwfo") { hsEls[a].style.display = reb ? "" : "none"; continue; }
       hsEls[a].style.display = reb ? "none" : "";
     }
     var togEl = document.getElementById("sfToggle");
-    if (togEl) togEl.style.display = reb ? "none" : "";
+    if (togEl) togEl.style.display = (reb || dca) ? "none" : "";
     var bs = document.querySelectorAll(".sfold-b");
     for (var c = 0; c < bs.length; c++) {
+      if (dca) { bs[c].classList.toggle("hide", bs[c].id !== "sfg-dca"); continue; }
+      if (bs[c].id === "sfg-dca") { bs[c].classList.add("hide"); continue; }
       if (bs[c].id === "sfg-rebwfo") {
         if (!reb) bs[c].classList.add("hide");
         else { var hh2 = localStorage.getItem("sf_grp"); if (hh2 && hh2.indexOf("rebwfo") >= 0) bs[c].classList.remove("hide"); else bs[c].classList.add("hide"); }
@@ -4666,13 +4960,15 @@ function showStrategyDetail(name) {
       }
       bs[c].classList.remove("hide");
     }
-    // 持有排名区间（实际交易参数）为轮动专属：再平衡视图不展示（保持原行为）
+    // 持有排名区间（实际交易参数）为轮动专属：再平衡/定投视图不展示
     var tp = document.getElementById("topnRow");
-    if (tp) tp.style.display = reb ? "none" : "";
+    if (tp) tp.style.display = (reb || dca) ? "none" : "";
     // 因子与选股、参数调优与策略验证为轮动专属折叠区：再平衡视图不展示（保持原行为）；再平衡 WFO 为独立模块（见参数面板）
     if (reb) { var fB = document.getElementById("sfg-fac"); if (fB) fB.classList.add("hide"); }
     if (reb) { var tB2 = document.getElementById("sfg-tune"); if (tB2) tB2.classList.add("hide"); }
-    if (!reb) {
+    // 定投视图：dca 折叠组展开、文案「收起」
+    if (dca) { var db = document.getElementById("sfg-dca"); if (db) db.classList.remove("hide"); var da = document.querySelector('.sfold-h[data-g="dca"] .sf-a'); if (da) da.textContent = "收起"; }
+    if (!reb && !dca) {
       var hh = localStorage.getItem("sf_grp");
       var openGrps = (hh === null) ? "fac" : hh.split(",").filter(function (x) { return x !== "exe"; }).join(",");
       ["fac", "core", "exe", "mgmt", "tune"].forEach(function (g) {
@@ -4709,20 +5005,22 @@ function showStrategyDetail(name) {
   function showView(v) {
     $("viewRotation").style.display = v === "rotation" ? "" : "none";
     $("viewRebalance").style.display = v === "rebalance" ? "" : "none";
+    $("viewDCA").style.display = v === "dca" ? "" : "none";
     $("viewStrategies").style.display = v === "strategies" ? "" : "none";
     $("viewCorr").style.display = v === "correlation" ? "" : "none";
     $("viewCombo").style.display = v === "combo" ? "" : "none";
     $("viewIc").style.display = v === "ic" ? "" : "none";
     $("tabRotation").className = v === "rotation" ? "on" : "";
     $("tabRebalance").className = v === "rebalance" ? "on" : "";
+    $("tabDCA").className = v === "dca" ? "on" : "";
     $("tabStrategies").className = v === "strategies" ? "on" : "";
     $("tabCorr").className = v === "correlation" ? "on" : "";
     $("tabCombo").className = v === "combo" ? "on" : "";
     $("tabIc").className = v === "ic" ? "on" : "";
-    var svMap = { rotation: "tabRotation", rebalance: "tabRebalance", strategies: "tabStrategies", correlation: "tabCorr", combo: "tabCombo", ic: "tabIc" };
+    var svMap = { rotation: "tabRotation", rebalance: "tabRebalance", dca: "tabDCA", strategies: "tabStrategies", correlation: "tabCorr", combo: "tabCombo", ic: "tabIc" };
     var svTab = svMap[v] ? $(svMap[v]) : null;
     if (svTab && svTab.scrollIntoView) { try { svTab.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) { svTab.scrollIntoView(); } }
-    if (v === "rotation" || v === "rebalance") switchView(v);
+    if (v === "rotation" || v === "rebalance" || v === "dca") switchView(v);
     if (v === "strategies") renderStrategyList();
     if (v === "correlation" && window.CorrView) CorrView.render();
     if (v === "combo") renderComboSetup();
@@ -4730,6 +5028,7 @@ function showStrategyDetail(name) {
   }
   function hashView() {
     var h = location.hash || "";
+    if (h.indexOf("dca") >= 0 || h.indexOf("定投") >= 0) return "dca";
     if (h.indexOf("rotation") >= 0) return "rotation";
     if (h.indexOf("rebalance") >= 0 || h.indexOf("backtest") >= 0) return "rebalance";
     if (h.indexOf("strategies") >= 0) return "strategies";
@@ -4740,6 +5039,7 @@ function showStrategyDetail(name) {
   }
   $("tabRotation").addEventListener("click", function () { location.hash = "#/rotation"; showView("rotation"); });
   $("tabRebalance").addEventListener("click", function () { location.hash = "#/rebalance"; showView("rebalance"); });
+  $("tabDCA").addEventListener("click", function () { location.hash = "#/dca"; showView("dca"); });
   $("tabStrategies").addEventListener("click", function () { location.hash = "#/strategies"; showView("strategies"); });
   $("tabCorr").addEventListener("click", function () { location.hash = "#/correlation"; showView("correlation"); });
   $("tabCombo").addEventListener("click", function () { location.hash = "#/combo"; showView("combo"); });
@@ -4964,7 +5264,7 @@ function showStrategyDetail(name) {
 
   // ---------- 回测参数面板分区折叠（核心默认展开，其余折叠，状态记忆） ----------
   (function () {
-    var grps = ["fac", "core", "exe", "mgmt", "tune", "rebwfo"];
+    var grps = ["fac", "core", "exe", "mgmt", "tune", "rebwfo", "dca"];
     var H = localStorage.getItem("sf_grp");
     if (H === null) H = "fac"; // 默认只展开因子与选股
     else { var arrH = H.split(",").filter(function (x) { return x !== "exe"; }); H = arrH.join(",") || "fac"; } // ③择时管理默认收起（不记忆展开态）
@@ -4972,15 +5272,19 @@ function showStrategyDetail(name) {
     function setTogText() {
       if (!tog) return;
       var allOpen = grps.every(function (g) { return H.indexOf(g) >= 0; });
-      tog.textContent = allOpen ? "收起全部" : "展开全部";
+      tog.textContent = allOpen ? "收起" : "展开";
     }
     function apply() {
       var isReb = typeof activeView !== "undefined" && activeView === "rebalance";
+      var isDca = typeof activeView !== "undefined" && activeView === "dca";
       grps.forEach(function (g) {
         var b = document.getElementById("sfg-" + g);
         if (!b) return;
+        // 定投视图：仅 dca 组可见且展开，其余强制隐藏
+        if (isDca) { b.classList.toggle("hide", g !== "dca"); if (g === "dca") { var ad = document.querySelector('.sfold-h[data-g="dca"] .sf-a'); if (ad) ad.textContent = "收起"; } return; }
         // 再平衡视图：因子与选股、参数调优与策略验证为轮动专属，强制隐藏（折叠头已由 setFoldByMode 隐藏，此处防止 sf_grp 记忆将其内容重新展开）
         if (isReb && (g === "fac" || g === "tune")) { b.classList.add("hide"); return; }
+        if (g === "dca") { b.classList.add("hide"); return; }   // 轮动/再平衡视图下定投组隐藏
         var open = H.indexOf(g) >= 0;
         if (open) b.classList.remove("hide"); else b.classList.add("hide");
         var a = document.querySelector('.sfold-h[data-g="' + g + '"] .sf-a');
@@ -5343,6 +5647,9 @@ function showStrategyDetail(name) {
     buildIdxChips();
     updatePoolCount();
     updateSurvivorTip();
+    // 定投结束日期默认=数据末尾（仅首次未设置时）
+    var dEnd = $("dcaEndSel");
+    if (dEnd && !dEnd.value && D && D.calendar && D.calendar.length) dEnd.value = D.calendar[D.calendar.length - 1];
     showView(hashView());
     setTimeout(run, 60);          // 显示后执行默认回测
   }
