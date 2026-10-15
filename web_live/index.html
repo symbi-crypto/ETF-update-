@@ -486,7 +486,7 @@ footer b{color:#9FB0C3}
 <div class="sfold">
 <button type="button" class="sfold-h" data-g="tune"><b>⑤ 参数调优</b><span class="sf-a">点击展开</span></button>
 <div class="sfold-b hide" id="sfg-tune"><div class="psec" id="psecTune">
-        <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#7C8DA1">约束版 · 固定因子结构</span></h3>
+        <h3>参数调优与策略验证 <span style="font-size:11px;font-weight:400;color:#7C8DA1">约束版 · 固定因子结构</span></h3>
         <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
 
         <h3>调优维度</h3>
@@ -547,6 +547,20 @@ footer b{color:#9FB0C3}
       <span class="st" id="robState" style="font-size:11px;color:var(--mut)"></span>
     </div>
 <div id="robBox" style="display:none;margin-top:6px;font-size:12px;color:#D8E2EF;background:#3A2A12;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;line-height:1.7"></div>
+      <div class="wfowrap" id="wfowrap" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;flex-wrap:wrap">
+        <button id="wfoBtn" type="button" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#202E3F;color:#D8E2EF;cursor:pointer">滚动样本外检验（WFO）</button>
+        <label style="font-size:11px;color:#9FB0C3;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">训练<input id="wfoTrainIn" type="number" min="0.5" max="8" step="0.5" value="3" style="width:46px;font-size:11px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">年</label>
+        <label style="font-size:11px;color:#9FB0C3;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">验证<input id="wfoValIn" type="number" min="0.25" max="4" step="0.25" value="1" style="width:46px;font-size:11px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">年</label>
+        <span class="st" id="wfoState" style="font-size:11px;color:var(--mut)"></span>
+      </div>
+      <div id="wfoBox" style="display:none;margin-top:8px;font-size:12px;color:#D8E2EF;background:#243244;border:1px solid #3E4E63;border-radius:8px;padding:8px 12px;line-height:1.7">
+        <div style="font-weight:600;margin-bottom:4px">滚动样本外检验（WFO） <span id="wfoModeTag" style="font-weight:400;font-size:11px;color:#9FB0C3"></span></div>
+        <div id="wfoNote" style="font-size:11px;color:#7C8DA1;margin:2px 0 6px;line-height:1.7"></div>
+        <div id="wfoSummary" style="font-size:12px;color:#D8E2EF;margin:4px 0 8px;line-height:1.7"></div>
+        <div class="tblwrap" style="max-height:320px;overflow-x:auto;margin-bottom:6px"><table class="swfo" id="wfoTable" style="table-layout:fixed;width:100%;border-collapse:collapse;font-size:12px"></table></div>
+        <div id="wfoChart" style="height:230px;margin:6px 0 0"></div>
+      </div>
+      <div style="font-size:11px;color:#7C8DA1;margin-top:4px">单次回测的研究/验证段对比见「策略详情」样本内外分割区；滚动样本外检验（WFO）在下方。</div>
 </div>
 </div>
 <div class="runbar">
@@ -617,6 +631,11 @@ footer b{color:#9FB0C3}
       </div>
       <div class="card" style="border:none;padding:0;margin-bottom:14px"><h2>当前交易 <span class="n">逐笔买卖（未复权价 · 整手份额），可对照券商成交单</span></h2><div id="stPosBuy"></div></div>
       <div class="skpis" id="stKpis"></div>
+      <div class="card" id="attrCard" style="display:none"><h2>收益归因 <span class="n">策略收益分解到各因子（仅轮动策略）</span></h2>
+        <div id="attrTable"></div>
+        <div id="attrChart" style="height:220px;margin:8px 0 0"></div>
+        <div id="attrNote" style="font-size:11.5px;color:#9FB0C3;margin-top:6px;line-height:1.7"></div>
+      </div>
       <div class="card" style="border:none;padding:0"><h2>收益曲线 <span class="n">策略 vs 沪深300</span></h2><div class="chart" id="stChart"></div></div>
       <div class="card" style="border:none;padding:0;margin-top:14px"><h2>按年度收益 <span class="n">策略 / 沪深300 / 超额</span></h2>
         <div class="tblwrap" style="max-height:300px"><table class="syear" id="stYearly"></table></div>
@@ -1362,6 +1381,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     }
     var icSnapshots = [];   // 每个调仓决策日的综合得分截面 + 单因子原始值（供组合IC/单因子IC分析）
     var icSnapshotsFull = [];  // 全池 IC 截面：决策日全部有效标的（未过滤 scoreFloor/筛选/走弱），供「筛选池 vs 全池」IC 对照
+    var attrSnap = [];   // 单因子归因快照（仅轮动）：决策后权重 wNew2 + 候选池因子标准化值 fsR.full
     function factorScores(candidates, i) {
       var rankFactors = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
       if (!rankFactors.length) return { scored: [], full: [] };
@@ -1871,6 +1891,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           Object.keys(posMeta).forEach(function (pc) {
             if (holding.indexOf(pc) < 0) delete posMeta[pc];
           });
+          // 单因子归因快照（仅轮动）：决策后权重 + 候选池因子标准化值（fsR.full 含各因子 fv）
+          if (!isReb && fsR && fsR.full && fsR.full.length > 1) {
+            attrSnap.push({ i: i, full: fsR.full.slice(), w: wNew2.slice() });
+          }
         }
 
         // 市场状态风控-降仓动作（weak 且动作=降至X%）：目标仓位整体×X%（0=全部持现金/货币兜底）
@@ -1993,6 +2017,28 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var sharpe = stdR > 0 ? (meanR - rfDaily) / stdR * Math.sqrt(ann) : 0;
     var maxDD = Math.min.apply(null, ddV);
     var calmar = maxDD < 0 ? cagr / Math.abs(maxDD) : NaN;
+    // 需求·绩效补全：Sortino（下行波动，仅负收益期）/ IR（vs 基准）/ 平均资金占用率 / 占用口径年化
+    var downSq = 0, qi2;
+    for (qi2 = 0; qi2 < rets.length; qi2++) { var rr2 = rets[qi2]; if (!isNaN(rr2) && rr2 < 0) downSq += rr2 * rr2; }
+    var downDev = rets.length > 0 ? Math.sqrt(downSq / rets.length) : 0;
+    var sortino = downDev > 0 ? (meanR - rfDaily) / downDev * Math.sqrt(ann) : 0;
+    var exA = [], bi3;
+    for (bi3 = 1; bi3 < dailyR.length; bi3++) {
+      var dr3 = dailyR[bi3], db3 = benchD[bi3];
+      if (isNaN(dr3) || isNaN(db3)) continue;
+      exA.push(dr3 - db3);
+    }
+    var exM = 0;
+    for (bi3 = 0; bi3 < exA.length; bi3++) exM += exA[bi3];
+    if (exA.length) exM /= exA.length;
+    var exSd = 0;
+    for (bi3 = 0; bi3 < exA.length; bi3++) exSd += (exA[bi3] - exM) * (exA[bi3] - exM);
+    exSd = exA.length > 1 ? Math.sqrt(exSd / (exA.length - 1)) : 0;
+    var ir = exSd > 0 ? (exM * ann) / (exSd * Math.sqrt(ann)) : 0;
+    var expSum = 0, expN = 0, bi4;
+    for (bi4 = 0; bi4 < expV.length; bi4++) { var ev4 = expV[bi4]; if (ev4 != null && !isNaN(ev4)) { expSum += ev4; expN++; } }
+    var avgExposure = expN > 0 ? expSum / expN : 1;
+    var occCagr = (avgExposure > 0 && avgExposure !== 1) ? Math.pow(1 + cagr, 1 / avgExposure) - 1 : cagr;
     var winRate = rets.filter(function (v) { return v > 0; }).length / rets.length;
     var gains = 0, losses = 0, vi;
     for (vi = 0; vi < rets.length; vi++) { if (rets[vi] > 0) gains += rets[vi]; else losses -= rets[vi]; }
@@ -2043,6 +2089,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       metrics: {
         total_return: totalReturn, cagr: cagr, max_dd: maxDD,
         sharpe: sharpe, vol: vol, calmar: calmar,
+        sortino: sortino, ir: ir, avg_exposure: avgExposure, occ_cagr: occCagr,
         win_rate: winRate, profit_factor: profitFactor,
         exposure: exposure, n_days: nDays,
         n_trades: tradeRecords.length, cum_cost: cumCost,
@@ -2097,6 +2144,69 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             v_start: vIdx < calS.length ? calS[vIdx] : null,
             study: segM(0, vIdx),
             validation: segM(vIdx, calS.length)
+          };
+        })()
+        ,
+        // 单因子收益归因（仅轮动）：每调仓期 暴露×因子收益（高减低分组），Barra-lite 口径
+        attribution: (function () {
+          if (isReb || !attrSnap.length) return null;
+          var rankFs2 = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+          if (!rankFs2.length) return null;
+          function fkey2(f) {
+            return (f.kind || "roc") + ":" + (f.window || 20) + ":" + (f.window2 || 0) + ":" + (f.window3 || 0) + ":" + (f.formula_parts ? JSON.stringify(f.formula_parts.map(function (pp) { return pp.kind + ":" + (pp.window || 0) + ":" + (pp.window2 || 0) + ":" + (pp.window3 || 0) + ":" + (pp.coef || 0); })) : "");
+          }
+          function flabel(f) {
+            if (f.kind === "custom") return f.name || "自定义因子";
+            var nm = { roc: "涨幅", slope: "斜率动量", vol: "波动率", ma: "均线偏离", ma_vs_ma: "均线关系", ma_vs_ma_lag: "均线滞后", ret: "收益" }[f.kind] || f.kind;
+            return nm + (f.window ? "(" + f.window + ")" : "");
+          }
+          var fTot = new Array(rankFs2.length).fill(0);
+          var pTot = 0, mSum = 0;
+          for (var ai = 0; ai < attrSnap.length; ai++) {
+            var sn = attrSnap[ai];
+            var t0 = sn.i, t1 = (ai + 1 < attrSnap.length) ? attrSnap[ai + 1].i : endPos;
+            var wMap = {};
+            for (var ww = 0; ww < nAssets; ww++) { if (sn.w[ww] > 0) wMap[codes[ww]] = sn.w[ww]; }
+            var retB = {};
+            for (var cc in wMap) {
+              var cArr2 = closes[cc];
+              var v0 = cArr2[t0], v1 = cArr2[t1];
+              if (!isMiss(v0) && !isMiss(v1) && v0 > 0) retB[cc] = v1 / v0 - 1;
+            }
+            var rp = 0;
+            for (var cc in wMap) if (retB[cc] !== undefined) rp += wMap[cc] * retB[cc];
+            pTot += rp;
+            var fSum = 0;
+            for (var fi = 0; fi < rankFs2.length; fi++) {
+              var f2 = rankFs2[fi], key2 = fkey2(f2);
+              var pairs = [];
+              for (var fx = 0; fx < sn.full.length; fx++) {
+                var el2 = sn.full[fx];
+                if (el2.fv && el2.fv[key2] !== undefined) pairs.push({ code: el2.code, z: el2.fv[key2], r: retB[el2.code] !== undefined ? retB[el2.code] : 0 });
+              }
+              if (pairs.length < 2) continue;
+              pairs.sort(function (a, b) { return b.z - a.z; });
+              var nT = Math.max(1, Math.round(pairs.length * 0.3));
+              var tR = 0, bR = 0, tq;
+              for (tq = 0; tq < nT; tq++) tR += pairs[tq].r;
+              for (tq = pairs.length - nT; tq < pairs.length; tq++) bR += pairs[tq].r;
+              tR /= nT; bR /= nT;
+              var rF = tR - bR;
+              var expo = 0;
+              for (var ex2 = 0; ex2 < pairs.length; ex2++) { var ww2 = wMap[pairs[ex2].code]; if (ww2) expo += ww2 * pairs[ex2].z; }
+              var cf = expo * rF;
+              fTot[fi] += cf; fSum += cf;
+            }
+            mSum += rp - fSum;
+          }
+          var cap = params.initial_capital || 1000000;
+          return {
+            factors: rankFs2.map(function (f, idx) { return { name: flabel(f), contrib: fTot[idx] * cap, pct: pTot !== 0 ? fTot[idx] / pTot : 0 }; }),
+            market: { name: "宽基/其他", contrib: mSum * cap, pct: pTot !== 0 ? mSum / pTot : 0 },
+            total: pTot * cap,
+            capital: cap,
+            n_periods: attrSnap.length,
+            method: "每调仓期按候选池因子标准化得分排序，前30%组合收益−后30%组合收益为该期因子收益；因子贡献=持仓组合因子暴露(Σ权重×标准化得分)×因子收益；宽基/其他=组合收益−Σ因子贡献（含市场beta与残差）；各期收益为简单加总口径，非净值复合"
           };
         })()
       }
@@ -3879,7 +3989,7 @@ function buildChips() {
     var segBox = $("segBox");
     if (seg && seg.study && seg.validation) {
       segBox.style.display = "block";
-      $("segTip").textContent = "验证段自 " + seg.v_start + " 起（最近3年冻结作样本外；此前为研究段）";
+      $("segTip").textContent = "验证段自 " + seg.v_start + " 起（最近3年冻结作样本外；此前为研究段）——滚动样本外验证（WFO）见「参数设置→参数调优与策略验证」";
       var rows = [
         ["累计收益", FMT.pct(seg.study.total), FMT.pct(seg.validation.total)],
         ["年化收益", FMT.pct(seg.study.cagr), FMT.pct(seg.validation.cagr)],
@@ -4321,8 +4431,13 @@ function showStrategyDetail(name) {
       ["近半年收益", pct(w6, 0), ""],
       ["近1年收益", pct(wy, 0), ""],
       ["总收益", pct(mt.total_return, 0), mt.benchmark ? "基准 " + pct(mt.benchmark.total, 0) : ""],
-      ["年化收益", pct(mt.cagr, 0), ""],
+      ["年化收益", pct(mt.cagr, 0), "总投入口径"],
+      ["占用口径年化", mt.occ_cagr != null && !isNaN(mt.occ_cagr) ? pct(mt.occ_cagr, 0) : "—", "按平均占用资金折算；总投入口径偏低，占用口径反映资金效率"],
+      ["平均资金占用率", mt.avg_exposure != null ? (mt.avg_exposure * 100).toFixed(1) + "%" : "—", "按日平均持仓市值÷总资金"],
       ["夏普比率", mt.sharpe.toFixed(2), "（无风险 2%）"],
+      ["Sortino", mt.sortino != null && !isNaN(mt.sortino) ? mt.sortino.toFixed(2) : "—", "下行波动调整（仅负收益期，无风险 2%）"],
+      ["信息比率", mt.ir != null && !isNaN(mt.ir) ? mt.ir.toFixed(2) : "—", "年化超额÷跟踪误差（基准=沪深300）"],
+      ["Calmar", mt.calmar != null && !isNaN(mt.calmar) ? mt.calmar.toFixed(2) : "—", "年化收益÷最大回撤绝对值"],
       ["年均交易次数", (mt.n_trades / years).toFixed(0) + " 次/年", "共 " + mt.n_trades + " 笔"],
       ["触发买入", (res.metrics && res.metrics.sell_cond_times ? res.metrics.sell_cond_times : 0) + " 次", "排名区间内因条件卖出"],
       ["当前回撤", curDD.toFixed(2) + "%", ""],
@@ -4341,6 +4456,42 @@ function showStrategyDetail(name) {
       d.innerHTML = '<div class="t">' + k[0] + '</div><div class="v ' + vCls + '">' + k[1] + '</div><div class="s">' + k[2] + '</div>';
       kb.appendChild(d);
     });
+    // 收益归因（仅轮动：轮动显示因子分解；再平衡标注不适用）
+    var atr = mt.attribution;
+    var atrCard = $("attrCard");
+    if (atrCard) {
+      if (!atr || !atr.factors || !atr.factors.length) {
+        atrCard.style.display = "block";
+        $("attrTable").innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:6px 0">收益归因：不适用（该策略为再平衡模式或无排名因子，无因子选股维度可分解）</div>';
+        $("attrChart").innerHTML = "";
+        $("attrNote").textContent = "";
+      } else {
+        atrCard.style.display = "block";
+        var rowsA = '<table class="syear" style="table-layout:fixed;width:100%;border-collapse:collapse;font-size:12px"><colgroup><col style="width:30%"><col style="width:26%"><col style="width:24%"><col style="width:20%"></colgroup><tr><th>来源</th><th>贡献金额</th><th>贡献占比</th><th>累计</th></tr>';
+        var rows2 = atr.factors.concat([atr.market]);
+        for (var ari = 0; ari < rows2.length; ari++) {
+          var ro2 = rows2[ari];
+          var vClsA = ro2.contrib < 0 ? "down" : "up";
+          rowsA += '<tr><td>' + ro2.name + '</td><td class="' + vClsA + '">' + fmtN(ro2.contrib) + '</td><td class="' + vClsA + '">' + (ro2.pct * 100).toFixed(2) + '%</td><td></td></tr>';
+        }
+        rowsA += '<tr><td>合计</td><td>' + fmtN(atr.total) + '</td><td>100%</td><td></td></tr></table>';
+        $("attrTable").innerHTML = rowsA;
+        var chA = $("attrChart");
+        if (chA && typeof echarts !== "undefined") {
+          if (!charts["attrChart"]) { charts["attrChart"] = echarts.init(chA, "dark"); charts["attrChart"].setOption({ backgroundColor: "transparent" }); }
+          var namesA = atr.factors.map(function (f) { return f.name; }).concat([atr.market.name]);
+          var pctsA = atr.factors.map(function (f) { return +(f.pct * 100).toFixed(2); }).concat([+(atr.market.pct * 100).toFixed(2)]);
+          charts["attrChart"].setOption({
+            tooltip: { trigger: "axis", confine: true, renderMode: "richText" },
+            grid: { left: 92, right: 26, top: 12, bottom: 26 },
+            xAxis: { type: "value", axisLabel: { fontSize: 10, formatter: function (v) { return v + "%"; } } },
+            yAxis: { type: "category", data: namesA, axisLabel: { fontSize: 11 } },
+            series: [{ name: "贡献占比", type: "bar", data: pctsA, barMaxWidth: 18, itemStyle: { color: function (p) { return p.dataIndex === pctsA.length - 1 ? "#9FB0C3" : "#4FC3F7"; } } }]
+          });
+        }
+        $("attrNote").textContent = "口径：" + atr.method + "；贡献金额按起始资金 " + fmtN(atr.capital) + " 元折算，占比合计≈100%（" + atr.n_periods + " 个调仓期）。";
+      }
+    }
     // 详情投资额区：起始投资额 + 投资起始日期 + 最新投资额（按策略净值自起始日起变化）
     var stI2 = $("stInvIn2"), stStart = $("stStartIn"), stLC = $("stLatestCap");
     function updateLatestCap() {
@@ -4999,6 +5150,95 @@ function showStrategyDetail(name) {
     setTimeout(step, 0);
   }
 
+  // ===== 滚动样本外检验（WFO）：轮动=训练+验证滚动（复用 _warm_start 无前视预热），再平衡=纯分段 =====
+  var wfoRunning = false;
+  function wfoPct(v) { return (v * 100).toFixed(2) + "%"; }
+  function runWFO() {
+    var state = $("wfoState");
+    if (wfoRunning) { if (state) state.textContent = "WFO 进行中…"; return; }
+    var box = $("wfoBox");
+    if (!D || !engine) { if (state) state.textContent = "请先进入回测"; return; }
+    var isReb = activeView === "rebalance";
+    var trainY = Math.max(0.25, +($("wfoTrainIn") ? $("wfoTrainIn").value : 3) || 3);
+    var valY = Math.max(0.25, +($("wfoValIn") ? $("wfoValIn").value : 1) || 1);
+    var ann = 252, cal = D.calendar, n = cal.length;
+    var trainN = Math.round(trainY * ann), valN = Math.round(valY * ann);
+    // 分段：轮动=每段验证区间前 trainN 日预热（warm_start=训练段起点）；再平衡=无训练段，从数据起点每 valN 日一段
+    var segs = [];
+    if (isReb) {
+      var k0 = 0;
+      while (k0 + valN <= n) { segs.push({ vs: k0, ve: k0 + valN, ws: k0 }); k0 += valN; }
+    } else {
+      var st0 = trainN;
+      while (st0 + valN <= n) { segs.push({ vs: st0, ve: st0 + valN, ws: st0 - trainN }); st0 += valN; }
+    }
+    if (!segs.length) { if (state) state.textContent = "历史长度不足以完成分段（训练+验证需 ≤ 数据总长）"; return; }
+    if (state) state.textContent = "运行中（" + segs.length + " 段）…";
+    wfoRunning = true;
+    var base = getParams();
+    try {
+      for (var gi = 0; gi < segs.length; gi++) {
+        var sg = segs[gi];
+        var p = JSON.parse(JSON.stringify(base));
+        p.start_date = cal[sg.vs];
+        p.end_date = cal[sg.ve - 1];
+        p.warm_start = cal[sg.ws];
+        var r = engine.backtest(D, p);
+        var nav = r.nav, bench = r.bench_nav;
+        var nn = nav.length;
+        var tot = nn > 1 ? nav[nn - 1] / nav[0] - 1 : 0;
+        var yrs = nn / ann;
+        var cg = (yrs > 0 && nav[0] > 0) ? Math.pow(nav[nn - 1] / nav[0], 1 / yrs) - 1 : 0;
+        var pk = nav[0], mdd = 0, si2;
+        for (si2 = 1; si2 < nn; si2++) { if (nav[si2] > pk) pk = nav[si2]; var dd2 = 1 - nav[si2] / pk; if (dd2 > mdd) mdd = dd2; }
+        var bTot = (bench && bench.length > 1) ? bench[bench.length - 1] / bench[0] - 1 : 0;
+        sg.res = { start: r.calendar[0], end: r.calendar[nn - 1], cagr: cg, max_dd: mdd, excess: tot - bTot, total: tot };
+        if (state) state.textContent = "运行中（" + (gi + 1) + "/" + segs.length + "）…";
+      }
+      renderWFO(segs, isReb, trainY, valY);
+      if (state) state.textContent = segs.length + " 段完成";
+    } catch (e) {
+      if (state) state.textContent = "WFO 失败：" + String((e && e.message) || e);
+    }
+    wfoRunning = false;
+  }
+  function renderWFO(segs, isReb, trainY, valY) {
+    var box = $("wfoBox"); if (!box) return;
+    box.style.display = "block";
+    var mt = $("wfoModeTag"); if (mt) mt.textContent = isReb ? "（再平衡：纯分段逐段独立回测，无训练段）" : "（轮动：训练 " + trainY + " 年预热 + 验证 " + valY + " 年滚动；每段 warm_start=训练段起点，参数用当前配置，不做段内调优）";
+    var note = $("wfoNote");
+    if (note) note.innerHTML = "无前视说明：每段回测 warm_start 置于验证段起点之前（轮动=前 " + trainY + " 年训练段，再平衡=段起点），该段只算指标/因子、不产生交易；验证段净值、回撤与超额全部基于段起点之后的数据，每段只依赖段前数据。年化按 252 交易日折算；超额 = 段内策略总收益 − 沪深300（H00300.CSI）总收益。";
+    var th = '<tr><th style="width:9%">段</th><th style="width:27%">样本外区间</th><th style="width:16%">年化</th><th style="width:16%">最大回撤</th><th style="width:16%">vs 沪深300</th><th style="width:16%">区间收益</th></tr>';
+    var rows = "";
+    for (var ri = 0; ri < segs.length; ri++) {
+      var s = segs[ri].res;
+      rows += '<tr><td>段' + (ri + 1) + '</td><td>' + s.start + ' ~ ' + s.end + '</td><td class="' + (s.cagr < 0 ? "down" : "up") + '">' + wfoPct(s.cagr) + '</td><td class="down">' + wfoPct(s.max_dd) + '</td><td class="' + (s.excess < 0 ? "down" : "up") + '">' + wfoPct(s.excess) + '</td><td class="' + (s.total < 0 ? "down" : "up") + '">' + wfoPct(s.total) + '</td></tr>';
+    }
+    var tb = $("wfoTable"); if (tb) tb.innerHTML = th + rows;
+    var cagrs = segs.map(function (s) { return s.res.cagr; });
+    var avg = cagrs.reduce(function (a, b) { return a + b; }, 0) / cagrs.length;
+    var wi = 0;
+    for (var w2 = 1; w2 < cagrs.length; w2++) if (cagrs[w2] < cagrs[wi]) wi = w2;
+    var worst = segs[wi].res;
+    var downRun = false;
+    for (var d2 = 1; d2 < cagrs.length - 1; d2++) { if (cagrs[d2] < cagrs[d2 - 1] && cagrs[d2 + 1] < cagrs[d2]) { downRun = true; break; } }
+    var sm = $("wfoSummary");
+    if (sm) sm.innerHTML = "<b>汇总：</b>平均年化 " + wfoPct(avg) + " · 最差段 段" + (wi + 1) + "（" + worst.start + " ~ " + worst.end + "，" + wfoPct(worst.cagr) + "）· " +
+      (downRun ? '<span style="color:#F87171">存疑：存在连续两段收益转差，稳健性不足，建议检查参数或改权重新评估</span>' : '<span style="color:#34D399">稳健：无连续两段收益转差</span>');
+    var ch = $("wfoChart");
+    if (ch && typeof echarts !== "undefined") {
+      if (!charts["wfoChart"]) { charts["wfoChart"] = echarts.init(ch, "dark"); charts["wfoChart"].setOption({ backgroundColor: "transparent" }); }
+      charts["wfoChart"].setOption({
+        tooltip: { trigger: "axis", confine: true, renderMode: "richText" },
+        legend: { data: ["年化"], top: 0, textStyle: { fontSize: 11 } },
+        grid: { left: 58, right: 18, top: 30, bottom: 26 },
+        xAxis: { type: "category", data: segs.map(function (s, i) { return "段" + (i + 1); }), axisLabel: { fontSize: 10 } },
+        yAxis: { type: "value", axisLabel: { fontSize: 10, formatter: function (v) { return v + "%"; } } },
+        series: [{ name: "年化", type: "bar", barMaxWidth: 28, data: cagrs.map(function (v) { return +(v * 100).toFixed(2); }), itemStyle: { color: "#4FC3F7" }, markLine: { symbol: "none", data: [{ type: "average", name: "平均" }], lineStyle: { color: "#F59E0B", type: "dashed" }, label: { formatter: "平均 {c}%", fontSize: 10, color: "#F59E0B" } } }]
+      });
+    }
+  }
+
   function boot() {
     renderStrategyList();
     renderMfLib();
@@ -5019,6 +5259,8 @@ function showStrategyDetail(name) {
     if (rb) rb.onclick = robustnessCheck;
     var rn = $("runBtn");
     if (rn) rn.addEventListener("click", run);
+    var wb = $("wfoBtn");
+    if (wb) wb.addEventListener("click", runWFO);
   })();
 
   // ===== 功能1/2/3：大盘择时·独立开关 / 指数数据源切换 / 自定义基准 =====
