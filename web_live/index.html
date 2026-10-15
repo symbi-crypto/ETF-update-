@@ -201,9 +201,13 @@ footer b{color:#9FB0C3}
       <h3>目标权重来源</h3>
       <select id="rebWeightMode" style="width:100%;font-size:12.5px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
         <option value="fixed" selected>比例（按标的池比例输入）</option>
-        <option value="inv_vol">逆波动率（近20日，低波多配）</option>
-        <option value="risk_parity">风险平价（近60日协方差，等风险贡献）</option>
+        <option value="inv_vol">逆波动率（低波多配）</option>
+        <option value="risk_parity">风险平价（等风险贡献）</option>
       </select>
+      <div id="rebLookbackRow" style="display:none;margin-top:6px;font-size:12px;color:#7C8DA1">回看天数
+        <input id="rebLookbackIn" type="number" min="5" max="250" step="1" value="20" style="width:74px;font-size:12.5px;padding:2px 6px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9">
+        <span style="font-size:11px;color:#9FB0C3">按调仓日及之前 N 个交易日计算动态权重</span>
+      </div>
       <div id="rebStyleBox" style="margin-top:6px;font-size:12px;color:#7C8DA1">比例方式
         <select id="rebStyleSel" style="width:62%;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
           <option value="equal" selected>等比例（所有标等权，不填比例）</option>
@@ -985,7 +989,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       return 0.0030;
     }
     // 持有标的相对权重：equal=等权 / inv_vol=逆波动率(1/σ) / risk_parity=近60日协方差等风险贡献迭代（与 Python 同构）
-    function holdingWeights(mode, codes, i) {
+    function holdingWeights(mode, codes, i, lookback) {
       var n = codes.length;
       if (!n) return {};
       if (mode !== "inv_vol" && mode !== "risk_parity") {
@@ -997,8 +1001,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       var vj;
       for (vj = 0; vj < n; vj++) {
         c2 = codes[vj];
+        var W = lookback || 20;
         seg = [];
-        for (kk2 = Math.max(0, i - 20); kk2 <= i; kk2++) if (!isMiss(closes[c2][kk2])) seg.push(closes[c2][kk2]);
+        for (kk2 = Math.max(0, i - W); kk2 <= i; kk2++) if (!isMiss(closes[c2][kk2])) seg.push(closes[c2][kk2]);
         if (seg.length < 5) { vol[c2] = null; continue; }
         rr = [];
         for (kk2 = 1; kk2 < seg.length; kk2++) rr.push(seg[kk2] / seg[kk2 - 1] - 1);
@@ -1030,7 +1035,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         return rel;
       }
       if (mode === "inv_vol") return invVolRel();
-      var T = 60, rets = [];
+      var T = lookback || 20, rets = [];
       for (vj = 0; vj < okc.length; vj++) {
         c2 = okc[vj];
         seg = [];
@@ -1041,7 +1046,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       var L = 1e9;
       for (vj = 0; vj < rets.length; vj++) L = Math.min(L, rets[vj].length);
-      if (L < 30) return invVolRel();
+      if (L < Math.min(30, T)) return invVolRel();
       var m2c = [], vj4;
       for (vj4 = 0; vj4 < okc.length; vj4++) {
         var mm = 0;
@@ -1793,7 +1798,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           if (rwm2 === "inv_vol" || rwm2 === "risk_parity") {
             var rc2 = params.reb_codes || codesH2;
             var codesH3 = rc2.filter(function (c) { return codeSet[c] && !isMiss(closes[c][i]) && closes[c][i] > 0; });
-            var relW2 = holdingWeights(rwm2, codesH3, i);
+            var relW2 = holdingWeights(rwm2, codesH3, i, params.reb_lookback);
             codesH3.forEach(function (ch) { wNew2[codes.indexOf(ch)] = relW2[ch]; holding.push(ch); });
           } else {
             for (var ckR = 0; ckR < nAssets; ckR++) {
@@ -2355,7 +2360,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".wlab"), function (el) { el.style.display = (dyn && !isDca) ? "flex" : "none"; });
     if (poolBox) Array.prototype.forEach.call(poolBox.querySelectorAll(".rot"), function (el) { el.style.display = noRot ? "none" : ""; });
     // 权重合计/余量提示仅非等比例显示（等比例等权，显示"权重合计 0%"易误导）；inv_vol/risk_parity 权重合计按比例输入框和（隐藏时为 0%，引擎按动态权重计算）
-    var ws = $("wSum"); if (ws) ws.style.display = (isReb && (rwm !== "fixed" || rst !== "equal")) ? "" : "none";
+    var lbr = $("rebLookbackRow"); if (lbr) lbr.style.display = (isReb && rwm !== "fixed") ? "" : "none";
+    // 权重合计/余量提示仅「比例-自定义」显示（等比例等权、动态模式权重为计算所得，显示手填合计无意义）
+    var ws = $("wSum"); if (ws) ws.style.display = (isReb && rwm === "fixed" && rst === "custom") ? "" : "none";
     if (isReb && !dyn) { syncWIn(); updateWSum(); }
     // 定投模式：隐藏 回撤/年度/月度 图表卡（整卡，含标题）与基准选择（定投用专属曲线与对照），显示止盈阈值行
     ["cDD", "cYear", "cMonth"].forEach(function (cid) { var ce = $(cid); if (ce && ce.closest(".card")) ce.closest(".card").style.display = isDca ? "none" : ""; });
@@ -3411,6 +3418,7 @@ function buildChips() {
       })(),
       reb_codes: checkedCodes().map(function (p) { return p.code; }),
       reb_weight_mode: $("rebWeightMode") ? $("rebWeightMode").value : "fixed",
+      reb_lookback: Math.max(5, Math.min(250, +($("rebLookbackIn") ? $("rebLookbackIn").value : 20) || 20)),
       rebalance_mode: rebSel.mode,
       rebalance_interval: rebInterval,
       rebalance_anchor: rebAnchor,
@@ -3569,6 +3577,7 @@ function buildChips() {
         $("rebWeightMode").value = rwmOld;
         if ($("rebStyleSel")) $("rebStyleSel").value = p.reb_style || "equal";
       }
+      if ($("rebLookbackIn")) $("rebLookbackIn").value = p.reb_lookback || 20;
     }
     if ($("rebDevIn")) $("rebDevIn").value = +(p.reb_dev_pct) || 10;
     if ($("rebPeriodOn")) $("rebPeriodOn").checked = p.reb_period_on !== false;
