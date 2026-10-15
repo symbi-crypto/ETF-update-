@@ -691,11 +691,17 @@ footer b{color:#9FB0C3}
         <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#D8E2EF">佣金率（万分之）</span>
           <input id="gridComm" type="number" step="0.1" value="2.5" title="佣金率，单位：万分之（如 2.5 = 万分之2.5 = 0.025%）" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#D8E2EF">滑点（bp）</span>
           <input id="gridSlip" type="number" step="0.1" value="5" title="滑点，单位：bp（基点，1bp=0.01%；如 5bp=0.05%）" style="width:74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <span style="font-size:12px;color:#D8E2EF">最低佣金(元)</span>
           <input id="gridMinComm" type="number" step="0.1" value="0" style="width:64px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
-          <span style="font-size:12px;color:#D8E2EF">剩余资金买入</span>
+        </div>
+        <div class="row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:12px;color:#D8E2EF">空仓持有</span>
           <select id="gridIdleSel" title="参与标的数不足组合标的数时，剩余资金的处理：空仓(现金零收益)/黄金/国债/货币ETF长期持有" style="font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F">
             <option value="cash" selected>空仓（现金零收益）</option>
             <option value="gold">黄金ETF（518880）</option>
@@ -2780,10 +2786,13 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     for (key in bYears) ba[key] = bYears[key] - 1;
     for (key in months) mo[key] = months[key] - 1;
 
+    var finalHold = {};
+    for (var fk = 0; fk < nAssets; fk++) if (wOld[fk] > 0) finalHold[codes[fk]] = wOld[fk];
     return {
       calendar: calS, nav: navV, bench_nav: benchV, ew_nav: ewV,
       drawdown: ddV, bench_drawdown: benchDD, daily_ret: dailyR,
       holdings: holdV, regime: regV, exposure: expV,
+      final_hold: finalHold,   // 末态持仓权重 {code: weight}（轮动/再平衡详情「当前持仓」数据源）
       trades: tradeRecords, tx: txRecords, pool: codes,
       ic_snapshots: icSnapshots, ic_snapshots_full: icSnapshotsFull,
       metrics: {
@@ -4206,20 +4215,51 @@ function buildChips() {
     }
     scheduleRun();   // 参数恢复后自动重跑回测
   }
+  // ---------- 保存策略重名询问（轮动/再平衡/网格统一） ----------
+  var dupPending = null;
+  function showDupModal(name, doSave) {
+    dupPending = { name: name, doSave: doSave };
+    if (!window.__dupBound) {
+      var oc = $("dupModalClose"); if (oc) oc.onclick = hideDupModal;
+      var c = $("dupCancel"); if (c) c.onclick = hideDupModal;
+      var ov = $("dupOverwrite"); if (ov) ov.onclick = function () { var d = dupPending; hideDupModal(); if (d && d.doSave) d.doSave(d.name); };
+      var nw = $("dupNew"); if (nw) nw.onclick = function () { var d = dupPending; hideDupModal(); if (d && d.doSave) d.doSave(nextDupName(d.name)); };
+      window.__dupBound = true;
+    }
+    var n = $("dupName"); if (n) n.textContent = name;
+    var m = $("dupModal"); if (m) m.style.display = "block";
+  }
+  function hideDupModal() {
+    dupPending = null;
+    var m = $("dupModal"); if (m) m.style.display = "none";
+  }
+  function nextDupName(name) {
+    var m = loadStored() || {};
+    var base = name, k = 2;
+    while (m[base + " (" + k + ")"]) k++;
+    return base + " (" + k + ")";
+  }
+  function askOverwriteDup(name, doSave) {
+    var m = loadStored();
+    if (!m || !m[name]) { doSave(name); return; }
+    showDupModal(name, doSave);
+  }
   $("saveSt").addEventListener("click", function () {
     var name = $("stName").value.trim();
     if (!name) { showNotice("请先填写策略名"); return; }
-    try {
-      var m = loadStored();
-      var p = getParams();
-      p._saved_at = new Date().toISOString();
-      p._warm_start = p.start_date;   // 固化预热起点 = 保存那一刻的起始日期（详情页改起始日期不影响预热段）
-      m[name] = p;
-      storeAll(m); refreshStList(); renderStrategyList();
-      showNotice("策略已保存：" + name + "（本地存储按链接CDN域隔离，换链接/换设备请用「导出全部/导入全部」迁移）");
-    } catch (e) {
-      showNotice("保存失败：" + e.message);
-    }
+    askOverwriteDup(name, function (n) {
+      try {
+        var m = loadStored();
+        var p = getParams();
+        p._saved_at = new Date().toISOString();
+        p._warm_start = p.start_date;   // 固化预热起点 = 保存那一刻的起始日期（详情页改起始日期不影响预热段）
+        m[n] = p;
+        storeAll(m); refreshStList(); renderStrategyList();
+        showNotice("策略已保存：" + n + "（本地存储按链接CDN域隔离，换链接/换设备请用「导出全部/导入全部」迁移）");
+      } catch (e) {
+        showNotice("保存失败：" + e.message);
+      }
+    });
   });
   $("loadSt").addEventListener("click", function () {
     var name = $("stList").value; if (!name) return;
@@ -4997,31 +5037,62 @@ function buildChips() {
       }
       return;
     }
-    var tx = res.tx || [];
-    if (!tx.length) {
-      // 空仓/无成交：现金（不持有）展示，与引擎空仓收益=0 口径一致
-      var cap = latestCap(name, res);
-      var fb3 = (m[name] && m[name].fallback_when_no_signal) || "cash";
-      if (fb3 === "money") {
-        var cpx0 = lastRawClose("511990.SH");
-        var cs0 = lotShares(cap, cpx0);
-        box.innerHTML = '<table class="trades" style="margin-top:4px;table-layout:fixed;width:100%"><thead><tr><th class="fc">当前交易</th><th>金额</th><th>最新未复权价</th><th>份额</th></tr></thead><tbody><tr><td class="fc">货币ETF</td><td>' + fmtN(cap) + '</td><td>' + (cpx0 ? cpx0.toFixed(4) : "—") + '</td><td>' + (cs0 ? fmtN(cs0) : "—") + '</td></tr></tbody></table>';
-      } else {
-        box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:6px 0">现金（不持有）· 回测区间内无成交记录</div>';
-      }
-      return;
+        // ---- 新增3：当前持仓区块（轮动/再平衡：名称/代码 + 持仓数量 + 市值 + 持仓比例% + 细进度条；头部总持仓市值，最新未复权价估算）----
+    var fh = res.final_hold || {};
+    var fCodes = Object.keys(fh).filter(function (c) { return fh[c] > 0; });
+    var cap = latestCap(name, res);
+    var fb3 = (m[name] && m[name].fallback_when_no_signal) || "cash";
+    var posHtml = "";
+    if (!fCodes.length && fb3 === "money") {
+      // 轮动无信号兜底=货币ETF：视为当前持仓（原「当前交易-货币ETF」行并入当前持仓区块）
+      var cpx0m = lastRawClose("511990.SH");
+      var csm0 = lotShares(cap, cpx0m);
+      posHtml = '<div style="font-size:12px;color:#9FB0C3;margin:4px 0 8px">当前持仓 · 总持仓市值 <b style="color:#F1F5F9">' + fmtN(Math.round(cap)) + '</b> 元（货币ETF兜底）</div>'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border:1px solid #3E4E63;border-radius:8px;margin-bottom:6px;background:#202E3F">'
+        + '<span style="font-weight:600;color:#F1F5F9;flex:1;min-width:150px">货币ETF<span style="color:#9FB0C3;font-weight:400;margin-left:4px">511990.SH</span></span>'
+        + '<span style="font-size:12px;color:#D8E2EF">持仓 <b style="color:#F1F5F9">' + (csm0 ? fmtN(csm0) : "—") + '</b> 份</span>'
+        + '<span style="font-size:12px;color:#D8E2EF">现价 <b style="color:#F1F5F9">' + (cpx0m ? cpx0m.toFixed(4) : "—") + '</b></span>'
+        + '<span style="font-size:12px;color:#D8E2EF">市值 <b style="color:#F1F5F9">' + fmtN(Math.round(cap)) + '</b> 元</span>'
+        + '<span style="font-size:12px;color:#D8E2EF;white-space:nowrap">持仓比例 <b style="color:#4FC3F7">100.0%</b> <span style="display:inline-block;width:44px;height:5px;background:#1B2634;border-radius:3px;vertical-align:middle;margin-left:4px"><span style="display:block;width:100%;height:100%;background:#4FC3F7;border-radius:3px"></span></span></span></div>';
+    } else if (fCodes.length) {
+      var items = fCodes.map(function (c) {
+        var cur = lastRawClose(c);
+        var mv = fh[c] * cap;
+        return { c: c, cur: cur, mv: mv };
+      });
+      var totVal = items.reduce(function (a, b) { return a + b.mv; }, 0);
+      posHtml = '<div style="font-size:12px;color:#9FB0C3;margin:4px 0 8px">当前持仓 · 总持仓市值 <b style="color:#F1F5F9">' + fmtN(Math.round(totVal)) + '</b> 元（最新未复权价估算）</div>'
+        + items.map(function (it) {
+          var nm = gName(it.c);
+          var sh = lotShares(it.mv, it.cur);
+          var pct = totVal > 0 ? (it.mv / totVal) * 100 : 0;
+          return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border:1px solid #3E4E63;border-radius:8px;margin-bottom:6px;background:#202E3F">'
+            + '<span style="font-weight:600;color:#F1F5F9;flex:1;min-width:150px">' + nm + '<span style="color:#9FB0C3;font-weight:400;margin-left:4px">' + it.c + '</span></span>'
+            + '<span style="font-size:12px;color:#D8E2EF">持仓 <b style="color:#F1F5F9">' + (sh ? fmtN(sh) : "—") + '</b> 份</span>'
+            + '<span style="font-size:12px;color:#D8E2EF">现价 <b style="color:#F1F5F9">' + (it.cur ? it.cur.toFixed(4) : "—") + '</b></span>'
+            + '<span style="font-size:12px;color:#D8E2EF">市值 <b style="color:#F1F5F9">' + fmtN(Math.round(it.mv)) + '</b> 元</span>'
+            + '<span style="font-size:12px;color:#D8E2EF;white-space:nowrap">持仓比例 <b style="color:#4FC3F7">' + pct.toFixed(1) + '%</b> <span style="display:inline-block;width:44px;height:5px;background:#1B2634;border-radius:3px;vertical-align:middle;margin-left:4px"><span style="display:block;width:' + Math.min(100, pct) + '%;height:100%;background:#4FC3F7;border-radius:3px"></span></span></span></div>';
+        }).join("");
+    } else {
+      posHtml = '<div style="font-size:12px;color:#9FB0C3;margin:4px 0 8px">当前持仓 · 空仓（不持有标的）</div>';
     }
-    var total = tx.length;
-    var rows = tx.slice(-20).map(function (t) {
-      var d = String(t.d || "").slice(0, 10);
-      var buy = t.side === "BUY";
-      var rp = t.raw_px && t.raw_px > 0 ? t.raw_px : null;
-      var amt = +t.amt || 0;
-      var sh = rp ? Math.floor(amt / rp / 100) * 100 : null;
-      return "<tr><td>" + d + "</td><td class='fc'>" + gName(t.code) + "</td><td class='" + (buy ? "buy" : "sell") + "'>" + (buy ? "买" : "卖") + "</td><td>" + (rp ? rp.toFixed(4) : "—") + "</td><td>" + (sh ? sh.toLocaleString("zh-CN") : "—") + "</td><td>" + (buy ? "-" : "+") + Math.round(amt).toLocaleString("zh-CN") + "</td></tr>";
-    }).join("");
-    var moreTip = total > 20 ? '<div style="font-size:11.5px;color:#9FB0C3;margin-top:4px">共 ' + total + ' 笔成交，仅显示最近 20 笔（完整逐笔见回测成交表）</div>' : "";
-    box.innerHTML = '<div class="tblwrap"><table class="trades" style="margin-top:4px;table-layout:fixed;width:100%;min-width:560px"><colgroup><col style="width:15%"><col style="width:27%"><col style="width:8%"><col style="width:17%"><col style="width:17%"><col style="width:16%"></colgroup><thead><tr><th>日期</th><th class="fc">标的</th><th>方向</th><th>未复权价</th><th>数量（份）</th><th>金额</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + moreTip;
+    // ---- 交易流水（次要区块，保留）----
+    var tx = res.tx || [];
+    var txHtml = "";
+    if (tx.length) {
+      var total = tx.length;
+      var rows = tx.slice(-20).map(function (t) {
+        var d = String(t.d || "").slice(0, 10);
+        var buy = t.side === "BUY";
+        var rp = t.raw_px && t.raw_px > 0 ? t.raw_px : null;
+        var amt = +t.amt || 0;
+        var sh = rp ? Math.floor(amt / rp / 100) * 100 : null;
+        return "<tr><td>" + d + "</td><td class='fc'>" + gName(t.code) + "</td><td class='" + (buy ? "buy" : "sell") + "'>" + (buy ? "买" : "卖") + "</td><td>" + (rp ? rp.toFixed(4) : "—") + "</td><td>" + (sh ? sh.toLocaleString("zh-CN") : "—") + "</td><td>" + (buy ? "-" : "+") + Math.round(amt).toLocaleString("zh-CN") + "</td></tr>";
+      }).join("");
+      var moreTip = total > 20 ? '<div style="font-size:11.5px;color:#9FB0C3;margin-top:4px">共 ' + total + ' 笔成交，仅显示最近 20 笔（完整逐笔见回测成交表）</div>' : "";
+      txHtml = '<div style="font-size:12px;color:#D8E2EF;margin:10px 0 4px;font-weight:600">交易记录（最近 ' + Math.min(20, total) + ' / ' + total + ' 笔）</div><div class="tblwrap"><table class="trades" style="margin-top:4px;table-layout:fixed;width:100%;min-width:560px"><colgroup><col style="width:15%"><col style="width:27%"><col style="width:8%"><col style="width:17%"><col style="width:17%"><col style="width:16%"></colgroup><thead><tr><th>日期</th><th class="fc">标的</th><th>方向</th><th>未复权价</th><th>数量（份）</th><th>金额</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + moreTip;
+    }
+    box.innerHTML = posHtml + txHtml;
   }
     // 网格详情视图（持有标的一行点击后渲染）：① 网格参数（按引擎实际参数逐行展示）② 网格表（中轴线红标注 / 最新收盘价蓝标注）
   function gridHoldDetailHtml(h) {
@@ -5448,6 +5519,11 @@ function showStrategyDetail(name) {
         var m = $("gridCalcHelpModal");
         if (m) { m.style.display = "none"; document.body.style.overflow = ""; }
       });
+      var qms = $("gridQModeSel");
+      if (qms) qms.addEventListener("change", function () {
+        // 修正1：切换分位数 → 立即按新分位重算全部标的参数并刷新显示（评分表/参数表/计算说明）
+        if (window.GridView) window.GridView.recalcParams();
+      });
       if ($("gridCalcHelpModal")) $("gridCalcHelpModal").addEventListener("click", function (ev) {
         if (ev.target === this) { this.style.display = "none"; document.body.style.overflow = ""; }
       });
@@ -5615,6 +5691,27 @@ function showStrategyDetail(name) {
       });
       html += "</tbody></table>";
       el.innerHTML = '<div style="overflow-x:auto"><div style="font-size:12px;color:#D8E2EF;margin:4px 0">适配度评分 · Top ' + top.length + "（达标≥" + thr + " 分）</div>" + html + "</div>";
+    },
+    recalcParams: function () {
+      // 修正1：分位数/投资额/佣金滑点/波动窗口任一变化 → 仅重算已评分标的的参数（不重跑全池评分），并同步刷新评分表/参数表/计算说明弹层
+      var self = this;
+      if (!D || !self.lastScores || !self.lastScores.length) return;
+      var i = D.calendar.length - 1;
+      var n = Math.max(1, +($("gridTopN").value) || 10);
+      var invest = Math.max(1, +($("gridCapital").value) || 1000000);
+      var perCode = invest / Math.max(1, n);
+      var commV = (+($("gridComm").value) || 2.5) / 10000, slipV = (+($("gridSlip").value) || 5) / 10000;
+      var costRt = commV + slipV;
+      var volWin = Math.max(20, +($("gridVolWin").value) || 60);
+      var qPct = WufuEngine.gridQMode($("gridQModeSel") ? $("gridQModeSel").value : "p2p98");
+      self.lastScores.forEach(function (s) {
+        var p0 = WufuEngine.gridParams(s.code, i, perCode, costRt, volWin, qPct);
+        if (p0) { self.lastParams[s.code] = p0; self.allParams[s.code] = p0; }
+      });
+      self.renderScoreTable();
+      self.renderParamsTable();
+      var m = $("gridCalcHelpModal");
+      if (m && m.style.display !== "none") self.renderCalcHelp();
     },
     renderCalcHelp: function () {
       var self = this;
@@ -5961,10 +6058,12 @@ function showStrategyDetail(name) {
       cfg._warm_start = cfg.settings.start || "";   // 固化预热起点 = 保存那一刻的「回测起始时间」（详情页改起始日不更新预热起点）
       if (!self.lastScores || !self.lastScores.length) { showNotice("请先计算适配度评分（保存参数覆盖需评分后的网格参数）"); return; }
       var name = ($("gridStName").value || "").trim() || ("网格·" + cfg.codes.length + "标的·Top" + cfg.top_n + "·" + new Date().toLocaleDateString());
-      var m = loadStored();
-      m[name] = { type: "grid", _saved_at: new Date().toISOString(), grid: cfg };
-      storeAll(m); refreshStList(); renderStrategyList();
-      showNotice("网格策略已保存：" + name);
+      askOverwriteDup(name, function (n) {
+        var m = loadStored();
+        m[n] = { type: "grid", _saved_at: new Date().toISOString(), grid: cfg };
+        storeAll(m); refreshStList(); renderStrategyList();
+        showNotice("网格策略已保存：" + n);
+      });
     },
     applySaved: function (cfg) {
       var self = this;
@@ -7548,6 +7647,22 @@ function showStrategyDetail(name) {
         <b style="color:#F59E0B">当前参数实际计算值</b>
         <div id="gridCalcHelpBody" style="margin-top:6px;font-size:12px">（需先「计算适配度评分」后查看）</div>
       </div>
+    </div>
+  </div>
+</div>
+<div id="dupModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(2,6,23,.72);z-index:10000;overflow:auto;padding:16px">
+  <div style="max-width:420px;margin:20vh auto;background:#0B1220;border:1px solid #3E4E63;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #243244">
+      <div style="font-size:15px;font-weight:600;color:#F1F5F9">保存策略</div>
+      <button type="button" id="dupModalClose" style="font-size:18px;line-height:1;padding:4px 8px;background:transparent;border:none;color:#9FB0C3;cursor:pointer">×</button>
+    </div>
+    <div style="padding:14px 16px;font-size:13px;color:#D8E2EF;line-height:1.7">
+      已存在同名策略「<b id="dupName" style="color:#F1F5F9"></b>」，请选择：覆盖原策略，或另存为新策略。
+    </div>
+    <div style="display:flex;gap:8px;padding:0 16px 14px">
+      <button type="button" id="dupOverwrite" style="flex:1;font-size:13px;padding:7px 6px;border-radius:6px;border:1px solid #4FC3F7;background:#4FC3F7;color:#0B1220;cursor:pointer;font-weight:600">覆盖</button>
+      <button type="button" id="dupNew" style="flex:1;font-size:13px;padding:7px 6px;border-radius:6px;border:1px solid #4FC3F7;background:transparent;color:#4FC3F7;cursor:pointer">保存为新策略</button>
+      <button type="button" id="dupCancel" style="flex:1;font-size:13px;padding:7px 6px;border-radius:6px;border:1px solid #3E4E63;background:#202E3F;color:#D8E2EF;cursor:pointer">取消</button>
     </div>
   </div>
 </div>
