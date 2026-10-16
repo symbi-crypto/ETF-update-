@@ -296,7 +296,7 @@ footer b{color:#9FB0C3}
             <b id="fmTitle" style="font-size:14px;color:#F1F5F9">自定义公式编辑器</b>
             <button id="fmClose" style="font-size:16px;background:none;border:none;color:#9FB0C3;cursor:pointer">×</button>
           </div>
-          <input id="fmInput" type="text" placeholder="如 后复权收盘价/均线(后复权收盘价,10)-1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box">
+          <input id="fmInput" type="text" placeholder="如 MA(后复权收盘价,10)>1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box">
           <div id="fmStatus" style="font-size:11px;margin:4px 0;color:#4ADE80;min-height:14px"></div>
           <div style="display:flex;gap:8px;flex:1;min-height:180px;overflow:hidden">
             <div style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
@@ -1032,22 +1032,22 @@ window.WufuExpr = (function () {
     { id: 'premium', cn: '溢价率', help: '当日折溢价率（小数，负=折价）' }
   ];
   var FUNCS = [
-    { name: 'REF', cn: '引用', help: '取 N 日前的值', args: 2 },
-    { name: 'DELTA', cn: '差分', help: 'X - N日前X（差值）', args: 2 },
-    { name: 'MA', cn: '均线', help: 'N 日简单移动平均', args: 2 },
-    { name: 'EMA', cn: '指数移动平均', help: 'N 日指数移动平均', args: 2 },
-    { name: 'SMA', cn: '平滑均线', help: '递归移动平均：(X*M+前值*(N-M))/N', args: 3 },
-    { name: 'WMA', cn: '加权均线', help: 'N 日加权移动平均（线性权重）', args: 2 },
-    { name: 'DMA', cn: '动态均线', help: 'X 的 A 日动态移动平均', args: 2 },
-    { name: 'SUM', cn: '求和', help: 'N 日累计求和', args: 2 },
-    { name: 'PRODUCT', cn: '乘积', help: 'N 日连乘（累乘收益）', args: 2 },
-    { name: 'MAX', cn: '最大值', help: 'N 日最大值', args: 2 },
-    { name: 'MIN', cn: '最小值', help: 'N 日最小值', args: 2 },
-    { name: 'STD', cn: '标准差', help: 'N 日总体标准差', args: 2 },
-    { name: 'ABS', cn: '绝对值', help: '绝对值', args: 1 },
-    { name: 'ROC', cn: '变动率', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
-    { name: '涨幅', cn: '涨幅', help: 'X 当日涨幅（变动率(X,1)）', args: 1 },
-    { name: 'LOG', cn: '对数', help: '自然对数 ln(X)', args: 1 }
+    { name: 'REF', cn: 'REF', help: '取 N 日前的值', args: 2 },
+    { name: 'DELTA', cn: 'Delta', help: 'X - N日前X（差值）', args: 2 },
+    { name: 'MA', cn: 'MA', help: 'N 日简单移动平均', args: 2 },
+    { name: 'EMA', cn: 'EMA', help: 'N 日指数移动平均', args: 2 },
+    { name: 'SMA', cn: 'SMA', help: '递归移动平均：(X*M+前值*(N-M))/N', args: 3 },
+    { name: 'WMA', cn: 'WMA', help: 'N 日加权移动平均（线性权重）', args: 2 },
+    { name: 'DMA', cn: 'DMA', help: 'X 的 A 日动态移动平均', args: 2 },
+    { name: 'SUM', cn: 'SUM', help: 'N 日累计求和', args: 2 },
+    { name: 'PRODUCT', cn: 'Product', help: 'N 日连乘（累乘收益）', args: 2 },
+    { name: 'MAX', cn: 'MAX', help: 'N 日最大值', args: 2 },
+    { name: 'MIN', cn: 'MIN', help: 'N 日最小值', args: 2 },
+    { name: 'STD', cn: 'STD', help: 'N 日总体标准差', args: 2 },
+    { name: 'ABS', cn: 'ABS', help: '绝对值', args: 1 },
+    { name: 'ROC', cn: 'ROC', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
+    { name: '涨幅', cn: '涨幅', help: 'X 当日涨幅（ROC(X,1)）', args: 1 },
+    { name: 'LOG', cn: 'LOG', help: '自然对数 ln(X)', args: 1 }
   ];
   function validate(ast, fields, funcs) {
     var fset = {}, cset = {};
@@ -3369,8 +3369,9 @@ function fmInsertFunc(fnCn, nArgs) {
   $("fmClear").addEventListener("click", function () { $("fmInput").value = ""; FM_PENDING = null; fmRefresh(); $("fmInput").focus(); });
   $("fmSave").addEventListener("click", function () {
     var src = $("fmInput").value.trim();
+    if (!src) { alert("请输入公式，或点击下方字段/函数插入"); $("fmInput").focus(); return; }
     var r = fmValidate(src);
-    if (!r.ok) { alert(r.msg); return; }
+    if (!r.ok) { alert(r.msg + "\n\n请修正后再保存"); $("fmInput").focus(); return; }
     $("formulaModal").style.display = "none"; FM_PENDING = null;
     if (FM_CB) { var cb = FM_CB; FM_CB = null; cb(src); }
   });
