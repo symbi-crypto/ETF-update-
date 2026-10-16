@@ -318,7 +318,7 @@ footer b{color:#9FB0C3}
           </div>
         </div>
       </div>
-        <h3>筛选条件</h3>
+        <h3 style="font-size:12px;color:var(--mut);font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">筛选条件</h3>
         <div id="fltBox" style="margin-top:2px">
           <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">筛选因子（全部满足才进入候选池；如 R²阈值、涨幅≥X、收益波动率≤Y）——在「因子管理」创建并归属为筛选，或在此直接调整阈值</div>
           <div id="fltList"></div>
@@ -3133,34 +3133,58 @@ function renderFltList() {
     var ki = KIND_INFO[f.kind] || KIND_INFO.roc;
     var row = document.createElement("div");
     row.className = "row";
-    row.style.cssText = "display:flex;align-items:center;flex-wrap:wrap;margin:3px 0;gap:4px;box-sizing:border-box";
+    row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px;box-sizing:border-box";
     var lab = document.createElement("span");
-    lab.style.cssText = "flex:0 0 78px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+    lab.style.cssText = "flex:0 0 60px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     lab.textContent = factorLabel(f);
-    lab.title = (f.kind === "custom") ? (f.name + " = " + factorFormulaText(f)) : ((KIND_INFO[f.kind] || {}).title || "");
-    var wg;
+    lab.title = (f.kind === "custom" || f.kind === "expr") ? (f.name + " = " + factorFormulaText(f)) : ((KIND_INFO[f.kind] || {}).title || "");
+    var wg = document.createElement("div");
+    wg.style.cssText = "flex:0 0 auto;display:flex;align-items:center;gap:3px";
     if (f.kind === "custom" || f.kind === "expr") {
-      wg = document.createElement("div");
-      wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var tag3 = document.createElement("span");
-      tag3.style.cssText = "flex:0 0 auto;font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
+      tag3.style.cssText = "font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
       tag3.textContent = "公式";
       tag3.title = f.name + " = " + factorFormulaText(f);
       wg.appendChild(tag3);
-    } else wg = windowGroupHtml(ki, f);
+    } else {
+      // 紧凑窗口输入：无多余字母标签
+      var nw = ki.nwin || 1;
+      for (var j = 0; j < nw; j++) {
+        (function (jj) {
+          var wv = jj === 0 ? (f.window !== undefined ? f.window : ki.def)
+                 : jj === 1 ? (f.window2 !== undefined ? f.window2 : ki.def2)
+                 : (f.window3 !== undefined ? f.window3 : ki.def3);
+          var inp = document.createElement("input");
+          inp.type = "number";
+          inp.min = jj === 0 ? ki.wMin : ki["wMin" + (jj + 1)];
+          inp.max = jj === 0 ? ki.wMax : ki["wMax" + (jj + 1)];
+          inp.step = jj === 0 ? ki.wStep : ki["wStep" + (jj + 1)];
+          inp.value = wv;
+          inp.style.cssText = "width:44px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
+          inp.title = (ki.winTitles && ki.winTitles[jj]) || ki.title || "";
+          inp.addEventListener("input", function () {
+            if (jj === 0) f.window = +this.value;
+            else if (jj === 1) f.window2 = +this.value;
+            else f.window3 = +this.value;
+            renderMfLib(); scheduleRun();
+          });
+          wg.appendChild(inp);
+        })(j);
+      }
+    }
     var opSel = document.createElement("select");
-    opSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
+    opSel.style.cssText = "flex:0 0 38px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
     opSel.innerHTML = '<option value="gte">\u2265</option><option value="lte">\u2264</option>';
     opSel.value = f.op || "gte";
     opSel.addEventListener("change", function () { f.op = this.value; scheduleRun(); });
     var thIn = document.createElement("input");
     thIn.type = "number"; thIn.min = 0; thIn.max = 1000; thIn.step = 1;
     thIn.value = Math.round((f.threshold !== undefined ? f.threshold : 0) * 100);
-    thIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
+    thIn.style.cssText = "flex:0 0 48px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
     thIn.title = "筛选阈值（%）";
     thIn.addEventListener("input", function () { f.threshold = Math.max(0, Math.min(1000, +this.value || 0)) / 100; scheduleRun(); });
     var pct = document.createElement("span");
-    pct.style.cssText = "flex:0 0 14px;font-size:12px;color:#7C8DA1"; pct.textContent = "%";
+    pct.style.cssText = "flex:0 0 12px;font-size:12px;color:#7C8DA1"; pct.textContent = "%";
     var del = document.createElement("button");
     del.type = "button"; del.textContent = "\u00d7";
     del.style.cssText = "flex:0 0 22px;margin-left:2px";
