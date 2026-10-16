@@ -296,7 +296,7 @@ footer b{color:#9FB0C3}
             <b id="fmTitle" style="font-size:14px;color:#F1F5F9">自定义公式编辑器</b>
             <button id="fmClose" style="font-size:16px;background:none;border:none;color:#9FB0C3;cursor:pointer">×</button>
           </div>
-          <input id="fmInput" type="text" placeholder="如 close/MA(close,10)-1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box">
+          <input id="fmInput" type="text" placeholder="如 后复权收盘价/均线(后复权收盘价,10)-1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box">
           <div id="fmStatus" style="font-size:11px;margin:4px 0;color:#4ADE80;min-height:14px"></div>
           <div style="display:flex;gap:8px;flex:1;min-height:180px;overflow:hidden">
             <div style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
@@ -309,7 +309,7 @@ footer b{color:#9FB0C3}
             </div>
             <div style="flex:1.2;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
               <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">说明</div>
-              <div id="fmHelp" style="font-size:11px;color:#9FB0C3;line-height:1.55;word-break:break-all">点击左侧字段或函数查看说明；支持 + - * / ( )、比较 > >= < <= == !=、逻辑 &amp;&amp; || !。</div>
+              <div id="fmHelp" style="font-size:11px;color:#9FB0C3;line-height:1.55;word-break:break-all">点击左侧字段或函数插入；支持中文名称，可与英文混用。运算 + - * / ( )，比较 > >= < <= == !=，逻辑 &amp;&amp; || !。</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
@@ -940,6 +940,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 <script>
 // 安全表达式解析器（交易条件「自定义公式」白名单求值；禁止 eval/Function，递归下降解析）
 window.WufuExpr = (function () {
+  // 中文别名 → 规范 id（字段/函数）；英文 id 原样保留可解析
+  var CN_ALIAS = {
+    '后复权收盘价':'close','未复权收盘价':'rawclose','开盘价':'open','最高价':'high','最低价':'low',
+    '成交量':'volume','成交额':'amount','换手率':'turnover','单位净值':'nav','溢价率':'premium',
+    '引用':'ref','差分':'delta','均线':'ma','指数移动平均':'ema','平滑均线':'sma','加权均线':'wma',
+    '动态均线':'dma','求和':'sum','乘积':'product','最大值':'max','最小值':'min','标准差':'std',
+    '绝对值':'abs','变动率':'roc','对数':'log'
+  };
+  function canonId(v) { return CN_ALIAS[v] || v.toLowerCase(); }
   function tokenize(src) {
     var s = String(src).replace(/\s+/g, ''), out = [], i = 0;
     while (i < s.length) {
@@ -951,6 +960,10 @@ window.WufuExpr = (function () {
       if (/[a-zA-Z_]/.test(ch)) {
         var k = i; while (k < s.length && /[a-zA-Z0-9_]/.test(s[k])) k++;
         out.push({ t: 'id', v: s.slice(i, k) }); i = k; continue;
+      }
+      if (/[一-鿿]/.test(ch)) {
+        var z = i; while (z < s.length && /[一-鿿]/.test(s[z])) z++;
+        out.push({ t: 'id', v: s.slice(i, z) }); i = z; continue;
       }
       var two = s.slice(i, i + 2);
       if (two === '>=' || two === '<=' || two === '==' || two === '!=' || two === '&&' || two === '||') {
@@ -975,6 +988,7 @@ window.WufuExpr = (function () {
     var tk = this.next(); if (!tk) throw new Error('表达式不合法：意外结束');
     if (tk.t === 'num') return { t: 'num', v: tk.v };
     if (tk.t === 'id') {
+      var canon = canonId(tk.v);
       if (this.peek() && this.peek().v === '(') {
         this.next(); var args = [];
         if (!(this.peek() && this.peek().v === ')')) {
@@ -983,9 +997,9 @@ window.WufuExpr = (function () {
         }
         if (!this.peek() || this.peek().v !== ')') throw new Error('表达式不合法：函数 "' + tk.v + '" 缺少右括号 )');
         this.next();
-        return { t: 'call', name: tk.v.toLowerCase(), args: args };
+        return { t: 'call', name: canon, args: args };
       }
-      return { t: 'ref', v: tk.v.toLowerCase() };
+      return { t: 'ref', v: canon };
     }
     if (tk.v === '(') { var n = this.parseOr(); this.next(); return n; }
     throw new Error('表达式不合法：意外符号 "' + tk.v + '"');
@@ -1018,22 +1032,22 @@ window.WufuExpr = (function () {
     { id: 'premium', cn: '溢价率', help: '当日折溢价率（小数，负=折价）' }
   ];
   var FUNCS = [
-    { name: 'REF', cn: 'REF(X,N)', help: '取 N 日前的值', args: 2 },
-    { name: 'DELTA', cn: 'DELTA(X,N)', help: 'X - N日前X（差值）', args: 2 },
-    { name: 'MA', cn: 'MA(X,N)', help: 'N 日简单移动平均', args: 2 },
-    { name: 'EMA', cn: 'EMA(X,N)', help: 'N 日指数移动平均', args: 2 },
-    { name: 'SMA', cn: 'SMA(X,N,M)', help: '递归移动平均：(X*M+前值*(N-M))/N', args: 3 },
-    { name: 'WMA', cn: 'WMA(X,N)', help: 'N 日加权移动平均（线性权重）', args: 2 },
-    { name: 'DMA', cn: 'DMA(X,A)', help: 'X 的 A 日动态移动平均', args: 2 },
-    { name: 'SUM', cn: 'SUM(X,N)', help: 'N 日累计求和', args: 2 },
-    { name: 'PRODUCT', cn: 'PRODUCT(X,N)', help: 'N 日连乘（累乘收益）', args: 2 },
-    { name: 'MAX', cn: 'MAX(X,N)', help: 'N 日最大值', args: 2 },
-    { name: 'MIN', cn: 'MIN(X,N)', help: 'N 日最小值', args: 2 },
-    { name: 'STD', cn: 'STD(X,N)', help: 'N 日总体标准差', args: 2 },
-    { name: 'ABS', cn: 'ABS(X)', help: '绝对值', args: 1 },
-    { name: 'ROC', cn: 'ROC(X,N)', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
-    { name: '涨幅', cn: '涨幅(X)', help: 'X 当日涨幅（ROC(X,1)）', args: 1 },
-    { name: 'LOG', cn: 'LOG(X)', help: '自然对数 ln(X)', args: 1 }
+    { name: 'REF', cn: '引用', help: '取 N 日前的值', args: 2 },
+    { name: 'DELTA', cn: '差分', help: 'X - N日前X（差值）', args: 2 },
+    { name: 'MA', cn: '均线', help: 'N 日简单移动平均', args: 2 },
+    { name: 'EMA', cn: '指数移动平均', help: 'N 日指数移动平均', args: 2 },
+    { name: 'SMA', cn: '平滑均线', help: '递归移动平均：(X*M+前值*(N-M))/N', args: 3 },
+    { name: 'WMA', cn: '加权均线', help: 'N 日加权移动平均（线性权重）', args: 2 },
+    { name: 'DMA', cn: '动态均线', help: 'X 的 A 日动态移动平均', args: 2 },
+    { name: 'SUM', cn: '求和', help: 'N 日累计求和', args: 2 },
+    { name: 'PRODUCT', cn: '乘积', help: 'N 日连乘（累乘收益）', args: 2 },
+    { name: 'MAX', cn: '最大值', help: 'N 日最大值', args: 2 },
+    { name: 'MIN', cn: '最小值', help: 'N 日最小值', args: 2 },
+    { name: 'STD', cn: '标准差', help: 'N 日总体标准差', args: 2 },
+    { name: 'ABS', cn: '绝对值', help: '绝对值', args: 1 },
+    { name: 'ROC', cn: '变动率', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
+    { name: '涨幅', cn: '涨幅', help: 'X 当日涨幅（变动率(X,1)）', args: 1 },
+    { name: 'LOG', cn: '对数', help: '自然对数 ln(X)', args: 1 }
   ];
   function validate(ast, fields, funcs) {
     var fset = {}, cset = {};
@@ -3299,13 +3313,28 @@ function fmRefresh() {
   st.textContent = r.msg;
   st.style.color = r.ok ? "#4ADE80" : "#F87171";
 }
-function fmInsert(text) {
+function fmInsertAt(text, cursorOffset) {
   var inp = $("fmInput");
   var s = (inp.selectionStart != null) ? inp.selectionStart : inp.value.length;
   var e = (inp.selectionEnd != null) ? inp.selectionEnd : inp.value.length;
   inp.value = inp.value.slice(0, s) + text + inp.value.slice(e);
   inp.focus();
-  var pos = s + text.length; inp.setSelectionRange(pos, pos);
+  var pos = s + (cursorOffset != null ? cursorOffset : text.length);
+  inp.setSelectionRange(pos, pos);
+  fmRefresh();
+}
+var FM_PENDING = null; // {waitingComma:true}：多参数函数内，等用户输入逗号分隔后光标自然落在逗号后
+function fmInsertFunc(fnCn, nArgs) {
+  // 插入「均线()」，光标落在括号内第一个参数位；用户输入逗号分隔参数时光标自然在逗号后
+  var tpl = fnCn + "()";
+  var inp = $("fmInput");
+  var s = (inp.selectionStart != null) ? inp.selectionStart : inp.value.length;
+  var e = (inp.selectionEnd != null) ? inp.selectionEnd : inp.value.length;
+  inp.value = inp.value.slice(0, s) + tpl + inp.value.slice(e);
+  inp.focus();
+  var cursorPos = s + fnCn.length + 1;
+  inp.setSelectionRange(cursorPos, cursorPos);
+  FM_PENDING = nArgs >= 2 ? { waitingComma: true } : null;
   fmRefresh();
 }
 (function initFmModal() {
@@ -3314,7 +3343,7 @@ function fmInsert(text) {
     var b = document.createElement("button"); b.type = "button";
     b.textContent = f.cn; b.title = f.help;
     b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
-    b.addEventListener("click", function () { $("fmHelp").textContent = f.cn + "（" + f.id + "）：" + f.help; fmInsert(f.id); });
+    b.addEventListener("click", function () { $("fmHelp").textContent = f.cn + "：" + f.help; fmInsertAt(f.cn); });
     fb.appendChild(b);
   });
   var fc = $("fmFuncs");
@@ -3324,18 +3353,25 @@ function fmInsert(text) {
     b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
     b.addEventListener("click", function () {
       $("fmHelp").textContent = fn.cn + "：" + fn.help;
-      fmInsert(fn.name + "(" + (fn.args >= 2 ? "字段,N" : "字段") + ")");
+      fmInsertFunc(fn.cn, fn.args);
     });
     fc.appendChild(b);
   });
-  $("fmInput").addEventListener("input", fmRefresh);
-  $("fmClose").addEventListener("click", function () { $("formulaModal").style.display = "none"; FM_CB = null; });
-  $("fmClear").addEventListener("click", function () { $("fmInput").value = ""; fmRefresh(); $("fmInput").focus(); });
+  $("fmInput").addEventListener("input", function () {
+    // 多参数函数：用户输入逗号分隔第一参数后，光标已自然落在逗号后；标记完成（不做额外移动）
+    if (FM_PENDING && FM_PENDING.waitingComma) {
+      var idx = this.selectionStart;
+      if (idx > 0 && this.value[idx - 1] === ',') FM_PENDING = null;
+    }
+    fmRefresh();
+  });
+  $("fmClose").addEventListener("click", function () { $("formulaModal").style.display = "none"; FM_CB = null; FM_PENDING = null; });
+  $("fmClear").addEventListener("click", function () { $("fmInput").value = ""; FM_PENDING = null; fmRefresh(); $("fmInput").focus(); });
   $("fmSave").addEventListener("click", function () {
     var src = $("fmInput").value.trim();
     var r = fmValidate(src);
     if (!r.ok) { alert(r.msg); return; }
-    $("formulaModal").style.display = "none";
+    $("formulaModal").style.display = "none"; FM_PENDING = null;
     if (FM_CB) { var cb = FM_CB; FM_CB = null; cb(src); }
   });
 })();
