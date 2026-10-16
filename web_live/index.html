@@ -1727,7 +1727,7 @@ window.WufuExpr = (function () {
     var icSnapshotsFull = [];  // 全池 IC 截面：决策日全部有效标的（未过滤 scoreFloor/筛选/走弱），供「筛选池 vs 全池」IC 对照
     var attrSnap = [];   // 单因子归因快照（仅轮动）：决策后权重 wNew2 + 候选池因子标准化值 fsR.full
     function factorScores(candidates, i) {
-      var rankFactors = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+      var rankFactors = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank" && f.enabled !== false; });
       if (!rankFactors.length) return { scored: [], full: [] };
       var need = 0, fi, f;
       for (fi = 0; fi < rankFactors.length; fi++) need = Math.max(need, needOf(rankFactors[fi]));
@@ -1984,7 +1984,7 @@ window.WufuExpr = (function () {
         // 筛选条件：统一因子列表中 usage=filter 的全部满足才进入候选池（{kind, window, op: gte/lte, threshold}）
         var allFactors = (params.factors && params.factors.length) ? params.factors
                        : (params.filters || []).map(function (ft) { return { kind: ft.kind, window: ft.window, op: ft.op, threshold: ft.threshold, usage: "filter" }; });
-        var filters = allFactors.filter(function (f) { return (f.usage || "rank") === "filter"; });
+        var filters = allFactors.filter(function (f) { return (f.usage || "rank") === "filter" && f.enabled !== false; });
         if (filters.length) {
           var cand2 = [];
           for (ci = 0; ci < candidates.length; ci++) {
@@ -2024,7 +2024,7 @@ window.WufuExpr = (function () {
         if (scored.length) {
           var _sn = { i: i, scores: {}, fv: {} };
           for (var _si = 0; _si < scored.length; _si++) _sn.scores[scored[_si].code] = scored[_si].score;
-          var _rkf = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+          var _rkf = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank" && f.enabled !== false; });
           for (var _fi2 = 0; _fi2 < _rkf.length; _fi2++) {
             var _f2 = _rkf[_fi2];
             var _kk2 = _f2.kind + ":" + (_f2.window || 20) + ":" + (_f2.window2 || 0) + ":" + (_f2.window3 || 0);
@@ -2176,9 +2176,9 @@ window.WufuExpr = (function () {
             var bandOut = srk < rankN || srk > rankM;
             var meta = posMeta[sc] || {};
             var sH = false, idxC2;
-            for (idxC2 = 0; idxC2 < sellConds.length; idxC2++) if (sellHit(sellConds[idxC2], sc, i, meta)) { sH = true; break; }
+            for (idxC2 = 0; idxC2 < sellConds.length; idxC2++) if (sellConds[idxC2].enabled !== false && sellHit(sellConds[idxC2], sc, i, meta)) { sH = true; break; }
             var nH = false;
-            for (idxC2 = 0; idxC2 < holdConds.length; idxC2++) if (holdHit(holdConds[idxC2], sc, i, meta)) { nH = true; break; }
+            for (idxC2 = 0; idxC2 < holdConds.length; idxC2++) if (holdConds[idxC2].enabled !== false && holdHit(holdConds[idxC2], sc, i, meta)) { nH = true; break; }
             if ((bandOut || sH) && !nH) {
               lastSell[sc] = i;      // 卖出记录（决策日索引，冷却用）
               soldNow[sc] = 1;       // 本次不再买入
@@ -2199,7 +2199,7 @@ window.WufuExpr = (function () {
               if (brk < rankN || brk > rankM) continue;
               if (onlyR2.indexOf(bc) >= 0 || soldNow[bc]) continue;
               var bOk = true;
-              for (var bj2 = 0; bj2 < buyAdd.length; bj2++) if (!buyAddHit(buyAdd[bj2], bc, i)) { bOk = false; break; }
+              for (var bj2 = 0; bj2 < buyAdd.length; bj2++) if (buyAdd[bj2].enabled !== false && !buyAddHit(buyAdd[bj2], bc, i)) { bOk = false; break; }
               if (bOk) { if (wTarget[bc] === undefined) wTarget[bc] = 1; }
             }
           }
@@ -2506,7 +2506,7 @@ window.WufuExpr = (function () {
         // 单因子收益归因（仅轮动）：每调仓期 暴露×因子收益（高减低分组），Barra-lite 口径
         attribution: (function () {
           if (isReb || !attrSnap.length) return null;
-          var rankFs2 = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+          var rankFs2 = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank" && f.enabled !== false; });
           if (!rankFs2.length) return null;
           function fkey2(f) {
             return (f.kind || "roc") + ":" + (f.window || 20) + ":" + (f.window2 || 0) + ":" + (f.window3 || 0) + ":" + (f.formula_parts ? JSON.stringify(f.formula_parts.map(function (pp) { return pp.kind + ":" + (pp.window || 0) + ":" + (pp.window2 || 0) + ":" + (pp.window3 || 0) + ":" + (pp.coef || 0); })) : "");
@@ -3066,31 +3066,59 @@ function renderMfList() {
   }
   rankF.forEach(function (f) {
     var ki = KIND_INFO[f.kind] || KIND_INFO.roc;
-    sum += f.weight;
+    if (f.enabled !== false) sum += f.weight;
     var row = document.createElement("div");
     row.className = "row";
-    row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px";
+    row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px;box-sizing:border-box";
+    var chk = document.createElement("input");
+    chk.type = "checkbox"; chk.checked = f.enabled !== false;
+    chk.style.cssText = "flex:0 0 16px;width:16px;height:16px;cursor:pointer";
+    chk.title = "启用/停用（停用不参与回测，保留定义）";
+    chk.addEventListener("change", function () { f.enabled = this.checked; row.style.opacity = this.checked ? "1" : "0.4"; renderMfList(); renderMfLib(); scheduleRun(); });
     var lab = document.createElement("span");
-    lab.style.cssText = "flex:0 0 78px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+    lab.style.cssText = "flex:0 0 60px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     lab.textContent = factorLabel(f);
-    lab.title = (f.kind === "custom") ? (f.name + " = " + factorFormulaText(f)) : ((KIND_INFO[f.kind] || {}).title || "");
-    var wg;
+    lab.title = (f.kind === "custom" || f.kind === "expr") ? (f.name + " = " + factorFormulaText(f)) : ((KIND_INFO[f.kind] || {}).title || "");
+    var wg = document.createElement("div");
+    wg.style.cssText = "flex:0 0 auto;display:flex;align-items:center;gap:3px";
     if (f.kind === "custom" || f.kind === "expr") {
-      wg = document.createElement("div");
-      wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var tag = document.createElement("span");
-      tag.style.cssText = "flex:0 0 auto;font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
+      tag.style.cssText = "font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
       tag.textContent = "公式";
       tag.title = f.name + " = " + factorFormulaText(f);
       wg.appendChild(tag);
-    } else wg = windowGroupHtml(ki, f);
+    } else {
+      var nw = ki.nwin || 1;
+      for (var j = 0; j < nw; j++) {
+        (function (jj) {
+          var wv = jj === 0 ? (f.window !== undefined ? f.window : ki.def)
+                 : jj === 1 ? (f.window2 !== undefined ? f.window2 : ki.def2)
+                 : (f.window3 !== undefined ? f.window3 : ki.def3);
+          var inp = document.createElement("input");
+          inp.type = "number";
+          inp.min = jj === 0 ? ki.wMin : ki["wMin" + (jj + 1)];
+          inp.max = jj === 0 ? ki.wMax : ki["wMax" + (jj + 1)];
+          inp.step = jj === 0 ? ki.wStep : ki["wStep" + (jj + 1)];
+          inp.value = wv;
+          inp.style.cssText = "width:44px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
+          inp.title = (ki.winTitles && ki.winTitles[jj]) || ki.title || "";
+          inp.addEventListener("input", function () {
+            if (jj === 0) f.window = +this.value;
+            else if (jj === 1) f.window2 = +this.value;
+            else f.window3 = +this.value;
+            renderMfLib(); scheduleRun();
+          });
+          wg.appendChild(inp);
+        })(j);
+      }
+    }
     var wIn = document.createElement("input");
     wIn.type = "number"; wIn.min = 0; wIn.max = 1; wIn.step = 0.05; wIn.value = f.weight !== undefined ? f.weight : 0.1;
     wIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
     wIn.title = "排名权重";
     wIn.addEventListener("input", function () { f.weight = +this.value; renderMfList(); renderMfLib(); scheduleRun(); });
     var dSel = document.createElement("select");
-    dSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
+    dSel.style.cssText = "flex:0 0 38px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
     dSel.innerHTML = '<option value="1">正向</option><option value="-1">反向</option>';
     dSel.value = String(f.direction !== undefined ? f.direction : (f.kind === "vol" || f.kind === "premium" ? -1 : 1));
     dSel.title = "该因子得分方向";
@@ -3099,7 +3127,7 @@ function renderMfList() {
     del.type = "button"; del.textContent = "\u00d7";
     del.style.cssText = "flex:0 0 22px;margin-left:2px";
     del.addEventListener("click", function () { removeFactor(f); });
-    row.appendChild(lab); row.appendChild(wg); row.appendChild(wIn); row.appendChild(dSel); row.appendChild(del);
+    row.appendChild(chk); row.appendChild(lab); row.appendChild(wg); row.appendChild(wIn); row.appendChild(dSel); row.appendChild(del);
     box.appendChild(row);
   });
   $("mfSum").textContent = sum.toFixed(2);
@@ -3134,6 +3162,11 @@ function renderFltList() {
     var row = document.createElement("div");
     row.className = "row";
     row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px;box-sizing:border-box";
+    var chk = document.createElement("input");
+    chk.type = "checkbox"; chk.checked = f.enabled !== false;
+    chk.style.cssText = "flex:0 0 16px;width:16px;height:16px;cursor:pointer";
+    chk.title = "启用/停用";
+    chk.addEventListener("change", function () { f.enabled = this.checked; row.style.opacity = this.checked ? "1" : "0.4"; renderFltList(); renderMfLib(); scheduleRun(); });
     var lab = document.createElement("span");
     lab.style.cssText = "flex:0 0 60px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     lab.textContent = factorLabel(f);
@@ -3189,7 +3222,7 @@ function renderFltList() {
     del.type = "button"; del.textContent = "\u00d7";
     del.style.cssText = "flex:0 0 22px;margin-left:2px";
     del.addEventListener("click", function () { removeFactor(f); });
-    row.appendChild(lab); row.appendChild(wg); row.appendChild(opSel); row.appendChild(thIn); row.appendChild(pct); row.appendChild(del);
+    row.appendChild(chk); row.appendChild(lab); row.appendChild(wg); row.appendChild(opSel); row.appendChild(thIn); row.appendChild(pct); row.appendChild(del);
     box.appendChild(row);
   });
 }
@@ -3754,15 +3787,32 @@ function buildChips() {
     list.forEach(function (c, i) {
       var row = document.createElement("div");
       row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px";
+      var chk = document.createElement("input");
+      chk.type = "checkbox"; chk.checked = c.enabled !== false;
+      chk.style.cssText = "flex:0 0 16px;width:16px;height:16px;cursor:pointer";
+      chk.title = "启用/停用";
+      chk.addEventListener("change", function () { c.enabled = this.checked; row.style.opacity = this.checked ? "1" : "0.4"; renderAllCond(); scheduleRun(); });
       var lab = document.createElement("span");
       lab.style.cssText = "flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
       lab.textContent = (i + 1) + ". " + condText(c, panel);
       lab.title = condText(c, panel);
+      var ed = null;
+      if (c.type === "expr") {
+        ed = document.createElement("button");
+        ed.type = "button"; ed.textContent = "\u270E";
+        ed.title = "编辑公式";
+        ed.style.cssText = "flex:0 0 auto;font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+        ed.addEventListener("click", function () {
+          openFormulaModal({ initial: c.expr, title: "编辑公式", onSave: function (newExpr) { c.expr = newExpr; renderAllCond(); scheduleRun(); } });
+        });
+      }
       var del = document.createElement("button");
       del.type = "button"; del.textContent = "\u00d7";
       del.style.cssText = "flex:0 0 22px";
       del.addEventListener("click", function () { list.splice(i, 1); renderAllCond(); scheduleRun(); });
-      row.appendChild(lab); row.appendChild(del);
+      row.appendChild(chk); row.appendChild(lab);
+      if (ed) row.appendChild(ed);
+      row.appendChild(del);
       box.appendChild(row);
     });
     var ct = $(countId); if (ct) ct.textContent = list.length + " 个";
@@ -3883,7 +3933,8 @@ function buildChips() {
         var o = { kind: f.kind, window: f.window, window2: f.window2, window3: f.window3,
                   weight: f.weight !== undefined ? f.weight : 0.1,
                   direction: f.direction !== undefined ? f.direction : (f.kind === "vol" || f.kind === "premium" ? -1 : 1),
-                  usage: f.usage || "rank" };
+                  usage: f.usage || "rank",
+                  enabled: f.enabled !== false };
         if (f.kind === "custom") {
           o.name = f.name;
           o.formula_parts = (f.formula_parts || []).map(function (p) {
@@ -3899,19 +3950,28 @@ function buildChips() {
       rank_m: Math.max(1, Math.min(60, +$("rankMIn").value || 1)),
       standardize: $("stdSel") ? $("stdSel").value : "robust",
       buy_add: buyAdds.map(function (c) {
-        if (c.type === "factor") return { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
-        if (c.type === "expr") return { type: "expr", expr: c.expr };
-        return { type: c.type, op: c.op || "lte", value: c.value };
+        var o;
+        if (c.type === "factor") o = { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
+        else if (c.type === "expr") o = { type: "expr", expr: c.expr };
+        else o = { type: c.type, op: c.op || "lte", value: c.value };
+        o.enabled = c.enabled !== false;
+        return o;
       }),
       sell_conds: sellConds.map(function (c) {
-        if (c.type === "factor") return { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
-        if (c.type === "expr") return { type: "expr", expr: c.expr };
-        return { type: c.type, value: c.value };
+        var o;
+        if (c.type === "factor") o = { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
+        else if (c.type === "expr") o = { type: "expr", expr: c.expr };
+        else o = { type: c.type, op: c.op || "lte", value: c.value };
+        o.enabled = c.enabled !== false;
+        return o;
       }),
       hold_conds: holdConds.map(function (c) {
-        if (c.type === "factor") return { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
-        if (c.type === "expr") return { type: "expr", expr: c.expr };
-        return { type: c.type, value: c.value };
+        var o;
+        if (c.type === "factor") o = { type: "factor", kind: c.kind, window: c.window, op: c.op, threshold: c.threshold };
+        else if (c.type === "expr") o = { type: "expr", expr: c.expr };
+        else o = { type: c.type, value: c.value };
+        o.enabled = c.enabled !== false;
+        return o;
       }),
       mode: activeView === "rebalance" ? "rebalance" : "rotation",
       reb_weights: (function () {
@@ -4364,7 +4424,7 @@ function buildChips() {
       return;
     }
     if (params.mode !== "rebalance") {
-      var rankFacs = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+      var rankFacs = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank" && f.enabled !== false; });
       if (!rankFacs.length) {
         showNotice("排名条件暂无因子：回测将全程空仓（收益为0）。请先在「因子管理」添加排名因子");
         return;
@@ -4756,7 +4816,7 @@ function buildChips() {
       if (charts["cICDecay"]) charts["cICDecay"].resize();
     } else if ($("cICDecay")) { $("cICDecay").style.display = "none"; }
 
-    var facs = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+    var facs = (params.factors || []).filter(function (f) { return (f.usage || "rank") === "rank" && f.enabled !== false; });
     var rows = "", k3;
     facs.forEach(function (f) {
       var key = f.kind + ":" + (f.window || 20) + ":" + (f.window2 || 0) + ":" + (f.window3 || 0);
@@ -6315,7 +6375,7 @@ function showStrategyDetail(name) {
     return { combos: combos };
   }
 
-  function rankFacs(p) { return (p.factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; }); }
+  function rankFacs(p) { return (p.factors || []).filter(function (f) { return (f.usage || "rank") === "rank" && f.enabled !== false; }); }
 
   // 把一组网格取值应用到完整 params（克隆后覆盖对应字段）；非法组合返回 null
   function applyCombo(base, combo) {
