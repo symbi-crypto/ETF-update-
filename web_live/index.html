@@ -3078,11 +3078,11 @@ function renderMfList() {
     if (f.kind === "custom" || f.kind === "expr") {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
-      var ft2 = document.createElement("span");
-      ft2.style.cssText = "font-size:11px;color:#9FB0C3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-      ft2.textContent = factorFormulaText(f);
-      ft2.title = f.name + " = " + factorFormulaText(f);
-      wg.appendChild(ft2);
+      var tag = document.createElement("span");
+      tag.style.cssText = "font-size:10.5px;color:#7C8DA1;flex:0 0 auto;cursor:help";
+      tag.textContent = "公式";
+      tag.title = f.name + " = " + factorFormulaText(f);
+      wg.appendChild(tag);
     } else wg = windowGroupHtml(ki, f);
     var wIn = document.createElement("input");
     wIn.type = "number"; wIn.min = 0; wIn.max = 1; wIn.step = 0.05; wIn.value = f.weight !== undefined ? f.weight : 0.1;
@@ -3142,11 +3142,11 @@ function renderFltList() {
     if (f.kind === "custom" || f.kind === "expr") {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
-      var ft3 = document.createElement("span");
-      ft3.style.cssText = "font-size:11px;color:#9FB0C3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-      ft3.textContent = factorFormulaText(f);
-      ft3.title = f.name + " = " + factorFormulaText(f);
-      wg.appendChild(ft3);
+      var tag3 = document.createElement("span");
+      tag3.style.cssText = "font-size:10.5px;color:#7C8DA1;flex:0 0 auto;cursor:help";
+      tag3.textContent = "公式";
+      tag3.title = f.name + " = " + factorFormulaText(f);
+      wg.appendChild(tag3);
     } else wg = windowGroupHtml(ki, f);
     var opSel = document.createElement("select");
     opSel.style.cssText = "flex:0 0 40px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
@@ -3323,18 +3323,21 @@ function fmInsertAt(text, cursorOffset) {
   inp.setSelectionRange(pos, pos);
   fmRefresh();
 }
-var FM_PENDING = null; // {waitingComma:true}：多参数函数内，等用户输入逗号分隔后光标自然落在逗号后
+var FM_PENDING = null; // {p2:"周期"}：函数模板已插入，等用户键入逗号跳第二参数
 function fmInsertFunc(fnCn, nArgs) {
-  // 插入「均线()」，光标落在括号内第一个参数位；用户输入逗号分隔参数时光标自然在逗号后
-  var tpl = fnCn + "()";
+  var p1 = "后复权收盘价";
+  var p2 = nArgs >= 2 ? "周期" : null;
+  var p3 = nArgs >= 3 ? "M" : null;
+  var inner = p1 + (p2 ? ", " + p2 : "") + (p3 ? ", " + p3 : "");
+  var tpl = fnCn + "(" + inner + ")";
   var inp = $("fmInput");
   var s = (inp.selectionStart != null) ? inp.selectionStart : inp.value.length;
   var e = (inp.selectionEnd != null) ? inp.selectionEnd : inp.value.length;
   inp.value = inp.value.slice(0, s) + tpl + inp.value.slice(e);
   inp.focus();
-  var cursorPos = s + fnCn.length + 1;
-  inp.setSelectionRange(cursorPos, cursorPos);
-  FM_PENDING = nArgs >= 2 ? { waitingComma: true } : null;
+  var selStart = s + fnCn.length + 1;
+  inp.setSelectionRange(selStart, selStart + p1.length);
+  FM_PENDING = p2 ? { p2: p2 } : null;
   fmRefresh();
 }
 (function initFmModal() {
@@ -3357,14 +3360,18 @@ function fmInsertFunc(fnCn, nArgs) {
     });
     fc.appendChild(b);
   });
-  $("fmInput").addEventListener("input", function () {
-    // 多参数函数：用户输入逗号分隔第一参数后，光标已自然落在逗号后；标记完成（不做额外移动）
-    if (FM_PENDING && FM_PENDING.waitingComma) {
-      var idx = this.selectionStart;
-      if (idx > 0 && this.value[idx - 1] === ',') FM_PENDING = null;
+  $("fmInput").addEventListener("keydown", function (ev) {
+    // 用户键入逗号：不插入重复逗号，跳到第二参数占位并选中
+    if (FM_PENDING && FM_PENDING.p2 && ev.key === ",") {
+      ev.preventDefault();
+      var idx = this.value.indexOf(FM_PENDING.p2);
+      if (idx >= 0) {
+        this.setSelectionRange(idx, idx + FM_PENDING.p2.length);
+        FM_PENDING = null;
+      }
     }
-    fmRefresh();
   });
+  $("fmInput").addEventListener("input", fmRefresh);
   $("fmClose").addEventListener("click", function () { $("formulaModal").style.display = "none"; FM_CB = null; FM_PENDING = null; });
   $("fmClear").addEventListener("click", function () { $("fmInput").value = ""; FM_PENDING = null; fmRefresh(); $("fmInput").focus(); });
   $("fmSave").addEventListener("click", function () {
