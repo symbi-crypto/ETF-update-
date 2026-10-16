@@ -2982,12 +2982,22 @@ function renderMfLib() {
       renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
     });
     var edBtn = null;
-    if (f.kind === "custom") {
+    if (f.kind === "custom" || f.kind === "expr") {
       edBtn = document.createElement("button");
       edBtn.type = "button"; edBtn.textContent = "\u270e";
       edBtn.style.cssText = "flex:0 0 22px;margin-left:2px";
-      edBtn.title = "编辑自定义公式";
-      edBtn.addEventListener("click", function () { openCfEditor(f); });
+      if (f.kind === "custom") {
+        edBtn.title = "编辑自定义公式";
+        edBtn.addEventListener("click", function () { openCfEditor(f); });
+      } else {
+        edBtn.title = "编辑公式：" + (f.name || "");
+        edBtn.addEventListener("click", function () {
+          openFormulaModal({ title: "编辑公式因子：" + (f.name || ""), initial: f.expr || "", onSave: function (src) {
+            f.expr = src;
+            renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
+          }});
+        });
+      }
     }
     var del = document.createElement("button");
     del.type = "button"; del.textContent = "\u00d7";
@@ -3051,7 +3061,7 @@ function renderMfList() {
     lab.textContent = factorLabel(f);
     lab.title = (f.kind === "custom") ? (f.name + " = " + factorFormulaText(f)) : ((KIND_INFO[f.kind] || {}).title || "");
     var wg;
-    if (f.kind === "custom") {
+    if (f.kind === "custom" || f.kind === "expr") {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var ft2 = document.createElement("span");
@@ -3109,13 +3119,13 @@ function renderFltList() {
     var ki = KIND_INFO[f.kind] || KIND_INFO.roc;
     var row = document.createElement("div");
     row.className = "row";
-    row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px";
+    row.style.cssText = "display:flex;align-items:center;flex-wrap:wrap;margin:3px 0;gap:4px;box-sizing:border-box";
     var lab = document.createElement("span");
     lab.style.cssText = "flex:0 0 78px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     lab.textContent = factorLabel(f);
     lab.title = (f.kind === "custom") ? (f.name + " = " + factorFormulaText(f)) : ((KIND_INFO[f.kind] || {}).title || "");
     var wg;
-    if (f.kind === "custom") {
+    if (f.kind === "custom" || f.kind === "expr") {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var ft3 = document.createElement("span");
