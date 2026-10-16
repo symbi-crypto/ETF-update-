@@ -261,7 +261,6 @@ footer b{color:#9FB0C3}
               <option value="all">全部因子</option>
               <option value="price">行情因子</option>
               <option value="tech">技术因子</option>
-              <option value="navprem">净值溢价</option>
               <option value="custom">自定义因子</option>
             </select>
             <select id="mfAddKind" style="flex:1;min-width:0"></select>
@@ -507,21 +506,7 @@ footer b{color:#9FB0C3}
         <h3>参数调优 <span style="font-size:11px;font-weight:400;color:#7C8DA1">约束版 · 固定因子结构</span></h3>
         <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">基于当前参数做受限网格搜索：勾选要调优的维度并填取值网格，后台分片运行不卡页面；结果按目标排序，可一键应用到当前参数再「保存」。</div>
 
-        <h3>调优维度</h3>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
-          <input id="tdRankVal" type="text" value="1-1,1-3,1-5" placeholder="如 1-1 / 1-3 / 4-6"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
-        </div>
-        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
-          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
-          <input id="tdRebVal" type="text" value="weekly,monthly,quarterly" placeholder="daily/weekly/monthly/quarterly/yearly"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
-        </div>
-      </div>
-        
+        <h3>调优维度 <span style="font-size:11px;font-weight:400;color:#7C8DA1">数值维度按 最小/最大/步长 自动生成取值序列</span></h3>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
           <span style="width:16px;flex:0 0 16px"></span>
           <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">优化目标</span>
@@ -529,21 +514,64 @@ footer b{color:#9FB0C3}
             <option value="total" selected>研究段累计收益</option>
             <option value="sharpe">研究段夏普比率</option>
             <option value="calmar">研究段收益/回撤比</option>
+            <option value="ic">研究段因子IC</option>
           </select>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdRank" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">持有排名区间</span>
+          <span style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <input id="tdRankMin" type="number" min="1" max="60" step="1" value="1" style="width:48px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">~</span>
+            <input id="tdRankMax" type="number" min="1" max="60" step="1" value="5" style="width:48px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">步长</span>
+            <input id="tdRankStep" type="number" min="1" max="60" step="1" value="2" style="width:44px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1" title="起始名次=当前参数，结束名次按序列扫描">结束第N名(起始=当前)</span>
+          </span>
+        </div>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdReb" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">调仓周期</span>
+          <span style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <input id="tdRebMin" type="number" min="1" max="52" step="1" value="1" style="width:44px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">~</span>
+            <input id="tdRebMax" type="number" min="1" max="52" step="1" value="4" style="width:44px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">步长</span>
+            <input id="tdRebStep" type="number" min="1" max="52" step="1" value="1" style="width:44px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <select id="tdRebUnit" style="font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#202E3F;color:#F1F5F9" title="单位固定，扫描每 N 个单位">
+              <option value="daily">天</option>
+              <option value="weekly" selected>周</option>
+              <option value="monthly">月</option>
+              <option value="quarterly">季</option>
+              <option value="yearly">年</option>
+            </select>
+          </span>
         </div>
         <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
           <input type="checkbox" id="tdWindow" style="width:16px;flex:0 0 16px;margin:0">
           <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">排名因子窗口</span>
-          <input id="tdWindowVal" type="text" value="20,40,60" placeholder="逗号分隔取值，作用于全部排名因子"
-                 style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+          <span style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <input id="tdWinMin" type="number" min="1" max="250" step="1" value="20" style="width:48px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">~</span>
+            <input id="tdWinMax" type="number" min="1" max="250" step="1" value="60" style="width:48px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">步长</span>
+            <input id="tdWinStep" type="number" min="1" max="250" step="1" value="20" style="width:44px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">日</span>
+          </span>
         </div>
-
-        <div class="row" style="display:flex;align-items:flex-start;margin:3px 0;gap:6px">
-          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:2px 0 0">
-          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap;padding-top:2px">因子权重</span>
-          <textarea id="tdWeightVal" rows="2" placeholder="权重示例：0.25,0.35,0.25,0.15（每行一组，逗号分隔，个数=排名因子数）"
-                    style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9;resize:vertical"></textarea>
+        <div class="row" style="display:flex;align-items:center;margin:3px 0;gap:6px">
+          <input type="checkbox" id="tdWeight" style="width:16px;flex:0 0 16px;margin:0">
+          <span style="font-size:12px;color:#D8E2EF;width:88px;flex:0 0 88px;white-space:nowrap">因子权重</span>
+          <span style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <input id="tdWMin" type="number" min="0" max="1" step="0.05" value="0.1" style="width:52px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">~</span>
+            <input id="tdWMax" type="number" min="0" max="1" step="0.05" value="0.3" style="width:52px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1">步长</span>
+            <input id="tdWStep" type="number" min="0.01" max="1" step="0.05" value="0.05" style="width:48px;font-size:12px;padding:2px 3px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+            <span style="font-size:11px;color:#7C8DA1" title="扫描排名首因子权重，其余排名因子平分剩余权重">主因子权重(其余均分)</span>
+          </span>
         </div>
+      </div>
         <div class="row" style="display:flex;align-items:center;margin:6px 0;gap:6px">
           <button id="tuneBtn" type="button" style="padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">开始调优</button>
           <span class="st" id="tuneState" style="font-size:11px">就绪</span>
@@ -2539,16 +2567,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     vol_ratio: { label: "放量比",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 2,
                  wMin2: 5, wMax2: 250, wStep2: 5, def2: 60,
                  winTitles: ["近N日均量窗口", "M日前M日均量窗口"], title: "近N日均量 ÷ M日前M日均量（量能放大程度）", cat: "tech" },
-    nav_roc:   { label: "净值动量",     wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, cat: "navprem",
+    nav_roc:   { label: "净值",         wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, cat: "price",
                  title: "单位净值N日涨幅（NAV动量，基于官方公布净值，口径同涨幅因子）" },
-    premium:   { label: "溢价率均值",   wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, cat: "navprem",
+    premium:   { label: "溢价率均值",   wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, cat: "price",
                  title: "近N日平均折溢价率（收盘价-公布净值，小数；低溢价/折价更优，反转风格，默认负向使用）" }
   };
   var KIND_CAT = {
     all: null,
-    price: ["close", "open", "high", "low", "amount", "volume", "turnover", "roc"],
+    price: ["close", "open", "high", "low", "amount", "volume", "turnover", "roc", "nav_roc", "premium"],
     tech: ["slope_r2", "wslope_r2", "vol", "risk_adj", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "r2", "vol_ratio"],
-    navprem: ["nav_roc", "premium"],
     custom: ["custom"]
   };
   function fillMfKind(cat) {
@@ -2594,7 +2621,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     { k: "rsi", label: "RSI", mean: "相对强弱指标（Wilder 平滑：首值取前 N 日涨跌幅简单均值，其后 alpha=1/N 递推）", formula: "RSI = 100 × 均涨 ÷ (均涨 + 均跌)" },
     { k: "turnover", label: "换手率", mean: "N日平均换手率（%）", formula: "Σ turnover[t-N+1..t] ÷ N（%）" },
     { k: "vol_ratio", label: "放量比", mean: "近N日均量 ÷ M日前M日均量（量能放大程度）", formula: "(Σ vol[t-N+1..t] ÷ N) ÷ (Σ vol[t-N-M+1..t-N] ÷ M)" },
-    { k: "nav_roc", label: "净值动量", mean: "单位净值 N 日涨幅（NAV动量，基于基金官方公布净值，不受二级市场价格波动干扰）", formula: "nav[t] / nav[t-N] - 1" },
+    { k: "nav_roc", label: "净值", mean: "单位净值 N 日涨幅（NAV动量，基于基金官方公布净值，不受二级市场价格波动干扰）", formula: "nav[t] / nav[t-N] - 1" },
     { k: "premium", label: "溢价率均值", mean: "近N日平均折溢价率（收盘价相对公布净值的偏离，标准折溢价，非盘中IOPV；负值=折价）。低溢价/折价更优，反转风格，默认负向使用；QDII 因海外时差，折溢价偏差略大", formula: "Σ premium[t-N+1..t] ÷ N（premium = 收盘价/公布净值 - 1，小数）" },
     { k: "custom", label: "自定义公式因子", mean: "用现有基础因子按公式四则组合（最少2个成分，先乘除后加减）", formula: "Σ (coefᵢ × factorᵢ)，运算符 + - × ÷" }
   ];
@@ -3045,6 +3072,9 @@ function buildChips() {
         : "";
       rl.textContent = "每" + rebInterval + rebSel.unit + (apx ? "·" + apx : "");
     }
+    // 调优面板「调仓周期」单位与当前周期同步
+    var tu = $("tdRebUnit");
+    if (tu && rebSel) tu.value = rebSel.mode;
   }
   $("rebIn").addEventListener("input", function () {
     var nv = Math.max(rebSel.min, Math.min(rebSel.max, +this.value || rebSel.def));
@@ -5786,20 +5816,25 @@ function showStrategyDetail(name) {
   var BATCH = 50;                       // 每批回测组数（分批让出主线程）
   var anchorMap = { daily: "", weekly: "mon", monthly: "first", quarterly: "first", yearly: "first" };
 
-  function parseCsv(s) {
-    return String(s || "").split(/[,，;\s]+/).map(function (x) { return x.trim(); }).filter(Boolean);
-  }
-  function parseWeightRows(s) {
-    return String(s || "").split(/\n+/).map(function (ln) { return ln.trim(); }).filter(Boolean);
+  // min/max/step → 取值序列（含端点，步长>0；非法返回空）
+  function genSeq(minId, maxId, stepId, decimals) {
+    var lo = parseFloat($(minId).value), hi = parseFloat($(maxId).value), st = parseFloat($(stepId).value);
+    if (!(lo >= 0) || !(hi >= lo) || !(st > 0)) return [];
+    var out = [], n = Math.round((hi - lo) / st) + 1, i, v;
+    for (i = 0; i < n; i++) { v = lo + i * st; if (v > hi + 1e-9) break; out.push(+v.toFixed(decimals)); }
+    return out;
   }
 
   // 采集用户勾选的维度与取值，做笛卡尔积
   function buildGrid() {
     var dims = [];
-    if ($("tdWindow") && $("tdWindow").checked) dims.push({ k: "window", vals: parseCsv($("tdWindowVal").value) });
-    if ($("tdRank") && $("tdRank").checked) dims.push({ k: "rank", vals: parseCsv($("tdRankVal").value) });
-    if ($("tdReb") && $("tdReb").checked) dims.push({ k: "reb", vals: parseCsv($("tdRebVal").value) });
-    if ($("tdWeight") && $("tdWeight").checked) dims.push({ k: "weight", vals: parseWeightRows($("tdWeightVal").value) });
+    if ($("tdWindow") && $("tdWindow").checked) dims.push({ k: "window", vals: genSeq("tdWinMin", "tdWinMax", "tdWinStep", 0) });
+    if ($("tdRank") && $("tdRank").checked) dims.push({ k: "rank", vals: genSeq("tdRankMin", "tdRankMax", "tdRankStep", 0) });
+    if ($("tdReb") && $("tdReb").checked) {
+      var unit = $("tdRebUnit").value;                       // 单位固定，扫描每 N 个单位
+      dims.push({ k: "reb", vals: genSeq("tdRebMin", "tdRebMax", "tdRebStep", 0).map(function (N) { return { mode: unit, n: N }; }) });
+    }
+    if ($("tdWeight") && $("tdWeight").checked) dims.push({ k: "weight", vals: genSeq("tdWMin", "tdWMax", "tdWStep", 2) });
     if (!dims.length) return { err: "请至少勾选一个要调优的维度" };
     var combos = [{}];
     dims.forEach(function (d) {
@@ -5812,7 +5847,7 @@ function showStrategyDetail(name) {
       });
       combos = next;
     });
-    if (!combos.length) return { err: "取值网格为空" };
+    if (!combos.length) return { err: "取值序列为空（请检查最小/最大/步长）" };
     if (combos.length > MAXGRID) return { err: "网格组合 " + combos.length + " 组超过上限 " + MAXGRID + "，请减少维度或取值" };
     return { combos: combos };
   }
@@ -5829,19 +5864,25 @@ function showStrategyDetail(name) {
       rf.forEach(function (f) { f.window = wv; });
     }
     if (combo.rank !== undefined) {
-      var nm = String(combo.rank).split("-");
-      var n = parseInt(nm[0], 10), m = nm.length > 1 ? parseInt(nm[1], 10) : n;
-      if (!n || !m || m < n || n < 1) return null;
+      var m = parseInt(combo.rank, 10);
+      var n = Math.max(1, +p.rank_n || 1);               // 起始名次沿用当前参数
+      if (!m || m < n || m < 1) return null;
       p.rank_n = n; p.rank_m = m;
     }
-    if (combo.reb !== undefined) {
-      if (!(combo.reb in anchorMap)) return null;
-      p.rebalance_mode = combo.reb; p.rebalance_interval = 1; p.rebalance_anchor = anchorMap[combo.reb];
+    if (combo.reb !== undefined && combo.reb && combo.reb.mode) {
+      var mode = combo.reb.mode;
+      if (!(mode in anchorMap)) return null;
+      p.rebalance_mode = mode;
+      p.rebalance_interval = Math.max(1, parseInt(combo.reb.n, 10) || 1);
+      p.rebalance_anchor = anchorMap[mode];
     }
     if (combo.weight !== undefined) {
-      var w = String(combo.weight).split(/[,，\s]+/).map(function (x) { return parseFloat(x); });
-      if (w.length !== rf.length) return null;   // 权重个数必须等于排名因子数
-      rf.forEach(function (f, i) { f.weight = w[i]; });
+      var w0 = parseFloat(combo.weight);
+      if (isNaN(w0) || w0 < 0 || w0 > 1) return null;
+      if (!rf.length) return null;
+      rf[0].weight = w0;                                 // 首因子权重扫描，其余排名因子平分剩余权重
+      var rest = rf.length > 1 ? (1 - w0) / (rf.length - 1) : 0;
+      for (var ri = 1; ri < rf.length; ri++) rf[ri].weight = rest;
     }
     return p;
   }
@@ -5853,10 +5894,22 @@ function showStrategyDetail(name) {
     var obj = $("tuneObj").value;
     // P1-1 数据窥探修正：排序分数一律取研究段（前N年）指标；验证段（最近3年冻结段）只检验、不参与排序推荐
     var sg = m.segments && m.segments.study;
+    var stIC = null, stICIR = null;
+    if (obj === "ic") {
+      // 研究段因子IC：研究段（回测起点~验证段起点）内，多因子合成打分 vs 未来收益的截面秩相关均值/ICIR
+      var rf = rankFacs(p);
+      var vStart = m.segments && m.segments.v_start;
+      if (window.WufuIC && rf.length && p.codes && p.codes.length) {
+        var icr = window.WufuIC.studyIC(W.getData(), p.codes, rf, p.start_date, vStart);
+        if (icr) { stIC = icr.mean; stICIR = icr.icir; }
+      }
+      if (stIC === null || isNaN(stIC)) return null;
+    }
     function segScore(s) {
       if (!s || s.n_days < 5) return null;
       if (obj === "sharpe") return s.sharpe;
       if (obj === "calmar") return (s.max_dd < 0 ? s.cagr / Math.abs(s.max_dd) : null);
+      if (obj === "ic") return stIC;
       return s.total;
     }
     var score = segScore(sg);
@@ -5868,6 +5921,7 @@ function showStrategyDetail(name) {
       stTotal: sg ? sg.total : null,
       stSharpe: sg ? sg.sharpe : null,
       stCalmar: sg ? (sg.max_dd < 0 ? sg.cagr / Math.abs(sg.max_dd) : null) : null,
+      stIC: stIC, stICIR: stICIR,
       valTotal: m.segments && m.segments.validation ? m.segments.validation.total : null,
       valSharpe: m.segments && m.segments.validation ? m.segments.validation.sharpe : null
     };
@@ -5880,18 +5934,6 @@ function showStrategyDetail(name) {
     if (grid.err) { $("tuneState").textContent = grid.err; return; }
     var base = W.getParams();
     if (!base.codes.length) { $("tuneState").textContent = "请先在第一步勾选标的"; return; }
-    var rf = rankFacs(base);
-    // 权重维度预校验：候选每行的权重个数必须等于排名因子数
-    if ($("tdWeight") && $("tdWeight").checked) {
-      var wRows = parseWeightRows($("tdWeightVal").value);
-      for (var i = 0; i < wRows.length; i++) {
-        var c = String(wRows[i]).split(/[,，\s]+/).filter(Boolean).map(function (x) { return parseFloat(x); });
-        if (c.length !== rf.length) {
-          $("tuneState").textContent = "权重第 " + (i + 1) + " 组需 " + rf.length + " 个值（当前排名因子 " + rf.length + " 个），实际 " + c.length;
-          return;
-        }
-      }
-    }
     var combos = grid.combos, results = [], done = 0;
     $("tuneState").textContent = "搜索 " + combos.length + " 组…";
     $("tuneProg").style.display = "block";
@@ -5930,10 +5972,11 @@ function showStrategyDetail(name) {
     var obj = $("tuneObj").value;
     results.sort(function (a, b) { return b.m.score - a.m.score; });
     var bm = metric(base);
-    var objLabel = { total: "目标·研究段累计", sharpe: "目标·研究段夏普", calmar: "目标·研究段收益回撤" }[obj] || "目标";
+    var objLabel = { total: "目标·研究段累计", sharpe: "目标·研究段夏普", calmar: "目标·研究段收益回撤", ic: "目标·研究段IC" }[obj] || "目标";
 
     function scoreText(m) {
       if (obj === "sharpe") return (isFinite(m.stSharpe) ? m.stSharpe.toFixed(2) : "—");
+      if (obj === "ic") return (isFinite(m.stIC) ? (m.stIC >= 0 ? "+" : "") + m.stIC.toFixed(3) + (isFinite(m.stICIR) ? " (ICIR " + m.stICIR.toFixed(2) + ")" : "") : "—");
       var v = (obj === "calmar") ? (m.stCalmar !== undefined && m.stCalmar !== null ? m.stCalmar : null) : m.stTotal;
       return pct(v);
     }
@@ -6030,12 +6073,13 @@ function showStrategyDetail(name) {
     chart.resize();
   }
 
+  var REB_UNIT_LABEL = { daily: "天", weekly: "周", monthly: "月", quarterly: "季", yearly: "年" };
   function describeCombo(c) {
     var parts = [];
-    if (c.window !== undefined) parts.push("窗口 " + c.window);
-    if (c.rank !== undefined) parts.push("排名 " + c.rank);
-    if (c.reb !== undefined) parts.push("周期 " + c.reb);
-    if (c.weight !== undefined) parts.push("权重 [" + c.weight + "]");
+    if (c.window !== undefined) parts.push("窗口 " + c.window + "日");
+    if (c.rank !== undefined) parts.push("持有至第" + c.rank + "名");
+    if (c.reb !== undefined && c.reb && c.reb.mode) parts.push("每" + c.reb.n + REB_UNIT_LABEL[c.reb.mode]);
+    if (c.weight !== undefined) parts.push("主因子权重 " + c.weight);
     return parts.length ? parts.join(" · ") : "（仅基线）";
   }
 
@@ -6288,7 +6332,7 @@ function showStrategyDetail(name) {
     r2: "R²阈值", c_vs_ma: "收盘vs均线", c_vs_ma_lag: "收盘vs前均线", ma_vs_ma: "均线vs均线", ma_vs_ma_lag: "均线vs前均线",
     ma: "N日均线", ma_lag: "N日前均线", close: "后复权收盘", open: "开盘价", high: "最高价", low: "最低价",
     amplitude: "日内振幅", position: "日内位置", rsi: "RSI", amount: "成交额", volume: "成交量", turnover: "换手率", vol_ratio: "放量比", rsrs: "RSRS",
-    nav_roc: "净值动量", premium: "溢价率均值"
+    nav_roc: "净值", premium: "溢价率均值"
   };
   window.IC_KINDS = IC_KINDS;
   var icSel = {}, fSel = {}, fWinVals = {};   // 标的池 / 因子勾选 / 因子主窗口（首次默认不勾选，重渲染保留）
@@ -6566,6 +6610,63 @@ function showStrategyDetail(name) {
     }
     return { icList: icList, dates: dates, nList: nList };
   }
+
+  // ---- 供参数调优复用：研究段多因子合成打分的截面 IC（均值/ICIR）----
+  // D=行情数据；codes=候选标的；factors=排名因子（含 kind/window/weight/direction）；
+  // startDate/endDate 圈定研究段（YYYY-MM-DD）。合成分=各因子截面秩×权重×方向，再与未来 futN 日收益做 Spearman。
+  function studyIC(D, codes, factors, startDate, endDate) {
+    try {
+      var seq = buildSeries(D, codes);
+      var calendar = D.calendar || [];
+      var L = calendar.length;
+      if (L < 60 || !codes || codes.length < 5) return null;
+      var futN = 20, freq = 5;
+      var i0 = 0, i1 = L - 1, a, b;
+      if (startDate) { for (a = 0; a < L; a++) { if (calendar[a] >= startDate) { i0 = a; break; } } }
+      if (endDate) { for (b = L - 1; b >= 0; b--) { if (calendar[b] <= endDate) { i1 = b; break; } } }
+      var rf = (factors || []).filter(function (f) { return (f.usage || "rank") === "rank"; });
+      if (!rf.length) return null;
+      var icList = [];
+      for (var i = i0 + 40; i + futN < i1; i += freq) {
+        var codesOk = [], fmat = [], fret = [];
+        for (var ci = 0; ci < codes.length; ci++) {
+          var c = codes[ci], cc = seq.closes[c];
+          if (!cc) continue;
+          var p0 = seq.opens && seq.opens[c] ? seq.opens[c][i + 1] : null;
+          if (isMiss(cc[i]) || isMiss(cc[i + futN]) || !(cc[i] > 0) || isMiss(p0) || !(p0 > 0)) continue;
+          var fvals = [], ok = true;
+          for (var fi = 0; fi < rf.length; fi++) {
+            var fv = factorValAt(seq, rf[fi].kind, c, i, rf[fi], 252);
+            if (isNaN(fv)) { ok = false; break; }
+            fvals.push(fv);
+          }
+          if (!ok) continue;
+          codesOk.push(c); fmat.push(fvals); fret.push(cc[i + futN] / p0 - 1);
+        }
+        if (codesOk.length < 5) continue;
+        var comp = new Array(codesOk.length).fill(0);
+        for (var fi2 = 0; fi2 < rf.length; fi2++) {
+          var col = [], r;
+          for (r = 0; r < codesOk.length; r++) col.push(fmat[r][fi2]);
+          var ranks = rankArr(col);
+          var dir = rf[fi2].direction !== undefined ? rf[fi2].direction : (rf[fi2].kind === "vol" || rf[fi2].kind === "premium" ? -1 : 1);
+          var w = rf[fi2].weight || 0;
+          for (r = 0; r < codesOk.length; r++) comp[r] += w * dir * ranks[r];
+        }
+        var ic = rankIC(comp, fret);
+        if (!isNaN(ic)) icList.push(ic);
+      }
+      if (icList.length < 3) return null;
+      var mean = 0, t;
+      for (t = 0; t < icList.length; t++) mean += icList[t];
+      mean /= icList.length;
+      var sd = 0;
+      for (t = 0; t < icList.length; t++) sd += (icList[t] - mean) * (icList[t] - mean);
+      sd = Math.sqrt(sd / icList.length);
+      return { mean: mean, icir: sd > 0 ? mean / sd : 0, n: icList.length };
+    } catch (e) { return null; }
+  }
+  window.WufuIC = { studyIC: studyIC };
 
   function buildSeries(D, codes) {
     var closes = {}, opens = {}, highs = {}, lows = {}, vols = {}, amts = {}, turnovers = {}, rawCloses = {}, navs = {}, prems = {};
