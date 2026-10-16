@@ -290,7 +290,34 @@ footer b{color:#9FB0C3}
           </div>
         </div>
       </div>
-      <div class="psec" id="psecFilter">
+      <div id="formulaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:#15202E;border:1px solid #3E4E63;border-radius:8px;width:min(720px,94vw);max-height:88vh;display:flex;flex-direction:column;padding:12px;box-sizing:border-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <b id="fmTitle" style="font-size:14px;color:#F1F5F9">自定义公式编辑器</b>
+            <button id="fmClose" style="font-size:16px;background:none;border:none;color:#9FB0C3;cursor:pointer">×</button>
+          </div>
+          <input id="fmInput" type="text" placeholder="如 close/MA(close,10)-1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box">
+          <div id="fmStatus" style="font-size:11px;margin:4px 0;color:#4ADE80;min-height:14px"></div>
+          <div style="display:flex;gap:8px;flex:1;min-height:180px;overflow:hidden">
+            <div style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
+              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">字段（10）</div>
+              <div id="fmFields"></div>
+            </div>
+            <div style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
+              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">函数（16）</div>
+              <div id="fmFuncs"></div>
+            </div>
+            <div style="flex:1.2;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
+              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">说明</div>
+              <div id="fmHelp" style="font-size:11px;color:#9FB0C3;line-height:1.55;word-break:break-all">点击左侧字段或函数查看说明；支持 + - * / ( )、比较 > >= < <= == !=、逻辑 &amp;&amp; || !。</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+            <button id="fmClear" style="font-size:12px;padding:4px 12px">清空</button>
+            <button id="fmSave" style="font-size:12px;padding:4px 16px;background:#F59E0B;color:#111;border:none;border-radius:4px;cursor:pointer">保存</button>
+          </div>
+        </div>
+      </div>
         <h3>筛选条件</h3>
         <div id="fltBox" style="margin-top:2px">
           <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">筛选因子（全部满足才进入候选池；如 R²阈值、涨幅≥X、收益波动率≤Y）——在「因子管理」创建并归属为筛选，或在此直接调整阈值</div>
@@ -929,7 +956,7 @@ window.WufuExpr = (function () {
       if (two === '>=' || two === '<=' || two === '==' || two === '!=' || two === '&&' || two === '||') {
         out.push({ t: 'op', v: two }); i += 2; continue;
       }
-      if ('+-*/()><!'.indexOf(ch) >= 0) { out.push({ t: 'op', v: ch }); i++; continue; }
+      if ('+-*/()><!,'.indexOf(ch) >= 0) { out.push({ t: 'op', v: ch }); i++; continue; }
       throw new Error('表达式不合法：无法识别字符 "' + ch + '"');
     }
     return out;
@@ -944,24 +971,87 @@ window.WufuExpr = (function () {
   Parser.prototype.parseAdd = function () { var n = this.parseMul(); while (this.peek() && (this.peek().v === '+' || this.peek().v === '-')) { var op = this.next().v; var r = this.parseMul(); n = { t: 'bin', op: op, l: n, r: r }; } return n; };
   Parser.prototype.parseMul = function () { var n = this.parseUnary(); while (this.peek() && (this.peek().v === '*' || this.peek().v === '/')) { var op = this.next().v; var r = this.parseUnary(); n = { t: 'bin', op: op, l: n, r: r }; } return n; };
   Parser.prototype.parseUnary = function () { if (this.peek() && this.peek().v === '!') { this.next(); return { t: 'not', e: this.parseUnary() }; } if (this.peek() && this.peek().v === '-') { this.next(); return { t: 'neg', e: this.parseUnary() }; } return this.parsePrimary(); };
-  Parser.prototype.parsePrimary = function () { var tk = this.next(); if (!tk) throw new Error('表达式不合法：意外结束'); if (tk.t === 'num') return { t: 'num', v: tk.v }; if (tk.t === 'id') return { t: 'ref', v: tk.v }; if (tk.v === '(') { var n = this.parseOr(); this.next(); return n; } throw new Error('表达式不合法：意外符号 "' + tk.v + '"'); };
+  Parser.prototype.parsePrimary = function () {
+    var tk = this.next(); if (!tk) throw new Error('表达式不合法：意外结束');
+    if (tk.t === 'num') return { t: 'num', v: tk.v };
+    if (tk.t === 'id') {
+      if (this.peek() && this.peek().v === '(') {
+        this.next(); var args = [];
+        if (!(this.peek() && this.peek().v === ')')) {
+          args.push(this.parseOr());
+          while (this.peek() && this.peek().v === ',') { this.next(); args.push(this.parseOr()); }
+        }
+        if (!this.peek() || this.peek().v !== ')') throw new Error('表达式不合法：函数 "' + tk.v + '" 缺少右括号 )');
+        this.next();
+        return { t: 'call', name: tk.v.toLowerCase(), args: args };
+      }
+      return { t: 'ref', v: tk.v.toLowerCase() };
+    }
+    if (tk.v === '(') { var n = this.parseOr(); this.next(); return n; }
+    throw new Error('表达式不合法：意外符号 "' + tk.v + '"');
+  };
   function truthy(v) { return !(v == null || isNaN(v)) && !!v; }
-  function evalNode(node, getv) {
+  // ctx.field(id) -> 标量；ctx.call(name, argsAst) -> 数值；ctx.evalNum(ast) 供函数递归求值参数
+  function evalNum(node, ctx) {
     if (node.t === 'num') return node.v;
-    if (node.t === 'ref') { var v = getv(node.v); return (v == null || isNaN(v)) ? NaN : v; }
-    if (node.t === 'neg') return -evalNode(node.e, getv);
-    if (node.t === 'not') return !truthy(evalNode(node.e, getv));
-    if (node.t === 'bin') { var a = evalNode(node.l, getv), b = evalNode(node.r, getv); if (isNaN(a) || isNaN(b)) return NaN;
+    if (node.t === 'ref') { var v = ctx.field(node.v); return (v == null || isNaN(v)) ? NaN : v; }
+    if (node.t === 'call') return ctx.call(node.name, node.args);
+    if (node.t === 'neg') return -evalNum(node.e, ctx);
+    if (node.t === 'bin') { var a = evalNum(node.l, ctx), b = evalNum(node.r, ctx); if (isNaN(a) || isNaN(b)) return NaN;
       if (node.op === '+') return a + b; if (node.op === '-') return a - b; if (node.op === '*') return a * b; if (node.op === '/') return b === 0 ? NaN : a / b; }
-    if (node.t === 'cmp') { var a2 = evalNode(node.l, getv), b2 = evalNode(node.r, getv); if (isNaN(a2) || isNaN(b2)) return false;
-      if (node.op === '>') return a2 > b2; if (node.op === '<') return a2 < b2; if (node.op === '>=') return a2 >= b2; if (node.op === '<=') return a2 <= b2; if (node.op === '==') return a2 === b2; if (node.op === '!=') return a2 !== b2; }
-    if (node.t === 'log') { if (node.op === '&&') return truthy(evalNode(node.l, getv)) && truthy(evalNode(node.r, getv)); return truthy(evalNode(node.l, getv)) || truthy(evalNode(node.r, getv)); }
+    if (node.t === 'cmp') { var a2 = evalNum(node.l, ctx), b2 = evalNum(node.r, ctx); if (isNaN(a2) || isNaN(b2)) return 0;
+      if (node.op === '>') return a2 > b2 ? 1 : 0; if (node.op === '<') return a2 < b2 ? 1 : 0; if (node.op === '>=') return a2 >= b2 ? 1 : 0; if (node.op === '<=') return a2 <= b2 ? 1 : 0; if (node.op === '==') return a2 === b2 ? 1 : 0; if (node.op === '!=') return a2 !== b2 ? 1 : 0; }
+    if (node.t === 'log') { if (node.op === '&&') return (truthy(evalNum(node.l, ctx)) && truthy(evalNum(node.r, ctx))) ? 1 : 0; return (truthy(evalNum(node.l, ctx)) || truthy(evalNum(node.r, ctx))) ? 1 : 0; }
+    if (node.t === 'not') return truthy(evalNum(node.e, ctx)) ? 0 : 1;
     return NaN;
   }
+  var FIELDS = [
+    { id: 'close', cn: '后复权收盘价', help: '当日后复权收盘价（轮动引擎主口径）' },
+    { id: 'rawclose', cn: '未复权收盘价', help: '当日未复权收盘价（真实成交口径）' },
+    { id: 'open', cn: '开盘价', help: '当日开盘价' },
+    { id: 'high', cn: '最高价', help: '当日最高价' },
+    { id: 'low', cn: '最低价', help: '当日最低价' },
+    { id: 'volume', cn: '成交量', help: '当日成交量（手）' },
+    { id: 'amount', cn: '成交额', help: '当日成交额' },
+    { id: 'turnover', cn: '换手率', help: 'N 日换手率均值（%）' },
+    { id: 'nav', cn: '单位净值', help: '基金官方公布单位净值' },
+    { id: 'premium', cn: '溢价率', help: '当日折溢价率（小数，负=折价）' }
+  ];
+  var FUNCS = [
+    { name: 'REF', cn: 'REF(X,N)', help: '取 N 日前的值', args: 2 },
+    { name: 'DELTA', cn: 'DELTA(X,N)', help: 'X - N日前X（差值）', args: 2 },
+    { name: 'MA', cn: 'MA(X,N)', help: 'N 日简单移动平均', args: 2 },
+    { name: 'EMA', cn: 'EMA(X,N)', help: 'N 日指数移动平均', args: 2 },
+    { name: 'SMA', cn: 'SMA(X,N,M)', help: '递归移动平均：(X*M+前值*(N-M))/N', args: 3 },
+    { name: 'WMA', cn: 'WMA(X,N)', help: 'N 日加权移动平均（线性权重）', args: 2 },
+    { name: 'DMA', cn: 'DMA(X,A)', help: 'X 的 A 日动态移动平均', args: 2 },
+    { name: 'SUM', cn: 'SUM(X,N)', help: 'N 日累计求和', args: 2 },
+    { name: 'PRODUCT', cn: 'PRODUCT(X,N)', help: 'N 日连乘（累乘收益）', args: 2 },
+    { name: 'MAX', cn: 'MAX(X,N)', help: 'N 日最大值', args: 2 },
+    { name: 'MIN', cn: 'MIN(X,N)', help: 'N 日最小值', args: 2 },
+    { name: 'STD', cn: 'STD(X,N)', help: 'N 日总体标准差', args: 2 },
+    { name: 'ABS', cn: 'ABS(X)', help: '绝对值', args: 1 },
+    { name: 'ROC', cn: 'ROC(X,N)', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
+    { name: '涨幅', cn: '涨幅(X)', help: 'X 当日涨幅（ROC(X,1)）', args: 1 },
+    { name: 'LOG', cn: 'LOG(X)', help: '自然对数 ln(X)', args: 1 }
+  ];
+  function validate(ast, fields, funcs) {
+    var fset = {}, cset = {};
+    fields.forEach(function (f) { fset[f.id] = 1; });
+    funcs.forEach(function (f) { cset[f.name.toLowerCase()] = 1; });
+    (function walk(n) {
+      if (!n || typeof n !== 'object') return;
+      if (n.t === 'ref') { if (!fset[n.v]) throw new Error('表达式不合法：未识别字段 "' + n.v + '"'); return; }
+      if (n.t === 'call') { if (!cset[n.name]) throw new Error('表达式不合法：未识别函数 "' + n.name + '"'); n.args.forEach(walk); return; }
+      for (var k in n) { if (n[k] && typeof n[k] === 'object') walk(n[k]); }
+    })(ast);
+  }
   return {
-    compile: function (src) { var toks = tokenize(src); var p = new Parser(toks); return p.parse(); },
-    eval: function (ast, getv) { return truthy(evalNode(ast, getv)); },
-    ALLOWED: '字段 close/open/high/low/volume；maN/rocN/volN/nav/premium；+-*/() 比较 > >= < <= == != 逻辑 && || !；例 close/ma20<0.9'
+    compile: function (src) { var toks = tokenize(src); var p = new Parser(toks); var ast = p.parse(); validate(ast, FIELDS, FUNCS); return ast; },
+    evalNum: function (ast, ctx) { return evalNum(ast, ctx); },
+    evalBool: function (ast, ctx) { return truthy(evalNum(ast, ctx)); },
+    FIELDS: FIELDS, FUNCS: FUNCS,
+    ALLOWED: '字段(10)：' + FIELDS.map(function (f) { return f.cn; }).join('/') + '；函数(16)：' + FUNCS.map(function (f) { return f.name; }).join('/')
   };
 })();
 </script>
@@ -1229,6 +1319,57 @@ window.WufuExpr = (function () {
     // 序列
     var closes = {}, opens = {}, highs = {}, lows = {}, vols = {}, amts = {}, turnovers = {}, idxClose = {}, codeSet = {};
     var rawOpens = {}, rawCloses = {}, navs = {}, prems = {};
+    var EXPR_AST = {};
+    // 自定义公式：白名单字段(10)+函数(16)求值，AST 缓存，无 eval
+    function exprSeriesArr(id, code) {
+      if (id === 'close') return closes[code];
+      if (id === 'rawclose') return rawCloses[code];
+      if (id === 'open') return opens[code];
+      if (id === 'high') return highs[code];
+      if (id === 'low') return lows[code];
+      if (id === 'volume') return vols[code];
+      if (id === 'amount') return amts[code];
+      if (id === 'turnover') return turnovers[code];
+      if (id === 'nav') return navs[code];
+      if (id === 'premium') return prems[code];
+      return null;
+    }
+    function exprFieldAt(id, code, i) {
+      var s = exprSeriesArr(id, code);
+      if (!s) return NaN;
+      var v = s[i];
+      return (v == null || isNaN(v)) ? NaN : v;
+    }
+    function exprEvalAt(ast, code, idx) {
+      var ctx = { field: function (nm) { return exprFieldAt(nm, code, idx); },
+                  call: function (fn, args) { return exprCallAt(fn, args, code, idx, ctx); } };
+      return window.WufuExpr.evalNum(ast, ctx);
+    }
+    function exprCallAt(fn, args, code, i, ctx) {
+      function argNum(k) { return window.WufuExpr.evalNum(args[k], ctx); }
+      function win(argAst, N) { var lo = i - N + 1; if (lo < 0) return null; var out = []; for (var j = lo; j <= i; j++) { var v = exprEvalAt(argAst, code, j); if (isNaN(v)) return null; out.push(v); } return out; }
+      var N, s;
+      switch (fn) {
+        case 'ref': N = argNum(1); if (i - N < 0) return NaN; return exprEvalAt(args[0], code, i - N);
+        case 'delta': N = argNum(1); { var a = exprEvalAt(args[0], code, i); var b = (i - N >= 0) ? exprEvalAt(args[0], code, i - N) : NaN; return a - b; }
+        case 'ma': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var t = 0; for (var q = 0; q < s.length; q++) t += s[q]; return t / s.length; }
+        case 'ema': N = argNum(1) || 20; { var lo = i - N + 1; if (lo < 0) return NaN; var k = 2 / (N + 1), e = exprEvalAt(args[0], code, lo); for (var j = lo + 1; j <= i; j++) { var v = exprEvalAt(args[0], code, j); if (isNaN(v)) return NaN; e = v * k + e * (1 - k); } return e; }
+        case 'sma': { var Nn = argNum(1) || 10, M = argNum(2) || 1, lo2 = i - Nn + 1; if (lo2 < 0) return NaN; var prev = exprEvalAt(args[0], code, lo2); for (var j = lo2 + 1; j <= i; j++) { var v = exprEvalAt(args[0], code, j); if (isNaN(v)) return NaN; prev = (v * M + prev * (Nn - M)) / Nn; } return prev; }
+        case 'wma': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var num = 0, den = 0; for (var q = 0; q < s.length; q++) { var w = q + 1; num += s[q] * w; den += w; } return num / den; }
+        case 'dma': { var A = argNum(1) || 10, lo3 = i - A + 1; if (lo3 < 0) return NaN; var pv = exprEvalAt(args[0], code, lo3); for (var j = lo3 + 1; j <= i; j++) { var v = exprEvalAt(args[0], code, j); if (isNaN(v)) return NaN; pv = v / A + pv * (1 - 1 / A); } return pv; }
+        case 'sum': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var t2 = 0; for (var q = 0; q < s.length; q++) t2 += s[q]; return t2; }
+        case 'product': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var pr = 1; for (var q = 0; q < s.length; q++) pr *= (1 + s[q]); return pr - 1; }
+        case 'max': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; return Math.max.apply(null, s);
+        case 'min': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; return Math.min.apply(null, s);
+        case 'std': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var mu = 0; for (var q = 0; q < s.length; q++) mu += s[q]; mu /= s.length; var vv = 0; for (var q = 0; q < s.length; q++) vv += (s[q] - mu) * (s[q] - mu); return Math.sqrt(vv / s.length); }
+        case 'abs': return Math.abs(argNum(0));
+        case 'roc': N = argNum(1) || 10; if (i - N < 0) return NaN; { var a = exprEvalAt(args[0], code, i), b = exprEvalAt(args[0], code, i - N); return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1; }
+        case '涨幅': { var a = exprEvalAt(args[0], code, i), b = (i > 0) ? exprEvalAt(args[0], code, i - 1) : NaN; return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1; }
+        case 'log': { var x = argNum(0); return x <= 0 ? NaN : Math.log(x); }
+      }
+      return NaN;
+    }
+
     codes.forEach(function (c) {
       closes[c] = D.series[c].close; opens[c] = D.series[c].open; codeSet[c] = 1;
       highs[c] = D.series[c].high || null; lows[c] = D.series[c].low || null;
@@ -1374,6 +1515,15 @@ window.WufuExpr = (function () {
     function factorValue(kind, code, i, f, annf) {
       var w1 = f.window || 20, w2 = f.window2 || 0, w3 = f.window3 || 0;
       var cArr = closes[code];
+      if (kind === "expr") {
+        // 果仁式公式因子：AST 缓存，白名单字段+函数求值
+        var esrc = f.expr || '';
+        if (EXPR_AST[esrc] === undefined) { try { EXPR_AST[esrc] = window.WufuExpr.compile(esrc); } catch (e) { EXPR_AST[esrc] = null; } }
+        var east = EXPR_AST[esrc]; if (!east) return NaN;
+        var ectx = { field: function (nm) { return exprFieldAt(nm, code, i); },
+                     call: function (fn, args) { return exprCallAt(fn, args, code, i, ectx); } };
+        return window.WufuExpr.evalNum(east, ectx);
+      }
       if (kind === "custom") {
         var parts = f.formula_parts || [];
         if (parts.length < 2) return NaN;
@@ -1943,30 +2093,13 @@ window.WufuExpr = (function () {
             if (v === null || v === undefined || isNaN(v)) return false;
             return op === "lte" ? v <= thr : v >= thr;
           }
-          // 自定义公式：白名单字段求值（close/open/high/low/volume/maN/rocN/volN/nav/premium）
-          var EXPR_AST = {};
-          function exprGetv(name, code, i) {
-            var m = /^([a-zA-Z]+)(\d*)$/.exec(name); if (!m) return NaN;
-            var base = m[1].toLowerCase(), N = m[2] ? +m[2] : 0, cArr = closes[code];
-            if (base === 'close') return isMiss(cArr[i]) ? NaN : cArr[i];
-            if (base === 'open') { var oa = opens[code]; return (!oa || isMiss(oa[i])) ? NaN : oa[i]; }
-            if (base === 'high') { var ha = highs[code]; return (!ha || isMiss(ha[i])) ? NaN : ha[i]; }
-            if (base === 'low') { var la = lows[code]; return (!la || isMiss(la[i])) ? NaN : la[i]; }
-            if (base === 'volume') { var va = vols[code]; return (!va || isMiss(va[i])) ? NaN : va[i]; }
-            if (base === 'ma') return maAt(cArr, i, N || 20);
-            if (base === 'roc') { if (i + 1 < N) return NaN; var seg = cArr.slice(i - N + 1, i + 1); for (var q = 0; q < seg.length; q++) if (isMiss(seg[q])) return NaN; return seg[seg.length - 1] / seg[0] - 1; }
-            if (base === 'nav') { var nv = navs[code]; return (!nv || nv[i] == null || isNaN(nv[i])) ? NaN : nv[i]; }
-            if (base === 'premium') { var pm = prems[code]; return (!pm || pm[i] == null || isNaN(pm[i])) ? NaN : pm[i]; }
-            if (base === 'vol') { if (i + 1 < N) return NaN; var s2 = cArr.slice(i - N + 1, i + 1), rs = []; for (var q2 = 1; q2 < s2.length; q2++) { if (isMiss(s2[q2]) || isMiss(s2[q2 - 1])) return NaN; rs.push(s2[q2] / s2[q2 - 1] - 1); } var mu = 0; for (var r0 = 0; r0 < rs.length; r0++) mu += rs[r0]; mu /= rs.length; var vv = 0; for (var r1 = 0; r1 < rs.length; r1++) vv += (rs[r1] - mu) * (rs[r1] - mu); return Math.sqrt(vv / rs.length) * Math.sqrt(params.annualize_factor || 252); }
-            return NaN;
-          }
           function exprHit(f, code, i) {
             var src = f.expr || '';
-            if (EXPR_AST[src] === undefined) {
-              try { EXPR_AST[src] = window.WufuExpr.compile(src); } catch (e) { EXPR_AST[src] = null; return false; }
-            }
+            if (EXPR_AST[src] === undefined) { try { EXPR_AST[src] = window.WufuExpr.compile(src); } catch (e) { EXPR_AST[src] = null; return false; } }
             var ast = EXPR_AST[src]; if (!ast) return false;
-            return window.WufuExpr.eval(ast, function (nm) { return exprGetv(nm, code, i); });
+            var ctx = { field: function (nm) { return exprFieldAt(nm, code, i); },
+                        call: function (fn, args) { return exprCallAt(fn, args, code, i, ctx); } };
+            return window.WufuExpr.evalBool(ast, ctx);
           }
           function buyAddHit(f, code, i) {
             var t = f.type;
@@ -2760,11 +2893,12 @@ window.WufuExpr = (function () {
   var factors = [];   // 统一因子列表：{kind, window, window2, window3, weight, direction, usage(rank/filter), op, threshold, name, formula_parts[{kind,window,coef,op}]}
 
 function factorLabel(f) {
-  if (f.kind === "custom") return f.name || "自定义";
+  if (f.kind === "custom" || f.kind === "expr") return f.name || "自定义公式";
   var ki = KIND_INFO[f.kind] || KIND_INFO.roc;
   return ki.label;
 }
 function factorFormulaText(f) {
+  if (f.kind === "expr") return f.expr || "";
   if (f.kind !== "custom") return null;
   var parts = f.formula_parts || [];
   var t = [];
@@ -2868,7 +3002,18 @@ function renderMfLib() {
 }
 $("mfAddBtn").addEventListener("click", function () {
   var kind = $("mfAddKind").value, usage = $("mfAddUsage").value;
-  if (kind === "custom") { openCfEditor(null, usage); return; }
+  if (kind === "custom") {
+    var nm = ($("cfName").value || "").trim();
+    openFormulaModal({ title: "自定义公式因子", initial: "", onSave: function (src) {
+      var name = nm || ("公式因子" + (factors.length + 1));
+      var f = { kind: "expr", name: name, expr: src, weight: 0.10, usage: usage };
+      if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
+      factors.push(f);
+      $("cfName").value = "";
+      renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
+    }});
+    return;
+  }
   var ki = KIND_INFO[kind] || KIND_INFO.roc;
   var f = { kind: kind, window: ki.def, window2: ki.def2, window3: ki.def3, weight: 0.10, usage: usage };
   if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
@@ -3120,6 +3265,70 @@ $("cfOk").addEventListener("click", function () {
   cfEditIdx = -1;
   renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
 });
+
+// ===== 统一公式弹窗（果仁风格；因子管理 + 交易条件复用）=====
+var FM_CB = null;
+function fmValidate(src) {
+  src = (src || "").trim();
+  if (!src) return { ok: false, msg: "请输入公式" };
+  try { window.WufuExpr.compile(src); return { ok: true, msg: "✓ 公式合法" }; }
+  catch (e) { return { ok: false, msg: e.message }; }
+}
+function openFormulaModal(opts) {
+  FM_CB = opts.onSave || null;
+  $("fmTitle").textContent = opts.title || "自定义公式编辑器";
+  var inp = $("fmInput");
+  inp.value = opts.initial || "";
+  $("formulaModal").style.display = "flex";
+  fmRefresh();
+  inp.focus();
+}
+function fmRefresh() {
+  var r = fmValidate($("fmInput").value);
+  var st = $("fmStatus");
+  st.textContent = r.msg;
+  st.style.color = r.ok ? "#4ADE80" : "#F87171";
+}
+function fmInsert(text) {
+  var inp = $("fmInput");
+  var s = (inp.selectionStart != null) ? inp.selectionStart : inp.value.length;
+  var e = (inp.selectionEnd != null) ? inp.selectionEnd : inp.value.length;
+  inp.value = inp.value.slice(0, s) + text + inp.value.slice(e);
+  inp.focus();
+  var pos = s + text.length; inp.setSelectionRange(pos, pos);
+  fmRefresh();
+}
+(function initFmModal() {
+  var fb = $("fmFields");
+  window.WufuExpr.FIELDS.forEach(function (f) {
+    var b = document.createElement("button"); b.type = "button";
+    b.textContent = f.cn; b.title = f.help;
+    b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
+    b.addEventListener("click", function () { $("fmHelp").textContent = f.cn + "（" + f.id + "）：" + f.help; fmInsert(f.id); });
+    fb.appendChild(b);
+  });
+  var fc = $("fmFuncs");
+  window.WufuExpr.FUNCS.forEach(function (fn) {
+    var b = document.createElement("button"); b.type = "button";
+    b.textContent = fn.cn; b.title = fn.help;
+    b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
+    b.addEventListener("click", function () {
+      $("fmHelp").textContent = fn.cn + "：" + fn.help;
+      fmInsert(fn.name + "(" + (fn.args >= 2 ? "字段,N" : "字段") + ")");
+    });
+    fc.appendChild(b);
+  });
+  $("fmInput").addEventListener("input", fmRefresh);
+  $("fmClose").addEventListener("click", function () { $("formulaModal").style.display = "none"; FM_CB = null; });
+  $("fmClear").addEventListener("click", function () { $("fmInput").value = ""; fmRefresh(); $("fmInput").focus(); });
+  $("fmSave").addEventListener("click", function () {
+    var src = $("fmInput").value.trim();
+    var r = fmValidate(src);
+    if (!r.ok) { alert(r.msg); return; }
+    $("formulaModal").style.display = "none";
+    if (FM_CB) { var cb = FM_CB; FM_CB = null; cb(src); }
+  });
+})();
 
 function buildChips() {
     var h2 = $("rebChips"); h2.innerHTML = "";
@@ -3543,13 +3752,11 @@ function buildChips() {
         arr.push({ type: "factor", kind: kSel.value, window: +wIn.value || 20,
                    op: opSel.value, threshold: Math.max(-1000, Math.min(1000, +thIn.value || 0)) / 100 });
       } else if (t === "expr") {
-        var we = document.getElementById(selKind.id + "_fac");
-        if (!we) we = condExprRow(selKind).parentElement;
-        var ein = document.getElementById(selKind.id + "_expr");
-        var src = (ein && ein.value || "").trim();
-        if (!src) { alert("请输入自定义公式表达式"); return; }
-        try { window.WufuExpr.compile(src); } catch (e) { alert(e.message + "\n\n可用：" + window.WufuExpr.ALLOWED); return; }
-        arr.push({ type: "expr", expr: src });
+        openFormulaModal({ title: "自定义公式条件（含比较符）", initial: "", onSave: function (src) {
+          arr.push({ type: "expr", expr: src });
+          renderAllCond(); scheduleRun();
+        }});
+        return;
       } else {
         var realT = t === "rank_gte" ? "rank" : t;
         var o = { type: realT, value: Math.max(1, +valIn.value || 1) };
@@ -3560,13 +3767,12 @@ function buildChips() {
       // 配置行保留：便于连续调整后添加多个因子判断
     });
   }
-  // 各面板：类型切换时 factor/expr 显示对应配置行
+  // 各面板：类型切换时 factor 显示因子配置行；expr 走统一弹窗（添加时弹出）
   function wireFacRow(selKind, valIn) {
     selKind.addEventListener("change", function () {
       var old = document.getElementById(selKind.id + "_fac");
       if (old) old.remove();
       if (this.value === "factor") condFactorRow(selKind, valIn);
-      else if (this.value === "expr") condExprRow(selKind);
     });
   }
   if ($("buyAddBtn")) {
@@ -3605,6 +3811,7 @@ function buildChips() {
             return { kind: p.kind, window: p.window, window2: p.window2, window3: p.window3, coef: p.coef, op: p.op };
           });
         }
+        if (f.kind === "expr") { o.name = f.name; o.expr = f.expr; }
         if ((f.usage || "rank") === "filter") { o.op = f.op || "gte"; o.threshold = f.threshold !== undefined ? f.threshold : 0; }
         return o;
       }),
@@ -3753,7 +3960,7 @@ function buildChips() {
                weight: f.weight !== undefined ? f.weight : 0.1,
                direction: f.direction !== undefined ? f.direction : (f.kind === "vol" || f.kind === "premium" ? -1 : 1),
                usage: f.usage || "rank", name: f.name, formula_parts: f.formula_parts,
-               op: f.op, threshold: f.threshold };
+               expr: f.expr, op: f.op, threshold: f.threshold };
     });
     (p.filters || []).forEach(function (ft) {
       factors.push({ kind: ft.kind, window: ft.window, window2: ft.window2, window3: ft.window3,
