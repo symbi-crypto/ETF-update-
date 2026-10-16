@@ -3079,7 +3079,7 @@ function renderMfList() {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var tag = document.createElement("span");
-      tag.style.cssText = "font-size:10.5px;color:#7C8DA1;flex:0 0 auto;cursor:help";
+      tag.style.cssText = "flex:0 0 auto;font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
       tag.textContent = "公式";
       tag.title = f.name + " = " + factorFormulaText(f);
       wg.appendChild(tag);
@@ -3143,7 +3143,7 @@ function renderFltList() {
       wg = document.createElement("div");
       wg.style.cssText = "flex:1;min-width:0;display:flex;align-items:center";
       var tag3 = document.createElement("span");
-      tag3.style.cssText = "font-size:10.5px;color:#7C8DA1;flex:0 0 auto;cursor:help";
+      tag3.style.cssText = "flex:0 0 auto;font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
       tag3.textContent = "公式";
       tag3.title = f.name + " = " + factorFormulaText(f);
       wg.appendChild(tag3);
@@ -3323,11 +3323,12 @@ function fmInsertAt(text, cursorOffset) {
   inp.setSelectionRange(pos, pos);
   fmRefresh();
 }
-var FM_PENDING = null; // {p2:"周期"}：函数模板已插入，等用户键入逗号跳第二参数
+var FM_PENDING = null; // {p2:"20"}：函数模板已插入，等用户键入逗号跳第二参数
 function fmInsertFunc(fnCn, nArgs) {
+  // 模板用可解析默认值：MA(后复权收盘价, 20)；选中第一参数，未替换直接保存也合法
   var p1 = "后复权收盘价";
-  var p2 = nArgs >= 2 ? "周期" : null;
-  var p3 = nArgs >= 3 ? "M" : null;
+  var p2 = nArgs >= 2 ? "20" : null;
+  var p3 = nArgs >= 3 ? "10" : null;
   var inner = p1 + (p2 ? ", " + p2 : "") + (p3 ? ", " + p3 : "");
   var tpl = fnCn + "(" + inner + ")";
   var inp = $("fmInput");
