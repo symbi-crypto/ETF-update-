@@ -4128,7 +4128,12 @@ function buildChips() {
   // ---------- 策略保存 / 加载（localStorage 策略库 + 导出/导入 JSON） ----------
   var ST_KEY = "wufu_strategies_v1";
   function loadStored() {
-    try { return JSON.parse(localStorage.getItem(ST_KEY) || "{}") || {}; } catch (e) { return {}; }
+    var m = {};
+    try { m = JSON.parse(localStorage.getItem(ST_KEY) || "{}") || {}; } catch (e) { m = {}; }
+    // 一次性迁移（仅本版本保留）：网格策略功能已剥离，清除遗留的 grid 类型条目；执行一次后数据已清，后续版本可移除本段
+    var gk = Object.keys(m).filter(function (k) { return m[k] && m[k].type === "grid"; });
+    if (gk.length) { gk.forEach(function (k) { delete m[k]; }); try { localStorage.setItem(ST_KEY, JSON.stringify(m)); } catch (e) {} }
+    return m;
   }
   function storeAll(m) {
     try { localStorage.setItem(ST_KEY, JSON.stringify(m)); } catch (e) { showNotice("保存失败：" + e.message); }
@@ -4137,7 +4142,7 @@ function buildChips() {
     var sel = $("stList"); if (!sel) return;
     var m = loadStored();
     sel.innerHTML = "";
-    Object.keys(m).filter(function (k) { return !(m[k] && m[k].type === "grid"); }).forEach(function (k) {
+    Object.keys(m).forEach(function (k) {
       var o = document.createElement("option"); o.value = k; o.textContent = k; sel.appendChild(o);
     });
     $("stCount").textContent = Object.keys(m).length + " 个";
@@ -5208,7 +5213,7 @@ function buildChips() {
   function renderStrategyList() {
     var box = $("stListV"); if (!box) return;
     var m = loadStored();
-    var keys = Object.keys(m).filter(function (k) { return !(m[k] && m[k].type === "grid"); });
+    var keys = Object.keys(m);
     keys.sort(function (a, b) {
       var ta = (m[a]._saved_at || ""), tb = (m[b]._saved_at || "");
       if (ta && tb) return ta < tb ? -1 : 1;
@@ -5765,7 +5770,7 @@ function showStrategyDetail(name) {
   function renderComboSetup() {
     var box = $("comboStratList"); if (!box) return;
     var m = loadStored();
-    var keys = Object.keys(m).filter(function (k) { return !(m[k] && m[k].type === "grid"); });
+    var keys = Object.keys(m);
     box.innerHTML = "";
     if (!keys.length) {
       box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:10px 2px">暂无已保存策略。<br>请先在「回测」页调好参数并保存，再到此页组合多个策略。</div>';
