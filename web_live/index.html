@@ -4517,13 +4517,18 @@ function buildChips() {
         return;
       }
       $("runState").textContent = "已更新 · " + (Date.now() - t0) + "ms · " + res.metrics.n_days + "个交易日";
-      renderKpis(res);
-      renderNav(res);
-      renderDD(res);
-      renderYear(res);
-      renderMonth(res);
-      renderTrades(res, getParams());
-      renderCompositeIC(res, getParams(), D);
+      try {
+        renderKpis(res);
+        renderNav(res);
+        renderDD(res);
+        renderYear(res);
+        renderMonth(res);
+        renderTrades(res, getParams());
+        renderCompositeIC(res, getParams(), D);
+      } catch (e2) {
+        // 部分结果区容器在特定环境/视口缺失时，仅提示，不抛全局脚本异常中断整页
+        showNotice("部分结果渲染未完成：" + e2.message);
+      }
     });
   }
 
@@ -5044,11 +5049,13 @@ function buildChips() {
   }
 
   function renderTrades(r, params) {
+    var ttab = $("tradeTable");
+    if (!ttab) return;   // 防御：结果表容器缺失时静默跳过，不抛脚本异常（部分环境 DOM 解析差异）
     var names = {};
     POOL.forEach(function (p) { names[p.code] = p.name; });
     var isReb = params.mode === "rebalance";
-    var th = $("tradeTable").querySelector("thead");
-    var tb = $("tradeTable").querySelector("tbody");
+    var th = ttab.querySelector("thead");
+    var tb = ttab.querySelector("tbody");
     // 表头按模式生成：再平衡只保留核心列（卖出/买入/换手/成本/Top1/R² 等空数据列不渲染）
     // 列宽用 th 内联百分比（table-layout:fixed 下按比例分配，保证不横向溢出）
     if (isReb) {
@@ -5089,7 +5096,8 @@ function buildChips() {
       tb.appendChild(tr);
       if (t.to.length === 0) cashCount++;
     });
-    $("tradeCount").textContent = "共 " + r.trades.length + " 笔（空仓 " + cashCount + " 笔）" + (isReb ? "；再平衡模式仅显示核心列" : "");
+    var tc = $("tradeCount");
+    if (tc) tc.textContent = "共 " + r.trades.length + " 笔（空仓 " + cashCount + " 笔）" + (isReb ? "；再平衡模式仅显示核心列" : "");
   }
 
   // ---------- resize ----------
