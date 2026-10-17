@@ -820,12 +820,18 @@ footer b{color:#9FB0C3}
     <div class="card">
       <h2>多策略组合</h2>
       <p style="font-size:12px;color:#9FB0C3;margin:2px 0 12px;line-height:1.7">从「我的策略」中勾选多个策略、手动分配权重，按所选周期做组合再平衡，合成组合净值；并计算各策略<b>日收益率相关</b>矩阵，辅助判断分散化。</p>
-      <h3 style="margin:14px 0 6px;font-size:13px">已保存组合</h3>
-      <div id="comboSavedList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0"></div>
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
-        <input id="comboSaveName" type="text" placeholder="组合名称，如：稳健版" style="flex:1;min-width:0;font-size:12px;padding:5px 8px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
-        <button id="comboSaveBtn" type="button" style="padding:5px 12px;font-size:12px;border-radius:6px;border:1px solid #4FC3F7;background:rgba(79,195,247,.12);color:#7DD3FC;cursor:pointer;white-space:nowrap">保存当前组合</button>
-      </div>
+        <h3>已保存组合 <span class="v" id="comboCount">0 个</span></h3>
+        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
+          <input id="comboSaveName" type="text" placeholder="组合名，如：稳健版"
+                 style="flex:2;min-width:120px;font-size:12px;padding:3px 6px;border:1px solid #3E4E63;border-radius:4px">
+          <button type="button" id="comboSaveBtn" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">保存</button>
+        </div>
+        <div class="row" style="margin:3px 0;gap:4px;flex-wrap:wrap">
+          <select id="comboSel" style="flex:2;min-width:120px;font-size:12px;padding:3px 4px;border:1px solid #3E4E63;border-radius:4px"></select>
+          <button type="button" id="comboLoadBtn" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">加载</button>
+          <button type="button" id="comboRenBtn" style="flex:1;min-width:64px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">重命名</button>
+          <button type="button" id="comboDelBtn" style="flex:1;min-width:52px;font-size:12px;padding:3px 4px;border-radius:4px;border:1px solid var(--line);background:#202E3F;cursor:pointer">删除</button>
+        </div>
       <h3 style="margin:8px 0 6px;font-size:13px">选择策略与权重</h3>
       <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px">
         <input id="comboSearch" type="text" placeholder="搜索策略名称…" style="flex:1;min-width:0;font-size:12px;padding:5px 8px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
@@ -5778,20 +5784,29 @@ function showStrategyDetail(name) {
   function loadCombos() { try { return JSON.parse(localStorage.getItem(COMBO_KEY) || "[]") || []; } catch (e) { return []; } }
   function persistCombos(list) { try { localStorage.setItem(COMBO_KEY, JSON.stringify(list)); } catch (e) { showNotice("组合保存失败：" + e.message); } }
   function renderComboSaved() {
-    var box = $("comboSavedList"); if (!box) return;
+    var sel = $("comboSel"), cnt = $("comboCount");
     var list = loadCombos();
-    if (!list.length) { box.innerHTML = '<div style="font-size:12px;color:#7C8DA1">暂无已保存组合</div>'; return; }
-    var h = "";
-    list.forEach(function (c, idx) {
-      h += '<div style="display:flex;align-items:center;gap:5px;background:#202E3F;border:1px solid #243244;border-radius:6px;padding:4px 7px;font-size:12px;cursor:pointer" data-load="' + idx + '" title="点击加载">' +
-        '<span style="color:#F1F5F9">' + c.name + '</span>' +
-        '<span style="color:#7C8DA1">' + (c.members ? c.members.length : 0) + '策略</span>' +
-        '<span data-del="' + idx + '" style="color:#F87171;padding:0 3px;cursor:pointer;font-size:13px" title="删除">×</span></div>';
+    if (cnt) cnt.textContent = list.length + " 个";
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = "";
+    if (!list.length) {
+      var o0 = document.createElement("option"); o0.value = ""; o0.textContent = "暂无已保存组合"; sel.appendChild(o0);
+      return;
+    }
+    list.forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c.name; o.textContent = c.name + "（" + (c.members ? c.members.length : 0) + "策略）";
+      sel.appendChild(o);
     });
-    box.innerHTML = h;
+    if (cur) { for (var i = 0; i < list.length; i++) if (list[i].name === cur) sel.value = cur; }
+    if (!sel.value) sel.value = list[0].name;
   }
-  function loadCombo(idx) {
-    var list = loadCombos(), c = list[idx]; if (!c) return;
+  function loadComboByName(name) {
+    if (!name) { showNotice("请先选择要加载的组合"); return; }
+    var list = loadCombos(), c = null;
+    list.forEach(function (x) { if (x.name === name) c = x; });
+    if (!c) return;
     var m = loadStored();
     var names = (c.members || []).map(function (x) { return x.name; });
     var wmap = {}; (c.members || []).forEach(function (x) { wmap[x.name] = x.weight; });
@@ -5809,7 +5824,7 @@ function showStrategyDetail(name) {
     var rb = $("comboReb"), ri = $("comboRebInt");
     if (rb && c.reb) rb.value = c.reb;
     if (ri && c.rebInt) ri.value = "" + c.rebInt;
-    showNotice("已加载组合「" + c.name + "」，权重与调仓周期已恢复");
+    showNotice("已加载组合「" + name + "」，权重与调仓周期已恢复");
   }
   function saveCombo() {
     var cks = document.querySelectorAll(".comboCk"), wts = document.querySelectorAll(".comboWt");
@@ -5825,14 +5840,32 @@ function showStrategyDetail(name) {
     if (idx >= 0) list[idx] = entry; else list.push(entry);
     persistCombos(list);
     renderComboSaved();
+    $("comboSel").value = name;
     showNotice("已保存组合「" + name + "」");
   }
-  function delCombo(idx) {
+  function delComboFromSel() {
+    var name = $("comboSel").value;
+    if (!name) { showNotice("请先选择要删除的组合"); return; }
+    var list = loadCombos().filter(function (x) { return x.name !== name; });
+    persistCombos(list); renderComboSaved();
+    showNotice("已删除组合：" + name);
+  }
+  function renameCombo() {
+    var oldName = $("comboSel").value;
+    var newName = ($("comboSaveName").value || "").trim();
+    if (!oldName) { showNotice("请先选择要重命名的组合"); return; }
+    if (!newName) { showNotice("请先填写新的组合名"); return; }
     var list = loadCombos();
-    if (!confirm("删除组合「" + (list[idx] ? list[idx].name : "") + "」？")) return;
-    list.splice(idx, 1);
-    persistCombos(list);
-    renderComboSaved();
+    if (newName !== oldName) {
+      var dup = false; list.forEach(function (x) { if (x.name === newName) dup = true; });
+      if (dup) { showNotice("组合名已存在：" + newName); return; }
+      list.forEach(function (x) { if (x.name === oldName) x.name = newName; });
+      persistCombos(list); renderComboSaved();
+      $("comboSel").value = newName;
+      showNotice("已重命名：" + oldName + " → " + newName);
+    } else {
+      showNotice("新旧名称相同，无需重命名");
+    }
   }
   function renderComboSetup() {
     var box = $("comboStratList"); if (!box) return;
@@ -5895,18 +5928,19 @@ function showStrategyDetail(name) {
       for (var i = 0; i < cks.length; i++) cks[i].checked = false;
       balanceComboWeights();
     };
-    // 已保存组合：列表事件委托（加载/删除）+ 保存按钮
-    var sl = $("comboSavedList"), sv = $("comboSaveBtn");
-    if (sl && !sl._cb) {
-      sl.addEventListener("click", function (e) {
-        var t = e.target;
-        if (t && t.getAttribute && t.getAttribute("data-del") !== null) { delCombo(+t.getAttribute("data-del")); return; }
-        var ld = t && t.closest ? t.closest("[data-load]") : null;
-        if (ld) loadCombo(+ld.getAttribute("data-load"));
+    // 已保存组合：下拉选中填名 + 保存/加载/重命名/删除（与策略管理一致）
+    var cs = $("comboSel"), cv = $("comboSaveBtn"), cl = $("comboLoadBtn"), cr = $("comboRenBtn"), cd = $("comboDelBtn");
+    if (cs && !cs._cb) {
+      cs.addEventListener("change", function () {
+        var v = this.value;
+        if (v) $("comboSaveName").value = v;
       });
-      sl._cb = true;
+      cs._cb = true;
     }
-    if (sv) sv.onclick = saveCombo;
+    if (cv) cv.onclick = saveCombo;
+    if (cl) cl.onclick = function () { loadComboByName($("comboSel").value); };
+    if (cr) cr.onclick = renameCombo;
+    if (cd) cd.onclick = delComboFromSel;
     renderComboSaved();
     $("comboResult").style.display = "none";
   }
