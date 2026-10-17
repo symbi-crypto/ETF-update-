@@ -848,8 +848,6 @@ footer b{color:#9FB0C3}
       </div>
       <div id="comboRotPanel" style="display:none;background:#202E3F;border:1px solid #243244;border-radius:8px;padding:10px;margin-bottom:10px">
         <div style="font-size:12px;color:#7DD3FC;margin-bottom:6px">因子轮动 · 对策略净值做截面因子排名，按排名区间 N-M 持有</div>
-        <div style="font-size:11px;color:#7C8DA1;margin:4px 0">因子管理：排名因子参与打分，筛选因子先过滤候选；支持自定义公式因子（作用于策略净值）。</div>
-        <div id="crFacLib" style="max-height:130px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:6px;margin-bottom:6px"></div>
         <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
           <select id="crAddKind" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"></select>
           <select id="crAddUsage" style="flex:0 0 62px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="rank">排名</option><option value="filter">筛选</option></select>
@@ -1097,6 +1095,7 @@ window.WufuExpr = (function () {
     { name: 'STD', cn: 'STD', help: 'N 日总体标准差', args: 2 },
     { name: 'ABS', cn: 'ABS', help: '绝对值', args: 1 },
     { name: 'ROC', cn: 'ROC', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
+    { name: 'VOL', cn: 'VOL', help: 'N 日收益波动率（ROC(X,1) 的 N 日标准差）', args: 2 },
     { name: '涨幅', cn: '涨幅', help: 'X 当日涨幅（ROC(X,1)）', args: 1 },
     { name: 'LOG', cn: 'LOG', help: '自然对数 ln(X)', args: 1 }
   ];
@@ -1116,7 +1115,7 @@ window.WufuExpr = (function () {
     evalNum: function (ast, ctx) { return evalNum(ast, ctx); },
     evalBool: function (ast, ctx) { return truthy(evalNum(ast, ctx)); },
     FIELDS: FIELDS, FUNCS: FUNCS,
-    ALLOWED: '字段(10)：' + FIELDS.map(function (f) { return f.cn; }).join('/') + '；函数(16)：' + FUNCS.map(function (f) { return f.name; }).join('/')
+    ALLOWED: '字段(10)：' + FIELDS.map(function (f) { return f.cn; }).join('/') + '；函数(17)：' + FUNCS.map(function (f) { return f.name; }).join('/')
   };
 })();
 </script>
@@ -1429,6 +1428,7 @@ window.WufuExpr = (function () {
         case 'std': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var mu = 0; for (var q = 0; q < s.length; q++) mu += s[q]; mu /= s.length; var vv = 0; for (var q = 0; q < s.length; q++) vv += (s[q] - mu) * (s[q] - mu); return Math.sqrt(vv / s.length); }
         case 'abs': return Math.abs(argNum(0));
         case 'roc': N = argNum(1) || 10; if (i - N < 0) return NaN; { var a = exprEvalAt(args[0], code, i), b = exprEvalAt(args[0], code, i - N); return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1; }
+        case 'vol': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var rr = []; for (var q = 1; q < s.length; q++) { if (s[q - 1] === 0) return NaN; rr.push(s[q] / s[q - 1] - 1); } if (rr.length < 2) return NaN; var mu = 0; for (var q = 0; q < rr.length; q++) mu += rr[q]; mu /= rr.length; var vv = 0; for (var q = 0; q < rr.length; q++) vv += (rr[q] - mu) * (rr[q] - mu); return Math.sqrt(vv / rr.length); }
         case '涨幅': { var a = exprEvalAt(args[0], code, i), b = (i > 0) ? exprEvalAt(args[0], code, i - 1) : NaN; return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1; }
         case 'log': { var x = argNum(0); return x <= 0 ? NaN : Math.log(x); }
       }
@@ -6023,8 +6023,8 @@ function showStrategyDetail(name) {
   }
   // ---------- 组合轮动因子管理（完整因子库 + 自定义公式，独立配置） ----------
   var crFactors = [];
-  var CR_FAC_KINDS = ["roc", "nav_roc", "slope_r2", "wslope_r2", "r2", "vol", "risk_adj", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "expr"];
-  var CR_FAC_NAMES = { roc: "涨幅动量", nav_roc: "净值变化率", slope_r2: "斜率(趋势)", wslope_r2: "加权斜率", r2: "拟合优度", vol: "收益波动率", risk_adj: "风险调整动量", c_vs_ma: "乖离率(净值vs均线)", c_vs_ma_lag: "乖离率(滞后均线)", ma_vs_ma: "均线相对强弱", ma_vs_ma_lag: "均线相对(滞后)", ma: "均线值", ma_lag: "滞后均线", amplitude: "振幅", position: "位置分位", rsi: "RSI强弱", expr: "自定义公式" };
+  var CR_FAC_KINDS = ["close", "nav_roc", "vol", "c_vs_ma", "expr"];
+  var CR_FAC_NAMES = { close: "净值", nav_roc: "净值涨幅", vol: "收益波动率", c_vs_ma: "乖离率", expr: "自定义公式" };
   function crFacLabel(f) {
     if (f.kind === "expr") return f.name || "自定义公式";
     var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
@@ -6071,57 +6071,6 @@ function showStrategyDetail(name) {
     }
     return wg;
   }
-  function crRenderLib() {
-    var box = $("crFacLib"); if (!box) return;
-    box.innerHTML = "";
-    if (!crFactors.length) {
-      var hint = document.createElement("div");
-      hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px;line-height:1.5";
-      hint.innerHTML = "当前无因子，组合保持空仓。<br>选择因子类型与归属（排名/筛选）添加，或用公式组合自定义因子。";
-      box.appendChild(hint);
-    }
-    crFactors.forEach(function (f) {
-      var row = document.createElement("div");
-      row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px";
-      var lab = document.createElement("span");
-      lab.style.cssText = "flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-      lab.textContent = crFacLabel(f);
-      lab.title = crFacWinTitle(f);
-      if (f.kind === "expr" && f.expr) lab.textContent = lab.textContent + "  " + f.expr;
-      var uSel = document.createElement("select");
-      uSel.style.cssText = "flex:0 0 66px;font-size:11.5px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F;text-align:center";
-      uSel.innerHTML = '<option value="filter">筛选</option><option value="rank">排名</option>';
-      uSel.value = f.usage || "rank";
-      uSel.title = "归属：排名=轮动打分；筛选=过滤条件";
-      uSel.addEventListener("change", function () {
-        f.usage = this.value;
-        if (f.usage === "filter" && f.op === undefined) { f.op = "gte"; f.threshold = 0.0; }
-        crRenderAll();
-      });
-      var ed = null;
-      if (f.kind === "expr") {
-        ed = document.createElement("button");
-        ed.type = "button"; ed.textContent = "\u270e";
-        ed.style.cssText = "flex:0 0 22px;margin-left:2px;cursor:pointer";
-        ed.title = "编辑公式";
-        ed.addEventListener("click", function () {
-          openFormulaModal({ title: "编辑公式因子：" + (f.name || ""), initial: f.expr || "", onSave: function (src) { f.expr = src; crRenderAll(); } });
-        });
-      }
-      var del = document.createElement("button");
-      del.type = "button"; del.textContent = "\u00d7";
-      del.style.cssText = "flex:0 0 22px;margin-left:2px;cursor:pointer";
-      del.title = "删除该因子";
-      del.addEventListener("click", function () {
-        var i = crFactors.indexOf(f); if (i >= 0) crFactors.splice(i, 1);
-        crRenderAll();
-      });
-      row.appendChild(lab); row.appendChild(uSel);
-      if (ed) row.appendChild(ed);
-      row.appendChild(del);
-      box.appendChild(row);
-    });
-  }
   function crRenderRank() {
     var box = $("crFacRankList"); if (!box) return;
     box.innerHTML = "";
@@ -6129,7 +6078,7 @@ function showStrategyDetail(name) {
     if (!rankF.length) {
       var hint = document.createElement("div");
       hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
-      hint.textContent = "暂无排名因子，请在「因子管理」添加并归属为排名。";
+      hint.textContent = "暂无排名因子，请在上方选择因子并归属为排名后添加。";
       box.appendChild(hint);
     }
     rankF.forEach(function (f) {
@@ -6195,7 +6144,7 @@ function showStrategyDetail(name) {
     if (!fltF.length) {
       var hint = document.createElement("div");
       hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
-      hint.textContent = "暂无筛选因子（全部策略可参与排名），请在「因子管理」添加并归属为筛选。";
+      hint.textContent = "暂无筛选因子（全部策略可参与排名），请在上方选择因子并归属为筛选后添加。";
       box.appendChild(hint);
     }
     fltF.forEach(function (f) {
@@ -6258,7 +6207,7 @@ function showStrategyDetail(name) {
     });
   }
   function crRenderAll() {
-    crRenderLib(); crRenderRank(); crRenderFilter();
+    crRenderRank(); crRenderFilter();
   }
   function crFillKindSel() {
     var sel = $("crAddKind"); if (!sel) return;
@@ -6272,11 +6221,6 @@ function showStrategyDetail(name) {
     });
   }
   function crInit() {
-    if (!crFactors.length) {
-      crFactors.push({ kind: "roc", window: 60, weight: 1, direction: 1, usage: "rank", enabled: true });
-      crFactors.push({ kind: "vol", window: 20, weight: 1, direction: -1, usage: "rank", enabled: true });
-      crFactors.push({ kind: "c_vs_ma", window: 20, weight: 1, direction: 1, usage: "rank", enabled: true });
-    }
     crFillKindSel();
     var ab = $("crAddBtn");
     if (ab && !ab._crBound) {
@@ -6284,7 +6228,7 @@ function showStrategyDetail(name) {
       ab.addEventListener("click", function () {
         var kind = $("crAddKind").value, usage = $("crAddUsage").value;
         if (kind === "expr") {
-          openFormulaModal({ title: "自定义公式因子", initial: "", onSave: function (src) {
+          openFormulaModal({ title: "自定义公式因子（作用于策略净值，字段用「后复权收盘价」即净值）", initial: "", onSave: function (src) {
             var f = { kind: "expr", name: "公式因子" + (crFactors.length + 1), expr: src, weight: 0.1, usage: usage };
             if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
             crFactors.push(f);
@@ -6318,6 +6262,8 @@ function showStrategyDetail(name) {
   crInit();
   function runComboRot(names, start, end, rebKey, rebInt) {
     var m = loadStored();
+    var fsChk = rotFactors().filter(function (f) { return f.usage === "rank"; });
+    if (!fsChk.length) { showNotice("请先添加至少一个排名因子（如净值涨幅、收益波动率、乖离率等）"); return; }
     showNotice("正在回测 " + names.length + " 个策略净值并做因子轮动，请稍候…");
     ensureData(function () {
       var paramsList = [], resList = [];
