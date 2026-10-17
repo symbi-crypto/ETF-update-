@@ -841,6 +841,45 @@ footer b{color:#9FB0C3}
       <div id="comboStratList" style="max-height:340px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:8px"></div>
       <div id="comboWarn" style="display:none;background:rgba(251,191,36,.12);border:1px solid #FBBF24;color:#FCD34D;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:8px"></div>
       <h3 style="margin:14px 0 6px;font-size:13px">组合参数</h3>
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px;font-size:12px;color:#D8E2EF">
+        <span>合成方式</span>
+        <label style="display:flex;align-items:center;gap:4px;color:#F1F5F9"><input type="radio" name="comboSynth" value="fixed" checked style="width:14px;height:14px;accent-color:#4FC3F7">固定权重</label>
+        <label style="display:flex;align-items:center;gap:4px;color:#F1F5F9"><input type="radio" name="comboSynth" value="rot" style="width:14px;height:14px;accent-color:#4FC3F7">因子轮动</label>
+      </div>
+      <div id="comboRotPanel" style="display:none;background:#202E3F;border:1px solid #243244;border-radius:8px;padding:10px;margin-bottom:10px">
+        <div style="font-size:12px;color:#7DD3FC;margin-bottom:6px">因子轮动 · 对策略净值做截面因子排名，按排名区间 N-M 持有</div>
+        <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
+          <input type="checkbox" id="crFacRoc" checked style="width:14px;height:14px;accent-color:#4FC3F7">
+          <span style="flex:0 0 auto">净值变化(动量)</span>
+          <input type="number" id="crRocWin" value="60" min="5" max="250" step="5" style="flex:0 0 56px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+          <select id="crRocDir" style="flex:0 0 74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="1">动量优先</option><option value="-1">反向</option></select>
+          <span style="color:#7C8DA1;font-size:11px">权重</span>
+          <input type="number" id="crRocWt" value="1" min="0" step="0.5" style="flex:0 0 44px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+        </div>
+        <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
+          <input type="checkbox" id="crFacVol" checked style="width:14px;height:14px;accent-color:#4FC3F7">
+          <span style="flex:0 0 auto">收益波动率</span>
+          <input type="number" id="crVolWin" value="20" min="5" max="250" step="5" style="flex:0 0 56px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+          <select id="crVolDir" style="flex:0 0 74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="-1" selected>低波优先</option><option value="1">高波优先</option></select>
+          <span style="color:#7C8DA1;font-size:11px">权重</span>
+          <input type="number" id="crVolWt" value="1" min="0" step="0.5" style="flex:0 0 44px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+        </div>
+        <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
+          <input type="checkbox" id="crFacMa" checked style="width:14px;height:14px;accent-color:#4FC3F7">
+          <span style="flex:0 0 auto">乖离率(净值vs均线)</span>
+          <input type="number" id="crMaWin" value="20" min="5" max="250" step="5" style="flex:0 0 56px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+          <select id="crMaDir" style="flex:0 0 74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="1" selected>正乖离优先</option><option value="-1">负乖离优先</option></select>
+          <span style="color:#7C8DA1;font-size:11px">权重</span>
+          <input type="number" id="crMaWt" value="1" min="0" step="0.5" style="flex:0 0 44px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+        </div>
+        <div style="font-size:11px;color:#7C8DA1;margin:4px 0">多因子公式：勾选多个因子后按各自权重做截面 z-score 加权合成排名（即组合因子）；只勾一个则为单因子轮动。</div>
+        <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
+          <span style="flex:0 0 auto">排名区间</span>
+          第 <input type="number" id="crRankN" value="1" min="1" max="60" style="flex:0 0 46px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"> ~
+          <input type="number" id="crRankM" value="2" min="1" max="60" style="flex:0 0 46px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"> 名持有
+        </div>
+        <div style="font-size:11px;color:#7C8DA1">调仓周期与起止日期沿用上方组合参数；换仓按组合成本（取各策略较高单边成本）扣减。</div>
+      </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
         <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">起始日期<input type="date" id="comboStart" style="padding:5px 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"></label>
         <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7C8DA1">结束日期<input type="date" id="comboEnd" style="padding:5px 8px;font-size:12px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9"></label>
@@ -5824,7 +5863,32 @@ function showStrategyDetail(name) {
     var rb = $("comboReb"), ri = $("comboRebInt");
     if (rb && c.reb) rb.value = c.reb;
     if (ri && c.rebInt) ri.value = "" + c.rebInt;
+    var radios = document.querySelectorAll('input[name="comboSynth"]');
+    if (radios.length) {
+      var want = (c.synth === "rot") ? "rot" : "fixed";
+      for (var ri2 = 0; ri2 < radios.length; ri2++) radios[ri2].checked = (radios[ri2].value === want);
+      syncComboSynth();
+    }
+    var rp = c.rot || {};
+    if ($("crFacRoc")) {
+      $("crFacRoc").checked = rp.facRoc !== false; $("crRocWin").value = rp.rocWin || 60; $("crRocDir").value = rp.rocDir || 1; $("crRocWt").value = rp.rocWt || 1;
+      $("crFacVol").checked = rp.facVol !== false; $("crVolWin").value = rp.volWin || 20; $("crVolDir").value = rp.volDir || -1; $("crVolWt").value = rp.volWt || 1;
+      $("crFacMa").checked = rp.facMa !== false; $("crMaWin").value = rp.maWin || 20; $("crMaDir").value = rp.maDir || 1; $("crMaWt").value = rp.maWt || 1;
+      $("crRankN").value = rp.rankN || 1; $("crRankM").value = rp.rankM || 2;
+    }
     showNotice("已加载组合「" + name + "」，权重与调仓周期已恢复");
+  }
+  function syncComboSynth() {
+    var rot = false;
+    var sr = document.querySelector('input[name="comboSynth"]:checked');
+    if (sr) rot = sr.value === "rot";
+    var p = $("comboRotPanel"); if (p) p.style.display = rot ? "" : "none";
+    var wts = document.querySelectorAll(".comboWt");
+    for (var i = 0; i < wts.length; i++) {
+      wts[i].style.display = rot ? "none" : "";
+      var sp = wts[i].nextElementSibling;
+      if (sp && sp.tagName === "SPAN") sp.style.display = rot ? "none" : "";
+    }
   }
   function saveCombo() {
     var cks = document.querySelectorAll(".comboCk"), wts = document.querySelectorAll(".comboWt");
@@ -5836,7 +5900,16 @@ function showStrategyDetail(name) {
     var name = ($("comboSaveName").value || "").trim() || ("组合 " + (loadCombos().length + 1));
     var list = loadCombos(), idx = -1;
     list.forEach(function (c, i) { if (c.name === name) idx = i; });
-    var entry = { name: name, members: members, reb: $("comboReb").value, rebInt: parseInt($("comboRebInt").value || "1", 10) || 1, savedAt: new Date().toISOString() };
+    var synth = "fixed";
+    var sr = document.querySelector('input[name="comboSynth"]:checked');
+    if (sr) synth = sr.value;
+    var rotCfg = {
+      facRoc: $("crFacRoc") ? $("crFacRoc").checked : true, rocWin: +($("crRocWin") ? $("crRocWin").value : 60) || 60, rocDir: +($("crRocDir") ? $("crRocDir").value : 1) || 1, rocWt: +($("crRocWt") ? $("crRocWt").value : 1) || 1,
+      facVol: $("crFacVol") ? $("crFacVol").checked : true, volWin: +($("crVolWin") ? $("crVolWin").value : 20) || 20, volDir: +($("crVolDir") ? $("crVolDir").value : -1) || -1, volWt: +($("crVolWt") ? $("crVolWt").value : 1) || 1,
+      facMa: $("crFacMa") ? $("crFacMa").checked : true, maWin: +($("crMaWin") ? $("crMaWin").value : 20) || 20, maDir: +($("crMaDir") ? $("crMaDir").value : 1) || 1, maWt: +($("crMaWt") ? $("crMaWt").value : 1) || 1,
+      rankN: +($("crRankN") ? $("crRankN").value : 1) || 1, rankM: +($("crRankM") ? $("crRankM").value : 2) || 2
+    };
+    var entry = { name: name, members: members, reb: $("comboReb").value, rebInt: parseInt($("comboRebInt").value || "1", 10) || 1, synth: synth, rot: rotCfg, savedAt: new Date().toISOString() };
     if (idx >= 0) list[idx] = entry; else list.push(entry);
     persistCombos(list);
     renderComboSaved();
@@ -5941,6 +6014,12 @@ function showStrategyDetail(name) {
     if (cl) cl.onclick = function () { loadComboByName($("comboSel").value); };
     if (cr) cr.onclick = renameCombo;
     if (cd) cd.onclick = delComboFromSel;
+    var radios = document.querySelectorAll('input[name="comboSynth"]');
+    if (radios.length && !radios._cb) {
+      radios.forEach(function (r) { r.addEventListener("change", syncComboSynth); });
+      radios._cb = true;
+    }
+    syncComboSynth();
     renderComboSaved();
     $("comboResult").style.display = "none";
   }
@@ -5949,6 +6028,71 @@ function showStrategyDetail(name) {
     var n = 0, i; for (i = 0; i < cks.length; i++) if (cks[i].checked) n++;
     var each = n ? Math.round(100 / n * 10) / 10 : 0;
     for (var j = 0; j < wts.length; j++) wts[j].value = (cks[j].checked ? each : 0);
+  }
+  function rotFactors() {
+    var fs = [];
+    function add(en, kind, winEl, dirEl, wtEl) {
+      if (!en || !en.checked) return;
+      fs.push({ kind: kind, window: Math.max(5, +winEl.value || 20), direction: +dirEl.value || 1, weight: Math.max(0, +wtEl.value || 0.5), usage: "rank", enabled: true });
+    }
+    add($("crFacRoc"), "roc", $("crRocWin"), $("crRocDir"), $("crRocWt"));
+    add($("crFacVol"), "vol", $("crVolWin"), $("crVolDir"), $("crVolWt"));
+    add($("crFacMa"), "c_vs_ma", $("crMaWin"), $("crMaDir"), $("crMaWt"));
+    return fs;
+  }
+  function runComboRot(names, start, end, rebKey, rebInt) {
+    var m = loadStored();
+    showNotice("正在回测 " + names.length + " 个策略净值并做因子轮动，请稍候…");
+    ensureData(function () {
+      var paramsList = [], resList = [];
+      names.forEach(function (nm) {
+        var p = JSON.parse(JSON.stringify(m[nm]));
+        if (start) p.start_date = start;
+        if (end) p.end_date = end;
+        paramsList.push(p);
+        resList.push(engine.backtest(D, p));
+      });
+      // 组合成本：取各策略中较高的单边成本作为换仓成本
+      var comboCost = 0;
+      paramsList.forEach(function (pp) { var cc = (+pp.commission_rate || 0) + (+pp.slippage_rate || 0); if (cc > comboCost) comboCost = cc; });
+      var calS = resList[0].calendar;
+      var D2 = { calendar: calS, series: {}, pool: [], overseas: [], index: {}, regime: [] };
+      if (D.index) D2.index = D.index;
+      if (D.regime) D2.regime = D.regime;
+      names.forEach(function (nm, i) {
+        D2.series[nm] = { close: resList[i].nav, open: resList[i].nav };
+        D2.pool.push({ code: nm });
+      });
+      var rmode = (rebKey === "none") ? "days" : rebKey;
+      var p2 = {
+        codes: names, only_rotation_codes: [], cooldown_days: 0,
+        factors: rotFactors(),
+        top_n: 0,
+        rank_n: Math.max(1, +$("crRankN").value || 1),
+        rank_m: Math.max(1, +$("crRankM").value || 2),
+        standardize: "robust",
+        buy_add: [], sell_conds: [], hold_conds: [],
+        mode: "rotation",
+        reb_weights: {}, reb_codes: names, reb_weight_mode: "fixed", reb_lookback: 20,
+        rebalance_mode: rmode,
+        rebalance_interval: Math.max(1, +rebInt || 1),
+        rebalance_anchor: "first",
+        rebalance_days: (rmode === "days") ? 999999 : 1,
+        annualize_factor: 252, score_floor: 0, r2_filter_mode: "normal_only",
+        mm_on: false, mm_bench: [], mm_mode: "any", mm_window: 20, mm_enter_days: 3, mm_exit_days: 3, mm_action: "cut", mm_cut_pct: 50, mm_hedge_pool: [], mm_weak_ma: false,
+        fallback_when_no_signal: "cash",
+        reb_style: "equal", reb_dev_pct: 0, reb_period_on: true, reb_band_on: false,
+        commission_rate: comboCost, slippage_rate: 0, min_commission: 0,
+        tiered_slippage: false, use_real_pool: false, holding_weight: "equal",
+        start_date: start, end_date: end, initial_capital: 1000000,
+        risk_free_rate: 0.02, overseas_codes: [],
+        st_on: false, st_small_idx: "000852.SH", st_large_idx: "000300.SH", st_window: 20, st_small_codes: [], st_large_codes: [],
+        benchmark: "000300.SH"
+      };
+      var rotRes = engine.backtest(D2, p2);
+      renderComboResult(names, resList, { combo: rotRes.nav }, null, "rot", rotRes);
+      showNotice("因子轮动回测完成：最近调仓持仓 " + ((rotRes.trades && rotRes.trades.length) ? rotRes.trades[rotRes.trades.length - 1].to.join("、") : "空仓"));
+    });
   }
   function runCombo() {
     var m = loadStored();
@@ -5962,12 +6106,21 @@ function showStrategyDetail(name) {
     }
     var warn = $("comboWarn");
     if (!names.length) { warn.style.display = ""; warn.textContent = "请至少勾选一个策略"; return; }
+    var start = $("comboStart").value, end = $("comboEnd").value;
+    var rebKey = $("comboReb").value, rebInt = parseInt($("comboRebInt").value || "1", 10) || 1;
+    var synth = "fixed";
+    var sr = document.querySelector('input[name="comboSynth"]:checked');
+    if (sr) synth = sr.value;
+    if (synth === "rot") {
+      warn.style.display = "none";
+      if (!rotFactors().length) { warn.style.display = ""; warn.textContent = "因子轮动请至少启用一个因子"; return; }
+      runComboRot(names, start, end, rebKey, rebInt);
+      return;
+    }
     var wsum = 0; weights.forEach(function (x) { wsum += x; });
     if (wsum <= 0) { warn.style.display = ""; warn.textContent = "权重之和需大于 0（请输入各策略权重百分比）"; return; }
     warn.style.display = "none";
     var w = weights.map(function (x) { return x / wsum; });
-    var start = $("comboStart").value, end = $("comboEnd").value;
-    var rebKey = $("comboReb").value, rebInt = parseInt($("comboRebInt").value || "1", 10) || 1;
     var base = { none: 0, daily: 1, weekly: 5, monthly: 21, quarterly: 63, yearly: 252 }[rebKey] || 0;
     var intervalDays = base * rebInt;
     if (names.length < 2) showNotice("相关性需至少 2 个策略；组合净值仍可显示");
@@ -5986,6 +6139,7 @@ function showStrategyDetail(name) {
       paramsList.forEach(function (pp) { var cc = (+pp.commission_rate || 0) + (+pp.slippage_rate || 0); if (cc > comboCost) comboCost = cc; });
       var comboRes = buildCombo(resList, w, intervalDays, comboCost);
       renderComboResult(names, resList, comboRes, w);
+      showNotice("组合回测完成");
     });
   }
   function buildCombo(resList, w, intervalDays, costPerSide) {
@@ -6031,7 +6185,7 @@ function showStrategyDetail(name) {
     var den = Math.sqrt(da * db); return den > 0 ? num / den : 0;
   }
   function _pct(x) { return (x * 100).toFixed(2) + "%"; }
-  function renderComboResult(names, resList, comboRes, w) {
+  function renderComboResult(names, resList, comboRes, w, synth, rotRes) {
     $("comboResult").style.display = "";
     var cal = resList[0].calendar;
     var combo = comboRes.combo;
@@ -6081,24 +6235,36 @@ function showStrategyDetail(name) {
       visualMap: { min: -1, max: 1, calculable: true, orient: "horizontal", left: "center", bottom: 6, textStyle: { color: "#9FB0C3" }, inRange: { color: ["#7F1D1D", "#243244", "#14532D"] } },
       series: [{ type: "heatmap", data: cells, label: { show: true, color: "#F1F5F9", fontSize: 11 }, itemStyle: { borderColor: "#1B2634", borderWidth: 1 } }]
     });
-    // 目标权重
+    // 目标权重（固定权重=静态占比；因子轮动=最近调仓持仓等权）
     _disposeCombo("comboWeight");
-    var pie = echarts.init($("comboWeight"));
-    // 目标权重：策略名列表放上方，饼图放下方，错开展示
     var lg = $("comboWeightLegend"); lg.innerHTML = "";
-    names.forEach(function (nm, i) {
-      var it = document.createElement("span");
-      it.style.cssText = "display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#F1F5F9";
-      it.innerHTML = '<span style="width:10px;height:10px;border-radius:2px;background:' + palette[i % palette.length] + ';flex:0 0 auto"></span>' + nm + ' <span style="color:#9FB0C3">' + (w[i] * 100).toFixed(2) + '%</span>';
-      lg.appendChild(it);
-    });
-    _disposeCombo("comboWeight");
-    var pie = echarts.init($("comboWeight"));
-    _comboCharts["comboWeight"] = pie;
-    pie.setOption({
-      backgroundColor: "transparent", tooltip: { trigger: "item", formatter: function (p) { return p.name + "<br>权重 " + p.percent + "%"; } },
-      series: [{ type: "pie", radius: ["42%", "64%"], center: ["50%", "50%"], avoidLabelOverlap: true, label: { color: "#F1F5F9", formatter: "{d}%", fontSize: 11 }, data: names.map(function (nm, i) { return { name: nm, value: +(w[i] * 100).toFixed(2), itemStyle: { color: palette[i % palette.length] } }; }) }]
-    });
+    if (synth === "rot") {
+      var lastTo = [];
+      if (rotRes && rotRes.trades && rotRes.trades.length) lastTo = rotRes.trades[rotRes.trades.length - 1].to || [];
+      lg.innerHTML = '<div style="font-size:12px;color:#9FB0C3">因子轮动：按排名区间动态持有，无固定权重。最近调仓持仓：' +
+        (lastTo.length ? lastTo.join("、") : "暂无（空仓）") + '</div>';
+      var pieR = echarts.init($("comboWeight"));
+      _comboCharts["comboWeight"] = pieR;
+      var wd = lastTo.length ? lastTo.map(function (c, i) { return { name: c, value: +(100 / lastTo.length).toFixed(2), itemStyle: { color: palette[i % palette.length] } }; }) : [{ name: "空仓", value: 100, itemStyle: { color: "#3E4E63" } }];
+      pieR.setOption({
+        backgroundColor: "transparent", tooltip: { trigger: "item", formatter: function (p) { return p.name + "<br>权重 " + p.percent + "%"; } },
+        series: [{ type: "pie", radius: ["42%", "64%"], center: ["50%", "50%"], avoidLabelOverlap: true, label: { color: "#F1F5F9", formatter: "{d}%", fontSize: 11 }, data: wd }]
+      });
+    } else {
+      names.forEach(function (nm, i) {
+        var it = document.createElement("span");
+        it.style.cssText = "display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#F1F5F9";
+        it.innerHTML = '<span style="width:10px;height:10px;border-radius:2px;background:' + palette[i % palette.length] + ';flex:0 0 auto"></span>' + nm + ' <span style="color:#9FB0C3">' + (w[i] * 100).toFixed(2) + '%</span>';
+        lg.appendChild(it);
+      });
+      _disposeCombo("comboWeight");
+      var pie = echarts.init($("comboWeight"));
+      _comboCharts["comboWeight"] = pie;
+      pie.setOption({
+        backgroundColor: "transparent", tooltip: { trigger: "item", formatter: function (p) { return p.name + "<br>权重 " + p.percent + "%"; } },
+        series: [{ type: "pie", radius: ["42%", "64%"], center: ["50%", "50%"], avoidLabelOverlap: true, label: { color: "#F1F5F9", formatter: "{d}%", fontSize: 11 }, data: names.map(function (nm, i) { return { name: nm, value: +(w[i] * 100).toFixed(2), itemStyle: { color: palette[i % palette.length] } }; }) }]
+      });
+    }
   }
   $("comboRun").addEventListener("click", function () { runCombo(); });
 
