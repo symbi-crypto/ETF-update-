@@ -255,7 +255,6 @@ footer b{color:#9FB0C3}
         </h3>
         <div id="mfBox" style="margin-top:2px">
           <div style="font-size:12px;color:#9FB0C3;margin:2px 0 6px">创建因子并选择归属：<b>排名</b> → 放入「排名条件」参与轮动打分；<b>筛选</b> → 放入「筛选条件」作为过滤条件（全部满足才进入候选池，先筛选后排序）。可添加基础因子，或用公式四则运算组合自定义因子（最少2个成分）。</div>
-          <div id="mfLibList"></div>
           <div class="row" style="display:flex;align-items:center;margin-top:6px;gap:6px">
             <select id="mfCat" style="width:110px;text-align:center;appearance:none;-webkit-appearance:none">
               <option value="all">全部因子</option>
@@ -3123,11 +3122,28 @@ function renderMfList() {
     dSel.value = String(f.direction !== undefined ? f.direction : (f.kind === "vol" || f.kind === "premium" ? -1 : 1));
     dSel.title = "该因子得分方向";
     dSel.addEventListener("change", function () { f.direction = +this.value; scheduleRun(); });
+    var tog = document.createElement("button");
+    tog.type = "button"; tog.textContent = "\u21C4";
+    tog.title = "切换为筛选";
+    tog.style.cssText = "flex:0 0 auto;font-size:11px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+    tog.addEventListener("click", function () { f.usage = "filter"; renderMfList(); renderFltList(); scheduleRun(); });
+    var ed = null;
+    if (f.kind === "expr") {
+      ed = document.createElement("button");
+      ed.type = "button"; ed.textContent = "\u270E";
+      ed.title = "编辑公式";
+      ed.style.cssText = "flex:0 0 auto;font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+      ed.addEventListener("click", function () {
+        openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; renderMfList(); renderFltList(); scheduleRun(); } });
+      });
+    }
     var del = document.createElement("button");
     del.type = "button"; del.textContent = "\u00d7";
     del.style.cssText = "flex:0 0 22px;margin-left:2px";
     del.addEventListener("click", function () { removeFactor(f); });
-    row.appendChild(chk); row.appendChild(lab); row.appendChild(wg); row.appendChild(wIn); row.appendChild(dSel); row.appendChild(del);
+    row.appendChild(chk); row.appendChild(lab); row.appendChild(wg); row.appendChild(wIn); row.appendChild(dSel); row.appendChild(tog);
+    if (ed) row.appendChild(ed);
+    row.appendChild(del);
     box.appendChild(row);
   });
   $("mfSum").textContent = sum.toFixed(2);
@@ -3218,11 +3234,28 @@ function renderFltList() {
     thIn.addEventListener("input", function () { f.threshold = Math.max(0, Math.min(1000, +this.value || 0)) / 100; scheduleRun(); });
     var pct = document.createElement("span");
     pct.style.cssText = "flex:0 0 12px;font-size:12px;color:#7C8DA1"; pct.textContent = "%";
+    var tog = document.createElement("button");
+    tog.type = "button"; tog.textContent = "\u21C4";
+    tog.title = "切换为排名";
+    tog.style.cssText = "flex:0 0 auto;font-size:11px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+    tog.addEventListener("click", function () { f.usage = "rank"; renderMfList(); renderFltList(); scheduleRun(); });
+    var ed = null;
+    if (f.kind === "expr") {
+      ed = document.createElement("button");
+      ed.type = "button"; ed.textContent = "\u270E";
+      ed.title = "编辑公式";
+      ed.style.cssText = "flex:0 0 auto;font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+      ed.addEventListener("click", function () {
+        openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; renderMfList(); renderFltList(); scheduleRun(); } });
+      });
+    }
     var del = document.createElement("button");
     del.type = "button"; del.textContent = "\u00d7";
     del.style.cssText = "flex:0 0 22px;margin-left:2px";
     del.addEventListener("click", function () { removeFactor(f); });
-    row.appendChild(chk); row.appendChild(lab); row.appendChild(wg); row.appendChild(opSel); row.appendChild(thIn); row.appendChild(pct); row.appendChild(del);
+    row.appendChild(chk); row.appendChild(lab); row.appendChild(wg); row.appendChild(opSel); row.appendChild(thIn); row.appendChild(pct); row.appendChild(tog);
+    if (ed) row.appendChild(ed);
+    row.appendChild(del);
     box.appendChild(row);
   });
 }
@@ -4099,11 +4132,13 @@ function buildChips() {
                weight: f.weight !== undefined ? f.weight : 0.1,
                direction: f.direction !== undefined ? f.direction : (f.kind === "vol" || f.kind === "premium" ? -1 : 1),
                usage: f.usage || "rank", name: f.name, formula_parts: f.formula_parts,
-               expr: f.expr, op: f.op, threshold: f.threshold };
+               expr: f.expr, op: f.op, threshold: f.threshold,
+               enabled: f.enabled !== false };
     });
     (p.filters || []).forEach(function (ft) {
       factors.push({ kind: ft.kind, window: ft.window, window2: ft.window2, window3: ft.window3,
-                     op: ft.op, threshold: ft.threshold, usage: "filter", weight: 0 });
+                     op: ft.op, threshold: ft.threshold, usage: "filter", weight: 0,
+                     enabled: ft.enabled !== false });
     });
     if (activeView === "rotation") {
       renderMfLib();
