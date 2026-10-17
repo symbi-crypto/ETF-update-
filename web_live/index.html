@@ -820,6 +820,12 @@ footer b{color:#9FB0C3}
     <div class="card">
       <h2>多策略组合</h2>
       <p style="font-size:12px;color:#9FB0C3;margin:2px 0 12px;line-height:1.7">从「我的策略」中勾选多个策略、手动分配权重，按所选周期做组合再平衡，合成组合净值；并计算各策略<b>日收益率相关</b>矩阵，辅助判断分散化。</p>
+      <h3 style="margin:14px 0 6px;font-size:13px">已保存组合</h3>
+      <div id="comboSavedList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">
+        <input id="comboSaveName" type="text" placeholder="组合名称，如：稳健版" style="flex:1;min-width:0;font-size:12px;padding:5px 8px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
+        <button id="comboSaveBtn" type="button" style="padding:5px 12px;font-size:12px;border-radius:6px;border:1px solid #4FC3F7;background:rgba(79,195,247,.12);color:#7DD3FC;cursor:pointer;white-space:nowrap">保存当前组合</button>
+      </div>
       <h3 style="margin:8px 0 6px;font-size:13px">选择策略与权重</h3>
       <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px">
         <input id="comboSearch" type="text" placeholder="搜索策略名称…" style="flex:1;min-width:0;font-size:12px;padding:5px 8px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
@@ -5767,6 +5773,67 @@ function showStrategyDetail(name) {
   // ---------- 多策略组合视图 ----------
   var _comboCharts = {};
   function _disposeCombo(id) { if (_comboCharts[id]) { try { _comboCharts[id].dispose(); } catch (e) {} delete _comboCharts[id]; } }
+  // ---------- 组合保存/加载（独立存储 wufu_combos_v1，不混入策略） ----------
+  var COMBO_KEY = "wufu_combos_v1";
+  function loadCombos() { try { return JSON.parse(localStorage.getItem(COMBO_KEY) || "[]") || []; } catch (e) { return []; } }
+  function persistCombos(list) { try { localStorage.setItem(COMBO_KEY, JSON.stringify(list)); } catch (e) { showNotice("组合保存失败：" + e.message); } }
+  function renderComboSaved() {
+    var box = $("comboSavedList"); if (!box) return;
+    var list = loadCombos();
+    if (!list.length) { box.innerHTML = '<div style="font-size:12px;color:#7C8DA1">暂无已保存组合</div>'; return; }
+    var h = "";
+    list.forEach(function (c, idx) {
+      h += '<div style="display:flex;align-items:center;gap:5px;background:#202E3F;border:1px solid #243244;border-radius:6px;padding:4px 7px;font-size:12px;cursor:pointer" data-load="' + idx + '" title="点击加载">' +
+        '<span style="color:#F1F5F9">' + c.name + '</span>' +
+        '<span style="color:#7C8DA1">' + (c.members ? c.members.length : 0) + '策略</span>' +
+        '<span data-del="' + idx + '" style="color:#F87171;padding:0 3px;cursor:pointer;font-size:13px" title="删除">×</span></div>';
+    });
+    box.innerHTML = h;
+  }
+  function loadCombo(idx) {
+    var list = loadCombos(), c = list[idx]; if (!c) return;
+    var m = loadStored();
+    var names = (c.members || []).map(function (x) { return x.name; });
+    var wmap = {}; (c.members || []).forEach(function (x) { wmap[x.name] = x.weight; });
+    var namesLow = names.map(function (n) { return (n || "").toLowerCase(); });
+    var missing = names.filter(function (nm) { return !m[nm]; });
+    if (missing.length) showNotice("组合含已删除策略：" + missing.join("、") + "，已跳过");
+    var rows = document.querySelectorAll(".comboRow");
+    for (var i = 0; i < rows.length; i++) {
+      var nm = rows[i].getAttribute("data-name");
+      var cb = rows[i].querySelector(".comboCk"), wt = rows[i].querySelector(".comboWt");
+      var gi = namesLow.indexOf(nm);
+      if (gi >= 0) { cb.checked = true; wt.value = (wmap[names[gi]] !== undefined ? wmap[names[gi]] : 0); }
+      else { cb.checked = false; wt.value = 0; }
+    }
+    var rb = $("comboReb"), ri = $("comboRebInt");
+    if (rb && c.reb) rb.value = c.reb;
+    if (ri && c.rebInt) ri.value = "" + c.rebInt;
+    showNotice("已加载组合「" + c.name + "」，权重与调仓周期已恢复");
+  }
+  function saveCombo() {
+    var cks = document.querySelectorAll(".comboCk"), wts = document.querySelectorAll(".comboWt");
+    var members = [];
+    for (var i = 0; i < cks.length; i++) {
+      if (cks[i].checked) members.push({ name: cks[i].nextElementSibling.textContent, weight: parseFloat(wts[i].value) || 0 });
+    }
+    if (!members.length) { showNotice("请先勾选至少一个策略再保存"); return; }
+    var name = ($("comboSaveName").value || "").trim() || ("组合 " + (loadCombos().length + 1));
+    var list = loadCombos(), idx = -1;
+    list.forEach(function (c, i) { if (c.name === name) idx = i; });
+    var entry = { name: name, members: members, reb: $("comboReb").value, rebInt: parseInt($("comboRebInt").value || "1", 10) || 1, savedAt: new Date().toISOString() };
+    if (idx >= 0) list[idx] = entry; else list.push(entry);
+    persistCombos(list);
+    renderComboSaved();
+    showNotice("已保存组合「" + name + "」");
+  }
+  function delCombo(idx) {
+    var list = loadCombos();
+    if (!confirm("删除组合「" + (list[idx] ? list[idx].name : "") + "」？")) return;
+    list.splice(idx, 1);
+    persistCombos(list);
+    renderComboSaved();
+  }
   function renderComboSetup() {
     var box = $("comboStratList"); if (!box) return;
     var m = loadStored();
@@ -5828,6 +5895,19 @@ function showStrategyDetail(name) {
       for (var i = 0; i < cks.length; i++) cks[i].checked = false;
       balanceComboWeights();
     };
+    // 已保存组合：列表事件委托（加载/删除）+ 保存按钮
+    var sl = $("comboSavedList"), sv = $("comboSaveBtn");
+    if (sl && !sl._cb) {
+      sl.addEventListener("click", function (e) {
+        var t = e.target;
+        if (t && t.getAttribute && t.getAttribute("data-del") !== null) { delCombo(+t.getAttribute("data-del")); return; }
+        var ld = t && t.closest ? t.closest("[data-load]") : null;
+        if (ld) loadCombo(+ld.getAttribute("data-load"));
+      });
+      sl._cb = true;
+    }
+    if (sv) sv.onclick = saveCombo;
+    renderComboSaved();
     $("comboResult").style.display = "none";
   }
   function balanceComboWeights() {
