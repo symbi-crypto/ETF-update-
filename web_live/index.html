@@ -848,31 +848,21 @@ footer b{color:#9FB0C3}
       </div>
       <div id="comboRotPanel" style="display:none;background:#202E3F;border:1px solid #243244;border-radius:8px;padding:10px;margin-bottom:10px">
         <div style="font-size:12px;color:#7DD3FC;margin-bottom:6px">因子轮动 · 对策略净值做截面因子排名，按排名区间 N-M 持有</div>
+        <div style="font-size:11px;color:#7C8DA1;margin:4px 0">因子管理：排名因子参与打分，筛选因子先过滤候选；支持自定义公式因子（作用于策略净值）。</div>
+        <div id="crFacLib" style="max-height:130px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:6px;margin-bottom:6px"></div>
         <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
-          <input type="checkbox" id="crFacRoc" checked style="width:14px;height:14px;accent-color:#4FC3F7">
-          <span style="flex:0 0 auto">净值变化(动量)</span>
-          <input type="number" id="crRocWin" value="60" min="5" max="250" step="5" style="flex:0 0 56px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
-          <select id="crRocDir" style="flex:0 0 74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="1">动量优先</option><option value="-1">反向</option></select>
-          <span style="color:#7C8DA1;font-size:11px">权重</span>
-          <input type="number" id="crRocWt" value="1" min="0" step="0.5" style="flex:0 0 44px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+          <select id="crAddKind" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"></select>
+          <select id="crAddUsage" style="flex:0 0 62px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="rank">排名</option><option value="filter">筛选</option></select>
+          <button type="button" id="crAddBtn" style="flex:0 0 auto;font-size:12px;padding:2px 10px;cursor:pointer">+ 添加因子</button>
         </div>
-        <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
-          <input type="checkbox" id="crFacVol" checked style="width:14px;height:14px;accent-color:#4FC3F7">
-          <span style="flex:0 0 auto">收益波动率</span>
-          <input type="number" id="crVolWin" value="20" min="5" max="250" step="5" style="flex:0 0 56px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
-          <select id="crVolDir" style="flex:0 0 74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="-1" selected>低波优先</option><option value="1">高波优先</option></select>
-          <span style="color:#7C8DA1;font-size:11px">权重</span>
-          <input type="number" id="crVolWt" value="1" min="0" step="0.5" style="flex:0 0 44px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+        <div id="crFacRankBox" style="border:1px solid #243244;border-radius:6px;padding:6px;margin:6px 0">
+          <div style="font-size:11px;color:#7DD3FC;margin-bottom:4px">排名因子（窗口 / 权重 / 方向）</div>
+          <div id="crFacRankList"></div>
         </div>
-        <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
-          <input type="checkbox" id="crFacMa" checked style="width:14px;height:14px;accent-color:#4FC3F7">
-          <span style="flex:0 0 auto">乖离率(净值vs均线)</span>
-          <input type="number" id="crMaWin" value="20" min="5" max="250" step="5" style="flex:0 0 56px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
-          <select id="crMaDir" style="flex:0 0 74px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="1" selected>正乖离优先</option><option value="-1">负乖离优先</option></select>
-          <span style="color:#7C8DA1;font-size:11px">权重</span>
-          <input type="number" id="crMaWt" value="1" min="0" step="0.5" style="flex:0 0 44px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">
+        <div id="crFacFltBox" style="border:1px solid #243244;border-radius:6px;padding:6px;margin:6px 0">
+          <div style="font-size:11px;color:#7DD3FC;margin-bottom:4px">筛选条件（不满足则剔除候选）</div>
+          <div id="crFacFltList"></div>
         </div>
-        <div style="font-size:11px;color:#7C8DA1;margin:4px 0">多因子公式：勾选多个因子后按各自权重做截面 z-score 加权合成排名（即组合因子）；只勾一个则为单因子轮动。</div>
         <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
           <span style="flex:0 0 auto">排名区间</span>
           第 <input type="number" id="crRankN" value="1" min="1" max="60" style="flex:0 0 46px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"> ~
@@ -5870,12 +5860,16 @@ function showStrategyDetail(name) {
       syncComboSynth();
     }
     var rp = c.rot || {};
-    if ($("crFacRoc")) {
-      $("crFacRoc").checked = rp.facRoc !== false; $("crRocWin").value = rp.rocWin || 60; $("crRocDir").value = rp.rocDir || 1; $("crRocWt").value = rp.rocWt || 1;
-      $("crFacVol").checked = rp.facVol !== false; $("crVolWin").value = rp.volWin || 20; $("crVolDir").value = rp.volDir || -1; $("crVolWt").value = rp.volWt || 1;
-      $("crFacMa").checked = rp.facMa !== false; $("crMaWin").value = rp.maWin || 20; $("crMaDir").value = rp.maDir || 1; $("crMaWt").value = rp.maWt || 1;
-      $("crRankN").value = rp.rankN || 1; $("crRankM").value = rp.rankM || 2;
+    if (rp.factors && rp.factors.length) {
+      crFactors = JSON.parse(JSON.stringify(rp.factors));
+    } else {   // 兼容旧版保存：固定三因子字段
+      crFactors = [];
+      if (rp.facRoc !== false) crFactors.push({ kind: "roc", window: rp.rocWin || 60, weight: rp.rocWt || 1, direction: rp.rocDir === -1 ? -1 : 1, usage: "rank", enabled: true });
+      if (rp.facVol !== false) crFactors.push({ kind: "vol", window: rp.volWin || 20, weight: rp.volWt || 1, direction: rp.volDir === -1 ? -1 : 1, usage: "rank", enabled: true });
+      if (rp.facMa !== false) crFactors.push({ kind: "c_vs_ma", window: rp.maWin || 20, weight: rp.maWt || 1, direction: rp.maDir === -1 ? -1 : 1, usage: "rank", enabled: true });
     }
+    if ($("crRankN")) { $("crRankN").value = rp.rankN || 1; $("crRankM").value = rp.rankM || 2; }
+    crRenderAll();
     showNotice("已加载组合「" + name + "」，权重与调仓周期已恢复");
   }
   function syncComboSynth() {
@@ -5904,10 +5898,8 @@ function showStrategyDetail(name) {
     var sr = document.querySelector('input[name="comboSynth"]:checked');
     if (sr) synth = sr.value;
     var rotCfg = {
-      facRoc: $("crFacRoc") ? $("crFacRoc").checked : true, rocWin: +($("crRocWin") ? $("crRocWin").value : 60) || 60, rocDir: +($("crRocDir") ? $("crRocDir").value : 1) || 1, rocWt: +($("crRocWt") ? $("crRocWt").value : 1) || 1,
-      facVol: $("crFacVol") ? $("crFacVol").checked : true, volWin: +($("crVolWin") ? $("crVolWin").value : 20) || 20, volDir: +($("crVolDir") ? $("crVolDir").value : -1) || -1, volWt: +($("crVolWt") ? $("crVolWt").value : 1) || 1,
-      facMa: $("crFacMa") ? $("crFacMa").checked : true, maWin: +($("crMaWin") ? $("crMaWin").value : 20) || 20, maDir: +($("crMaDir") ? $("crMaDir").value : 1) || 1, maWt: +($("crMaWt") ? $("crMaWt").value : 1) || 1,
-      rankN: +($("crRankN") ? $("crRankN").value : 1) || 1, rankM: +($("crRankM") ? $("crRankM").value : 2) || 2
+      rankN: +($("crRankN") ? $("crRankN").value : 1) || 1, rankM: +($("crRankM") ? $("crRankM").value : 2) || 2,
+      factors: JSON.parse(JSON.stringify(crFactors))
     };
     var entry = { name: name, members: members, reb: $("comboReb").value, rebInt: parseInt($("comboRebInt").value || "1", 10) || 1, synth: synth, rot: rotCfg, savedAt: new Date().toISOString() };
     if (idx >= 0) list[idx] = entry; else list.push(entry);
@@ -6029,17 +6021,301 @@ function showStrategyDetail(name) {
     var each = n ? Math.round(100 / n * 10) / 10 : 0;
     for (var j = 0; j < wts.length; j++) wts[j].value = (cks[j].checked ? each : 0);
   }
+  // ---------- 组合轮动因子管理（完整因子库 + 自定义公式，独立配置） ----------
+  var crFactors = [];
+  var CR_FAC_KINDS = ["roc", "nav_roc", "slope_r2", "wslope_r2", "r2", "vol", "risk_adj", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "expr"];
+  var CR_FAC_NAMES = { roc: "涨幅动量", nav_roc: "净值变化率", slope_r2: "斜率(趋势)", wslope_r2: "加权斜率", r2: "拟合优度", vol: "收益波动率", risk_adj: "风险调整动量", c_vs_ma: "乖离率(净值vs均线)", c_vs_ma_lag: "乖离率(滞后均线)", ma_vs_ma: "均线相对强弱", ma_vs_ma_lag: "均线相对(滞后)", ma: "均线值", ma_lag: "滞后均线", amplitude: "振幅", position: "位置分位", rsi: "RSI强弱", expr: "自定义公式" };
+  function crFacLabel(f) {
+    if (f.kind === "expr") return f.name || "自定义公式";
+    var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
+    return (ki && ki.label) ? ki.label : (CR_FAC_NAMES[f.kind] || f.kind);
+  }
+  function crFacWinTitle(f) {
+    if (f.kind === "expr") return (f.name || "公式") + " = " + (f.expr || "");
+    var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
+    return (ki && ki.title) ? ki.title : f.kind;
+  }
+  function crWindowGroup(f) {
+    var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
+    var wg = document.createElement("div");
+    wg.style.cssText = "flex:0 0 auto;display:flex;align-items:center;gap:3px";
+    if (f.kind === "expr") {
+      var tag = document.createElement("span");
+      tag.style.cssText = "font-size:10.5px;color:#7C8DA1;background:#1B2735;border:1px solid #2E3D50;border-radius:3px;padding:1px 5px;cursor:help";
+      tag.textContent = "公式";
+      tag.title = crFacWinTitle(f);
+      wg.appendChild(tag);
+      return wg;
+    }
+    var nw = ki.nwin || 1;
+    for (var j = 0; j < nw; j++) {
+      (function (jj) {
+        var mn = jj === 0 ? ki.wMin : ki["wMin" + (jj + 1)];
+        var mx = jj === 0 ? ki.wMax : ki["wMax" + (jj + 1)];
+        var st = jj === 0 ? ki.wStep : ki["wStep" + (jj + 1)];
+        var wv = jj === 0 ? (f.window !== undefined ? f.window : ki.def)
+               : jj === 1 ? (f.window2 !== undefined ? f.window2 : ki.def2)
+               : (f.window3 !== undefined ? f.window3 : ki.def3);
+        var inp = document.createElement("input");
+        inp.type = "number"; inp.min = mn; inp.max = mx; inp.step = st; inp.value = wv;
+        inp.style.cssText = "width:44px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
+        inp.title = (ki.winTitles && ki.winTitles[jj]) || ki.title || "";
+        inp.addEventListener("input", function () {
+          if (jj === 0) f.window = +this.value;
+          else if (jj === 1) f.window2 = +this.value;
+          else f.window3 = +this.value;
+          crRenderAll();
+        });
+        wg.appendChild(inp);
+      })(j);
+    }
+    return wg;
+  }
+  function crRenderLib() {
+    var box = $("crFacLib"); if (!box) return;
+    box.innerHTML = "";
+    if (!crFactors.length) {
+      var hint = document.createElement("div");
+      hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px;line-height:1.5";
+      hint.innerHTML = "当前无因子，组合保持空仓。<br>选择因子类型与归属（排名/筛选）添加，或用公式组合自定义因子。";
+      box.appendChild(hint);
+    }
+    crFactors.forEach(function (f) {
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;margin:3px 0;gap:4px";
+      var lab = document.createElement("span");
+      lab.style.cssText = "flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      lab.textContent = crFacLabel(f);
+      lab.title = crFacWinTitle(f);
+      if (f.kind === "expr" && f.expr) lab.textContent = lab.textContent + "  " + f.expr;
+      var uSel = document.createElement("select");
+      uSel.style.cssText = "flex:0 0 66px;font-size:11.5px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F;text-align:center";
+      uSel.innerHTML = '<option value="filter">筛选</option><option value="rank">排名</option>';
+      uSel.value = f.usage || "rank";
+      uSel.title = "归属：排名=轮动打分；筛选=过滤条件";
+      uSel.addEventListener("change", function () {
+        f.usage = this.value;
+        if (f.usage === "filter" && f.op === undefined) { f.op = "gte"; f.threshold = 0.0; }
+        crRenderAll();
+      });
+      var ed = null;
+      if (f.kind === "expr") {
+        ed = document.createElement("button");
+        ed.type = "button"; ed.textContent = "\u270e";
+        ed.style.cssText = "flex:0 0 22px;margin-left:2px;cursor:pointer";
+        ed.title = "编辑公式";
+        ed.addEventListener("click", function () {
+          openFormulaModal({ title: "编辑公式因子：" + (f.name || ""), initial: f.expr || "", onSave: function (src) { f.expr = src; crRenderAll(); } });
+        });
+      }
+      var del = document.createElement("button");
+      del.type = "button"; del.textContent = "\u00d7";
+      del.style.cssText = "flex:0 0 22px;margin-left:2px;cursor:pointer";
+      del.title = "删除该因子";
+      del.addEventListener("click", function () {
+        var i = crFactors.indexOf(f); if (i >= 0) crFactors.splice(i, 1);
+        crRenderAll();
+      });
+      row.appendChild(lab); row.appendChild(uSel);
+      if (ed) row.appendChild(ed);
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function crRenderRank() {
+    var box = $("crFacRankList"); if (!box) return;
+    box.innerHTML = "";
+    var rankF = crFactors.filter(function (f) { return (f.usage || "rank") === "rank"; });
+    if (!rankF.length) {
+      var hint = document.createElement("div");
+      hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
+      hint.textContent = "暂无排名因子，请在「因子管理」添加并归属为排名。";
+      box.appendChild(hint);
+    }
+    rankF.forEach(function (f) {
+      var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
+      var row = document.createElement("div");
+      row.style.cssText = "display:grid;grid-template-columns:16px 56px 1fr auto 22px;align-items:center;gap:5px;margin:3px 0;box-sizing:border-box";
+      var chk = document.createElement("input");
+      chk.type = "checkbox"; chk.checked = f.enabled !== false;
+      chk.style.cssText = "width:16px;height:16px;cursor:pointer;margin:0";
+      chk.title = "启用/停用（停用不参与回测，保留定义）";
+      chk.addEventListener("change", function () { f.enabled = this.checked; row.style.opacity = this.checked ? "1" : "0.4"; crRenderAll(); });
+      var lab = document.createElement("span");
+      lab.style.cssText = "font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      lab.textContent = crFacLabel(f);
+      lab.title = crFacWinTitle(f);
+      var param = document.createElement("div");
+      param.style.cssText = "display:flex;align-items:center;gap:4px;min-width:0";
+      param.appendChild(crWindowGroup(f));
+      var wIn = document.createElement("input");
+      wIn.type = "number"; wIn.min = 0; wIn.max = 1; wIn.step = 0.05; wIn.value = f.weight !== undefined ? f.weight : 0.1;
+      wIn.style.cssText = "flex:0 0 46px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
+      wIn.title = "排名权重";
+      wIn.addEventListener("input", function () { f.weight = +this.value; crRenderAll(); });
+      param.appendChild(wIn);
+      var dSel = document.createElement("select");
+      dSel.style.cssText = "flex:0 0 38px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
+      dSel.innerHTML = '<option value="1">正向</option><option value="-1">反向</option>';
+      dSel.value = String(f.direction !== undefined ? f.direction : (f.kind === "vol" ? -1 : 1));
+      dSel.title = "该因子得分方向";
+      dSel.addEventListener("change", function () { f.direction = +this.value; crRenderAll(); });
+      param.appendChild(dSel);
+      var op = document.createElement("div");
+      op.style.cssText = "display:flex;align-items:center;gap:2px";
+      var tog = document.createElement("button");
+      tog.type = "button"; tog.textContent = "\u21C4";
+      tog.title = "切换为筛选";
+      tog.style.cssText = "font-size:11px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+      tog.addEventListener("click", function () { f.usage = "filter"; if (f.op === undefined) { f.op = "gte"; f.threshold = 0.0; } crRenderAll(); });
+      op.appendChild(tog);
+      var ed = null;
+      if (f.kind === "expr") {
+        ed = document.createElement("button");
+        ed.type = "button"; ed.textContent = "\u270E";
+        ed.title = "编辑公式";
+        ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+        ed.addEventListener("click", function () {
+          openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; crRenderAll(); } });
+        });
+        op.appendChild(ed);
+      }
+      var del = document.createElement("button");
+      del.type = "button"; del.textContent = "\u00d7";
+      del.style.cssText = "width:22px;cursor:pointer";
+      del.addEventListener("click", function () { var i = crFactors.indexOf(f); if (i >= 0) crFactors.splice(i, 1); crRenderAll(); });
+      row.appendChild(chk); row.appendChild(lab); row.appendChild(param); row.appendChild(op); row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function crRenderFilter() {
+    var box = $("crFacFltList"); if (!box) return;
+    box.innerHTML = "";
+    var fltF = crFactors.filter(function (f) { return (f.usage || "rank") === "filter"; });
+    if (!fltF.length) {
+      var hint = document.createElement("div");
+      hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
+      hint.textContent = "暂无筛选因子（全部策略可参与排名），请在「因子管理」添加并归属为筛选。";
+      box.appendChild(hint);
+    }
+    fltF.forEach(function (f) {
+      var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
+      var row = document.createElement("div");
+      row.style.cssText = "display:grid;grid-template-columns:16px 56px 1fr auto 22px;align-items:center;gap:5px;margin:3px 0;box-sizing:border-box";
+      var chk = document.createElement("input");
+      chk.type = "checkbox"; chk.checked = f.enabled !== false;
+      chk.style.cssText = "width:16px;height:16px;cursor:pointer;margin:0";
+      chk.title = "启用/停用";
+      chk.addEventListener("change", function () { f.enabled = this.checked; row.style.opacity = this.checked ? "1" : "0.4"; crRenderAll(); });
+      var lab = document.createElement("span");
+      lab.style.cssText = "font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      lab.textContent = crFacLabel(f);
+      lab.title = crFacWinTitle(f);
+      var param = document.createElement("div");
+      param.style.cssText = "display:flex;align-items:center;gap:4px;min-width:0";
+      param.appendChild(crWindowGroup(f));
+      var opSel = document.createElement("select");
+      opSel.style.cssText = "flex:0 0 38px;font-size:11.5px;padding:2px 1px;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;background:#202E3F";
+      opSel.innerHTML = '<option value="gte">\u2265</option><option value="lte">\u2264</option>';
+      opSel.value = f.op || "gte";
+      opSel.addEventListener("change", function () { f.op = this.value; crRenderAll(); });
+      param.appendChild(opSel);
+      var thIn = document.createElement("input");
+      thIn.type = "number"; thIn.min = 0; thIn.max = 1000; thIn.step = 1;
+      thIn.value = Math.round((f.threshold !== undefined ? f.threshold : 0) * 100);
+      thIn.style.cssText = "flex:0 0 48px;font-size:12px;padding:2px 2px;border:1px solid #3E4E63;border-radius:4px";
+      thIn.title = "筛选阈值（%）";
+      thIn.addEventListener("input", function () { f.threshold = Math.max(0, Math.min(1000, +this.value || 0)) / 100; crRenderAll(); });
+      param.appendChild(thIn);
+      var pct = document.createElement("span");
+      pct.style.cssText = "flex:0 0 12px;font-size:12px;color:#7C8DA1"; pct.textContent = "%";
+      param.appendChild(pct);
+      var op = document.createElement("div");
+      op.style.cssText = "display:flex;align-items:center;gap:2px";
+      var tog = document.createElement("button");
+      tog.type = "button"; tog.textContent = "\u21C4";
+      tog.title = "切换为排名";
+      tog.style.cssText = "font-size:11px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+      tog.addEventListener("click", function () { f.usage = "rank"; crRenderAll(); });
+      op.appendChild(tog);
+      var ed = null;
+      if (f.kind === "expr") {
+        ed = document.createElement("button");
+        ed.type = "button"; ed.textContent = "\u270E";
+        ed.title = "编辑公式";
+        ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
+        ed.addEventListener("click", function () {
+          openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; crRenderAll(); } });
+        });
+        op.appendChild(ed);
+      }
+      var del = document.createElement("button");
+      del.type = "button"; del.textContent = "\u00d7";
+      del.style.cssText = "width:22px;cursor:pointer";
+      del.addEventListener("click", function () { var i = crFactors.indexOf(f); if (i >= 0) crFactors.splice(i, 1); crRenderAll(); });
+      row.appendChild(chk); row.appendChild(lab); row.appendChild(param); row.appendChild(op); row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  function crRenderAll() {
+    crRenderLib(); crRenderRank(); crRenderFilter();
+  }
+  function crFillKindSel() {
+    var sel = $("crAddKind"); if (!sel) return;
+    sel.innerHTML = "";
+    CR_FAC_KINDS.forEach(function (k) {
+      var ki = (KIND_INFO && KIND_INFO[k]) || (KIND_INFO && KIND_INFO.roc);
+      var lab = CR_FAC_NAMES[k] || ((ki && ki.label) ? ki.label : k);
+      var opt = document.createElement("option");
+      opt.value = k; opt.textContent = lab;
+      sel.appendChild(opt);
+    });
+  }
+  function crInit() {
+    if (!crFactors.length) {
+      crFactors.push({ kind: "roc", window: 60, weight: 1, direction: 1, usage: "rank", enabled: true });
+      crFactors.push({ kind: "vol", window: 20, weight: 1, direction: -1, usage: "rank", enabled: true });
+      crFactors.push({ kind: "c_vs_ma", window: 20, weight: 1, direction: 1, usage: "rank", enabled: true });
+    }
+    crFillKindSel();
+    var ab = $("crAddBtn");
+    if (ab && !ab._crBound) {
+      ab._crBound = true;
+      ab.addEventListener("click", function () {
+        var kind = $("crAddKind").value, usage = $("crAddUsage").value;
+        if (kind === "expr") {
+          openFormulaModal({ title: "自定义公式因子", initial: "", onSave: function (src) {
+            var f = { kind: "expr", name: "公式因子" + (crFactors.length + 1), expr: src, weight: 0.1, usage: usage };
+            if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
+            crFactors.push(f);
+            crRenderAll();
+          }});
+          return;
+        }
+        var ki = (KIND_INFO && KIND_INFO[kind]) || KIND_INFO.roc;
+        var f = { kind: kind, window: ki.def, window2: ki.def2, window3: ki.def3, weight: 0.1, usage: usage };
+        if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
+        crFactors.push(f);
+        crRenderAll();
+      });
+    }
+    crRenderAll();
+  }
   function rotFactors() {
     var fs = [];
-    function add(en, kind, winEl, dirEl, wtEl) {
-      if (!en || !en.checked) return;
-      fs.push({ kind: kind, window: Math.max(5, +winEl.value || 20), direction: +dirEl.value || 1, weight: Math.max(0, +wtEl.value || 0.5), usage: "rank", enabled: true });
-    }
-    add($("crFacRoc"), "roc", $("crRocWin"), $("crRocDir"), $("crRocWt"));
-    add($("crFacVol"), "vol", $("crVolWin"), $("crVolDir"), $("crVolWt"));
-    add($("crFacMa"), "c_vs_ma", $("crMaWin"), $("crMaDir"), $("crMaWt"));
+    crFactors.forEach(function (f) {
+      if (f.enabled === false) return;
+      var wv = +f.weight;
+      var o = { kind: f.kind, window: Math.max(1, +(f.window) || 20), weight: (isFinite(wv) && wv >= 0) ? wv : 0.1, direction: (+f.direction === -1) ? -1 : 1, usage: f.usage || "rank", enabled: true };
+      if (f.window2 !== undefined) o.window2 = +f.window2 || 0;
+      if (f.window3 !== undefined) o.window3 = +f.window3 || 0;
+      if (f.kind === "expr") { o.name = f.name || "公式因子"; o.expr = f.expr || ""; }
+      if ((f.usage || "rank") === "filter") { o.op = f.op || "gte"; o.threshold = f.threshold !== undefined ? f.threshold : 0; }
+      fs.push(o);
+    });
     return fs;
   }
+  crInit();
   function runComboRot(names, start, end, rebKey, rebInt) {
     var m = loadStored();
     showNotice("正在回测 " + names.length + " 个策略净值并做因子轮动，请稍候…");
