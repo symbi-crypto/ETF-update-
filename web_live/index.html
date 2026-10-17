@@ -6045,9 +6045,20 @@ function showStrategyDetail(name) {
     showNotice("正在回测 " + names.length + " 个策略净值并做因子轮动，请稍候…");
     ensureData(function () {
       var paramsList = [], resList = [];
+      // 预热起点：因子最大窗口 + 25 交易日余量，提前回测使组合曲线从用户起点第一天即有持仓
+      var warmDays = 80, preStart = start;
+      if (start) {
+        var fz = rotFactors(), wm = 0;
+        fz.forEach(function (f) { var w = +(f.window) || 20; if (w > wm) wm = w; });
+        warmDays = Math.max(warmDays, wm + 25);
+        var si = 0;
+        for (var z0 = 0; z0 < D.calendar.length; z0++) { if (D.calendar[z0] >= start) { si = z0; break; } }
+        var pi = Math.max(0, si - warmDays);
+        preStart = D.calendar[pi];
+      }
       names.forEach(function (nm) {
         var p = JSON.parse(JSON.stringify(m[nm]));
-        if (start) p.start_date = start;
+        if (start) p.start_date = preStart;
         if (end) p.end_date = end;
         paramsList.push(p);
         resList.push(engine.backtest(D, p));
@@ -6084,12 +6095,22 @@ function showStrategyDetail(name) {
         reb_style: "equal", reb_dev_pct: 0, reb_period_on: true, reb_band_on: false,
         commission_rate: comboCost, slippage_rate: 0, min_commission: 0,
         tiered_slippage: false, use_real_pool: false, holding_weight: "equal",
-        start_date: start, end_date: end, initial_capital: 1000000,
+        start_date: preStart, end_date: end, initial_capital: 1000000,
         risk_free_rate: 0.02, overseas_codes: [],
         st_on: false, st_small_idx: "000852.SH", st_large_idx: "000300.SH", st_window: 20, st_small_codes: [], st_large_codes: [],
         benchmark: "000300.SH"
       };
       var rotRes = engine.backtest(D2, p2);
+      // 截取到用户起点：预热段不显示，组合曲线从 start 第一天即含持仓
+      var keepFrom = 0;
+      if (start) {
+        for (var kk = 0; kk < calS.length; kk++) { if (calS[kk] >= start) { keepFrom = kk; break; } }
+      }
+      if (keepFrom > 0) {
+        var calTrim = calS.slice(keepFrom);
+        resList.forEach(function (r) { r.nav = r.nav.slice(keepFrom); r.calendar = calTrim; });
+        rotRes.nav = rotRes.nav.slice(keepFrom);
+      }
       renderComboResult(names, resList, { combo: rotRes.nav }, null, "rot", rotRes);
       showNotice("因子轮动回测完成：最近调仓持仓 " + ((rotRes.trades && rotRes.trades.length) ? rotRes.trades[rotRes.trades.length - 1].to.join("、") : "空仓"));
     });
