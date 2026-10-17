@@ -4681,7 +4681,7 @@ function buildChips() {
       lShares[c] = lAlloc / (s.close[firstBuyIdx] * (1 + slip));
     });
     var lumpEnd = 0;
-    for (var i = si; i <= ei; i++) {
+    for (var i = firstBuyIdx; i <= ei; i++) {
       var v = 0;
       codes.forEach(function (c) { var s = D.series[c]; if (s && s.close && s.close[i] > 0) v += lShares[c] * s.close[i]; });
       lumpArr[i] = v;
