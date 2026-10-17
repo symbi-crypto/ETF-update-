@@ -821,7 +821,12 @@ footer b{color:#9FB0C3}
       <h2>多策略组合</h2>
       <p style="font-size:12px;color:#9FB0C3;margin:2px 0 12px;line-height:1.7">从「我的策略」中勾选多个策略、手动分配权重，按所选周期做组合再平衡，合成组合净值；并计算各策略<b>日收益率相关</b>矩阵，辅助判断分散化。</p>
       <h3 style="margin:8px 0 6px;font-size:13px">选择策略与权重</h3>
-      <div id="comboStratList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;max-height:300px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:8px"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px">
+        <input id="comboSearch" type="text" placeholder="搜索策略名称…" style="flex:1;min-width:0;font-size:12px;padding:5px 8px;background:#1B2634;border:1px solid #3E4E63;border-radius:6px;color:#F1F5F9">
+        <button id="comboAll" type="button" style="padding:5px 10px;font-size:12px;border-radius:6px;border:1px solid #3E4E63;background:#202E3F;color:#F1F5F9;cursor:pointer">全选</button>
+        <button id="comboNone" type="button" style="padding:5px 10px;font-size:12px;border-radius:6px;border:1px solid #3E4E63;background:#202E3F;color:#F1F5F9;cursor:pointer">清空</button>
+      </div>
+      <div id="comboStratList" style="max-height:340px;overflow:auto;border:1px solid #243244;border-radius:6px;padding:8px"></div>
       <div id="comboWarn" style="display:none;background:rgba(251,191,36,.12);border:1px solid #FBBF24;color:#FCD34D;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:8px"></div>
       <h3 style="margin:14px 0 6px;font-size:13px">组合参数</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
@@ -5779,24 +5784,45 @@ function showStrategyDetail(name) {
       de.value = lastCal;
     };
     if (!D || !D.calendar) { ensureData(fillDates); } else { fillDates(); }
-    keys.forEach(function (nm) {
-      var row = document.createElement("label");
-      row.style.cssText = "display:flex;align-items:center;gap:6px;font-size:12px;color:#F1F5F9;padding:4px 6px;cursor:pointer;background:#202E3F;border:1px solid #243244;border-radius:5px";
-      var cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "comboCk"; cb.checked = true;
-      cb.style.cssText = "flex:0 0 auto";
-      var nmEl = document.createElement("span");
-      nmEl.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-      nmEl.textContent = nm;
-      nmEl.title = nm + ((m[nm].mode === "rebalance") ? "（再平衡策略）" : "（动量策略）");
-      var wt = document.createElement("input");
-      wt.type = "number"; wt.min = 0; wt.max = 100; wt.step = 1; wt.className = "comboWt";
-      wt.style.cssText = "flex:0 0 52px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9";
-      var wlab = document.createElement("span"); wlab.textContent = "%"; wlab.style.cssText = "color:#7C8DA1;font-size:11px";
-      cb.addEventListener("change", function () { balanceComboWeights(); });
-      row.appendChild(cb); row.appendChild(nmEl); row.appendChild(wt); row.appendChild(wlab);
-      box.appendChild(row);
-    });
+    var grpHtml = function (title, nms) {
+      if (!nms.length) return "";
+      var rows = "";
+      nms.forEach(function (nm) {
+        var tag = (m[nm].mode === "rebalance") ? "（再平衡策略）" : "（动量策略）";
+        rows += '<label class="comboRow" data-name="' + nm.toLowerCase() + '" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#F1F5F9;padding:4px 6px;cursor:pointer;background:#202E3F;border:1px solid #243244;border-radius:5px">' +
+          '<input type="checkbox" class="comboCk" checked style="flex:0 0 auto">' +
+          '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + nm + tag + '">' + nm + '</span>' +
+          '<input type="number" min="0" max="100" step="1" class="comboWt" value="20" style="flex:0 0 52px;text-align:right;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9">' +
+          '<span style="color:#7C8DA1;font-size:11px">%</span></label>';
+      });
+      return '<details open style="margin:2px 0 6px"><summary style="cursor:pointer;font-size:12.5px;color:#7DD3FC;padding:3px 2px;user-select:none">' + title + '（' + nms.length + '）</summary><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;padding:2px">' + rows + '</div></details>';
+    };
+    var gReb = [], gRot = [];
+    keys.forEach(function (nm) { (m[nm].mode === "rebalance" ? gReb : gRot).push(nm); });
+    box.innerHTML = grpHtml("再平衡策略", gReb) + grpHtml("轮动策略", gRot);
     balanceComboWeights();
+    // 事件委托：勾选变化时重新等权分配
+    if (!box._comboBound) {
+      box.addEventListener("change", function (e) { if (e.target && e.target.classList && e.target.classList.contains("comboCk")) balanceComboWeights(); });
+      box._comboBound = true;
+    }
+    // 搜索过滤 / 全选 / 清空（onxx 赋值覆盖，切视图重渲染不叠加监听）
+    var se = $("comboSearch"), al = $("comboAll"), ne = $("comboNone");
+    if (se) se.oninput = function () {
+      var q = (se.value || "").trim().toLowerCase();
+      var rows = box.querySelectorAll(".comboRow");
+      for (var i = 0; i < rows.length; i++) rows[i].style.display = (!q || (rows[i].getAttribute("data-name") || "").indexOf(q) >= 0) ? "" : "none";
+    };
+    if (al) al.onclick = function () {
+      var cks = box.querySelectorAll(".comboCk");
+      for (var i = 0; i < cks.length; i++) cks[i].checked = true;
+      balanceComboWeights();
+    };
+    if (ne) ne.onclick = function () {
+      var cks = box.querySelectorAll(".comboCk");
+      for (var i = 0; i < cks.length; i++) cks[i].checked = false;
+      balanceComboWeights();
+    };
     $("comboResult").style.display = "none";
   }
   function balanceComboWeights() {
