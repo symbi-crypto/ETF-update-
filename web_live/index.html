@@ -2632,6 +2632,8 @@ window.WufuExpr = (function () {
     var isReb = activeView === "rebalance";
     var isDca = activeView === "dca";
     var noRot = isReb || isDca;   // 轮动专属（稳健性/IC/择时）在再平衡与定投下均隐藏
+    // 第二步参数区：轮动专属（筛选/排名/买入附加/卖出/不卖）在再平衡/定投模式隐藏（再平衡无因子预测，交易条件为轮动逻辑）
+    ["psecFlt", "psecRank", "psecBuyAdd", "psecSell", "psecHold"].forEach(function (pid) { var pe = $(pid); if (pe) pe.style.display = noRot ? "none" : ""; });
     var robw = $("robwrap"); if (robw) robw.style.display = noRot ? "none" : "";
     if (noRot) { var rb = $("robBox"); if (rb) rb.style.display = "none"; }
     var cic = $("cICCard"); if (cic) cic.style.display = noRot ? "none" : "";
@@ -3809,6 +3811,18 @@ function buildChips() {
 
   // ---------- 三组附加交易条件（买入附加 / 卖出 / 不卖） ----------
   var buyAdds = [], sellConds = [], holdConds = [];
+  // ---- 三模式独立状态：公共参数共享一份；模式特有（因子/交易条件）按模式隔离，杜绝"改轮动串味到再平衡/定投" ----
+  var PERMODE = {
+    rotation:  { factors: factors,          buyAdds: buyAdds,          sellConds: sellConds,          holdConds: holdConds },
+    rebalance: { factors: [],               buyAdds: [],               sellConds: [],               holdConds: [] },
+    dca:       { factors: [],               buyAdds: [],               sellConds: [],               holdConds: [] }
+  };
+  function saveCurPermode() { var s = PERMODE[activeView] || PERMODE.rotation; s.factors = factors; s.buyAdds = buyAdds; s.sellConds = sellConds; s.holdConds = holdConds; }
+  function loadPermode(m) {
+    var s = PERMODE[m] || PERMODE.rotation;
+    if (!s.factors) s.factors = []; if (!s.buyAdds) s.buyAdds = []; if (!s.sellConds) s.sellConds = []; if (!s.holdConds) s.holdConds = [];
+    factors = s.factors; buyAdds = s.buyAdds; sellConds = s.sellConds; holdConds = s.holdConds;
+  }
   var BA_LABEL = {
     rank: "排名名次 ≤ N", rank_gte: "排名名次 ≥ N", cooldown: "距上次卖出 ≥ N 天",
     factor: "因子判断", hold_days: "持有天数 ≥ N", buy_gain: "买入后涨幅 ≥ N%",
@@ -4174,6 +4188,7 @@ function buildChips() {
     buyAdds = (p.buy_add || []).map(function (c) { return JSON.parse(JSON.stringify(c)); });
     sellConds = (p.sell_conds || []).map(function (c) { return JSON.parse(JSON.stringify(c)); });
     holdConds = (p.hold_conds || []).map(function (c) { return JSON.parse(JSON.stringify(c)); });
+    saveCurPermode();   // 模式特有状态写回当前模式分支，与其他模式隔离，避免串味
     renderAllCond();
     // 调仓周期
     var mode = p.rebalance_mode || "weekly", rs = null;
@@ -5522,7 +5537,8 @@ function showStrategyDetail(name) {
   function switchView(v) {
     var target = (v === "rebalance" || v === "dca") ? v : "rotation";
     var changed = activeView !== target;
-    activeView = target;
+    if (changed) { saveCurPermode(); activeView = target; loadPermode(target); }
+    else { activeView = target; }
     var sh1 = $("sh1"), sh2 = $("sh2");
     var sl = viewSlots();
     if (sh1 && sl.s1 && sh1.parentNode !== sl.s1) sl.s1.appendChild(sh1);
