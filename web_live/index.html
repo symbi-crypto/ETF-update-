@@ -853,13 +853,13 @@ footer b{color:#9FB0C3}
           <select id="crAddUsage" style="flex:0 0 62px;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px;background:#1B2634;color:#F1F5F9"><option value="rank">排名</option><option value="filter">筛选</option></select>
           <button type="button" id="crAddBtn" style="flex:0 0 auto;font-size:12px;padding:2px 10px;cursor:pointer">+ 添加因子</button>
         </div>
-        <div id="crFacRankBox" style="border:1px solid #243244;border-radius:6px;padding:6px;margin:6px 0">
-          <div style="font-size:11px;color:#7DD3FC;margin-bottom:4px">排名因子（窗口 / 权重 / 方向）</div>
-          <div id="crFacRankList"></div>
-        </div>
         <div id="crFacFltBox" style="border:1px solid #243244;border-radius:6px;padding:6px;margin:6px 0">
           <div style="font-size:11px;color:#7DD3FC;margin-bottom:4px">筛选条件（不满足则剔除候选）</div>
           <div id="crFacFltList"></div>
+        </div>
+        <div id="crFacRankBox" style="border:1px solid #243244;border-radius:6px;padding:6px;margin:6px 0">
+          <div style="font-size:11px;color:#7DD3FC;margin-bottom:4px">排名条件（窗口 / 权重 / 方向）</div>
+          <div id="crFacRankList"></div>
         </div>
         <div class="row" style="margin:4px 0;gap:6px;align-items:center;font-size:12px;color:#F1F5F9">
           <span style="flex:0 0 auto">排名区间</span>
@@ -3458,6 +3458,9 @@ function fmValidate(src) {
   catch (e) { return { ok: false, msg: e.message }; }
 }
 function openFormulaModal(opts) {
+  var fmEl = $("formulaModal");
+  // 弹窗可能嵌在回测视图容器内：切到组合页时父容器隐藏导致弹窗不可见，统一移到 body 顶层
+  if (fmEl && fmEl.parentElement && fmEl.parentElement !== document.body) document.body.appendChild(fmEl);
   FM_CB = opts.onSave || null;
   $("fmTitle").textContent = opts.title || "自定义公式编辑器";
   var inp = $("fmInput");
@@ -6078,7 +6081,7 @@ function showStrategyDetail(name) {
     if (!rankF.length) {
       var hint = document.createElement("div");
       hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
-      hint.textContent = "暂无排名因子，请在上方选择因子并归属为排名后添加。";
+      hint.textContent = "暂无排名条件，请在上方选择因子并归属为排名后添加。";
       box.appendChild(hint);
     }
     rankF.forEach(function (f) {
@@ -6144,7 +6147,7 @@ function showStrategyDetail(name) {
     if (!fltF.length) {
       var hint = document.createElement("div");
       hint.style.cssText = "font-size:12px;color:#9FB0C3;padding:6px 2px";
-      hint.textContent = "暂无筛选因子（全部策略可参与排名），请在上方选择因子并归属为筛选后添加。";
+      hint.textContent = "暂无筛选条件（全部策略可参与排名），请在上方选择因子并归属为筛选后添加。";
       box.appendChild(hint);
     }
     fltF.forEach(function (f) {
