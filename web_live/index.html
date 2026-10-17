@@ -5760,14 +5760,25 @@ function showStrategyDetail(name) {
   function renderComboSetup() {
     var box = $("comboStratList"); if (!box) return;
     var m = loadStored();
-    var keys = Object.keys(m);
+    var keys = Object.keys(m).filter(function (k) { return !(m[k] && m[k].type === "grid"); });
     box.innerHTML = "";
     if (!keys.length) {
       box.innerHTML = '<div style="font-size:12px;color:#9FB0C3;padding:10px 2px">暂无已保存策略。<br>请先在「回测」页调好参数并保存，再到此页组合多个策略。</div>';
       return;
     }
     var ds = $("comboStart"), de = $("comboEnd");
-    if (D && D.calendar && D.calendar.length) { ds.value = D.calendar[0]; de.value = D.calendar[D.calendar.length - 1]; }
+    var fillDates = function () {
+      if (!D || !D.calendar || !D.calendar.length) return;
+      // 起始默认=各策略回测起始日期中最新的（保证每策略区间内有完整数据）；结束=数据最后交易日
+      var lastCal = D.calendar[D.calendar.length - 1];
+      var maxStart = null;
+      keys.forEach(function (nm) { var s = m[nm] && m[nm].start_date; if (s) { if (!maxStart || s > maxStart) maxStart = s; } });
+      var startD = maxStart || D.calendar[0];
+      if (startD > lastCal) startD = lastCal;
+      ds.value = startD;
+      de.value = lastCal;
+    };
+    if (!D || !D.calendar) { ensureData(fillDates); } else { fillDates(); }
     keys.forEach(function (nm) {
       var row = document.createElement("label");
       row.style.cssText = "display:flex;align-items:center;gap:6px;font-size:12px;color:#F1F5F9;padding:4px 6px;cursor:pointer;background:#202E3F;border:1px solid #243244;border-radius:5px";
