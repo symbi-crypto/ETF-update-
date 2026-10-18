@@ -297,15 +297,15 @@ footer b{color:#9FB0C3}
             <b id="fmTitle" style="font-size:14px;color:#F1F5F9">自定义公式编辑器</b>
             <button id="fmClose" style="font-size:16px;background:none;border:none;color:#9FB0C3;cursor:pointer">×</button>
           </div>
-          <input id="fmInput" type="text" placeholder="如 MA(后复权收盘价,10)>1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box">
+          <textarea id="fmInput" rows="2" wrap="soft" placeholder="如 MA(后复权收盘价,10)>1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5;min-height:44px"></textarea>
           <div id="fmStatus" style="font-size:11px;margin:4px 0;color:#4ADE80;min-height:14px"></div>
           <div style="display:flex;gap:8px;flex:1;min-height:180px;overflow:hidden">
             <div style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
-              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">字段（10）</div>
+              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">字段（分类）</div>
               <div id="fmFields"></div>
             </div>
-            <div style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
-              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">函数（16）</div>
+            <div id="fmFuncsWrap" style="flex:1;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
+              <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">函数</div>
               <div id="fmFuncs"></div>
             </div>
             <div style="flex:1.2;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
@@ -995,7 +995,10 @@ window.WufuExpr = (function () {
     '成交量':'volume','成交额':'amount','换手率':'turnover','单位净值':'nav','溢价率':'premium',
     '引用':'ref','差分':'delta','均线':'ma','指数移动平均':'ema','平滑均线':'sma','加权均线':'wma',
     '动态均线':'dma','求和':'sum','乘积':'product','最大值':'max','最小值':'min','标准差':'std',
-    '绝对值':'abs','变动率':'roc','对数':'log'
+    '绝对值':'abs','变动率':'roc','对数':'log',
+    '涨幅动量':'roc','净值涨幅':'nav_roc','收益波动率':'vol','乖离率':'c_vs_ma','N日均线':'ma',
+    'MACD':'macd','KDJ':'kdj','布林线':'boll','ATR':'atr','斜率动量':'slope_r2','加权斜率动量':'wslope_r2',
+    '拟合优度R²':'r2','风险调整动量':'risk_adj','振幅':'amplitude','日内位置':'position','RSI':'rsi','放量比':'vol_ratio'
   };
   function canonId(v) { return CN_ALIAS[v] || v.toLowerCase(); }
   function tokenize(src) {
@@ -1069,16 +1072,33 @@ window.WufuExpr = (function () {
     return NaN;
   }
   var FIELDS = [
-    { id: 'close', cn: '后复权收盘价', help: '当日后复权收盘价（轮动引擎主口径）' },
-    { id: 'rawclose', cn: '未复权收盘价', help: '当日未复权收盘价（真实成交口径）' },
-    { id: 'open', cn: '开盘价', help: '当日开盘价' },
-    { id: 'high', cn: '最高价', help: '当日最高价' },
-    { id: 'low', cn: '最低价', help: '当日最低价' },
-    { id: 'volume', cn: '成交量', help: '当日成交量（手）' },
-    { id: 'amount', cn: '成交额', help: '当日成交额' },
-    { id: 'turnover', cn: '换手率', help: 'N 日换手率均值（%）' },
-    { id: 'nav', cn: '单位净值', help: '基金官方公布单位净值' },
-    { id: 'premium', cn: '溢价率', help: '当日折溢价率（小数，负=折价）' }
+    { id: 'close', cn: '后复权收盘价', cat: 'price', help: '当日后复权收盘价（轮动引擎主口径）' },
+    { id: 'rawclose', cn: '未复权收盘价', cat: 'price', help: '当日未复权收盘价（真实成交口径）' },
+    { id: 'open', cn: '开盘价', cat: 'price', help: '当日开盘价' },
+    { id: 'high', cn: '最高价', cat: 'price', help: '当日最高价' },
+    { id: 'low', cn: '最低价', cat: 'price', help: '当日最低价' },
+    { id: 'volume', cn: '成交量', cat: 'price', help: '当日成交量（手）' },
+    { id: 'amount', cn: '成交额', cat: 'price', help: '当日成交额' },
+    { id: 'turnover', cn: '换手率', cat: 'price', help: 'N 日换手率均值（%）' },
+    { id: 'nav', cn: '单位净值', cat: 'fund', help: '基金官方公布单位净值' },
+    { id: 'premium', cn: '溢价率', cat: 'fund', help: '当日折溢价率（小数，负=折价）' },
+    { id: 'roc', cn: '涨幅动量', cat: 'tech', help: 'N 日涨幅（默认20日）' },
+    { id: 'nav_roc', cn: '净值涨幅', cat: 'tech', help: '单位净值 N 日涨幅（默认20日）' },
+    { id: 'vol', cn: '收益波动率', cat: 'tech', help: 'N 日收益波动率（默认20日）' },
+    { id: 'c_vs_ma', cn: '乖离率', cat: 'tech', help: '收盘价相对 N 日均线（默认20日，BIAS）' },
+    { id: 'ma', cn: 'N日均线', cat: 'tech', help: 'N 日均线值（默认20日）' },
+    { id: 'macd', cn: 'MACD', cat: 'tech', help: 'MACD 柱（DIF-DEA，参数12/26/9）' },
+    { id: 'kdj', cn: 'KDJ', cat: 'tech', help: 'KDJ 的 K 值（RSV 9/3/3）' },
+    { id: 'boll', cn: '布林线', cat: 'tech', help: '布林带 %B（20日2σ）' },
+    { id: 'atr', cn: 'ATR', cat: 'tech', help: 'ATR÷收盘价（20日真实波幅相对值）' },
+    { id: 'slope_r2', cn: '斜率动量', cat: 'tech', help: '线性回归斜率×R²（默认25日）' },
+    { id: 'wslope_r2', cn: '加权斜率动量', cat: 'tech', help: '加权回归斜率×R²（默认25日）' },
+    { id: 'r2', cn: '拟合优度R²', cat: 'tech', help: '对数收盘价回归 R²（默认25日）' },
+    { id: 'risk_adj', cn: '风险调整动量', cat: 'tech', help: '年化斜率÷波动率（默认60日）' },
+    { id: 'amplitude', cn: '振幅', cat: 'tech', help: '(最高-最低)/最低（默认20日）' },
+    { id: 'position', cn: '日内位置', cat: 'tech', help: '(收盘-最低)/(最高-最低)（默认20日）' },
+    { id: 'rsi', cn: 'RSI', cat: 'tech', help: '相对强弱指标（默认14日）' },
+    { id: 'vol_ratio', cn: '放量比', cat: 'tech', help: '近N日均量÷M日前M日均量（默认20/60）' }
   ];
   var FUNCS = [
     { name: 'REF', cn: 'REF', help: '取 N 日前的值', args: 2 },
@@ -1115,7 +1135,7 @@ window.WufuExpr = (function () {
     evalNum: function (ast, ctx) { return evalNum(ast, ctx); },
     evalBool: function (ast, ctx) { return truthy(evalNum(ast, ctx)); },
     FIELDS: FIELDS, FUNCS: FUNCS,
-    ALLOWED: '字段(10)：' + FIELDS.map(function (f) { return f.cn; }).join('/') + '；函数(17)：' + FUNCS.map(function (f) { return f.name; }).join('/')
+    ALLOWED: '字段(' + FIELDS.length + ')：' + FIELDS.map(function (f) { return f.cn; }).join('/') + '；函数(' + FUNCS.length + ')：' + FUNCS.map(function (f) { return f.name; }).join('/')
   };
 })();
 </script>
@@ -1138,6 +1158,19 @@ window.WufuExpr = (function () {
 
   // ---------- 工具 ----------
   function isMiss(v) { return v === null || v === undefined || (typeof v === "number" && (isNaN(v) || v < 0)); }
+  // 指数移动平均（跳过上市前缺值，从首个有效值起算）
+  function techEMA(arr, n) {
+    var k = 2 / (n + 1), out = [], start = -1, j0;
+    for (j0 = 0; j0 < arr.length; j0++) if (!isMiss(arr[j0])) { start = j0; break; }
+    if (start < 0) return null;
+    var e0 = arr[start]; out[start] = e0;
+    for (j0 = start + 1; j0 < arr.length; j0++) {
+      var v = arr[j0];
+      if (isMiss(v)) return null;
+      e0 = v * k + e0 * (1 - k); out[j0] = e0;
+    }
+    return out;
+  }
 
   // ---------- 动量得分：对数收盘价 OLS ----------
   // closes: 长度为 w 的有效数组（已过滤缺失）；返回 {score, r2, slope, annSlope}
@@ -1385,6 +1418,13 @@ window.WufuExpr = (function () {
     var rawOpens = {}, rawCloses = {}, navs = {}, prems = {};
     var EXPR_AST = {};
     // 自定义公式：白名单字段(10)+函数(16)求值，AST 缓存，无 eval
+    // 公式可引用的因子字段：id → 默认窗口（求值时调用 factorValue，与因子面板同口径）
+    var EXPR_FACTOR_FIELDS = {
+      roc: 20, nav_roc: 20, vol: 20, c_vs_ma: 20, ma: 20, ma_lag: 20,
+      macd: 20, kdj: 9, boll: 20, atr: 20,
+      slope_r2: 25, wslope_r2: 25, r2: 25, risk_adj: 60,
+      amplitude: 20, position: 20, rsi: 14, vol_ratio: 20, rsrs: 20
+    };
     function exprSeriesArr(id, code) {
       if (id === 'close') return closes[code];
       if (id === 'rawclose') return rawCloses[code];
@@ -1399,6 +1439,10 @@ window.WufuExpr = (function () {
       return null;
     }
     function exprFieldAt(id, code, i) {
+      if (EXPR_FACTOR_FIELDS[id]) {
+        var fv = factorValue(id, code, i, { window: EXPR_FACTOR_FIELDS[id] }, null);
+        return isNaN(fv) ? NaN : fv;
+      }
       var s = exprSeriesArr(id, code);
       if (!s) return NaN;
       var v = s[i];
@@ -1755,6 +1799,54 @@ window.WufuExpr = (function () {
         }
         if (avgG + avgL <= 0) return NaN;
         return avgL === 0 ? 100 : 100 * avgG / (avgG + avgL);
+      }
+      // ---- 技术因子：MACD / KDJ / 布林线 / ATR（仅用现有 close/high/low，无需新行情数据）----
+      if (kind === "macd") {
+        var difA = techEMA(cArr, 12); if (!difA) return NaN;
+        var deaA = techEMA(difA, 9); if (!deaA) return NaN;
+        if (i >= difA.length || difA[i] === undefined || deaA[i] === undefined) return NaN;
+        var loM = Math.max(0, i - w1 + 1), sumM = 0;
+        for (var jm = loM; jm <= i; jm++) { var hm = difA[jm] - deaA[jm]; if (hm === undefined || isNaN(hm)) return NaN; sumM += hm; }
+        return sumM / (i - loM + 1);
+      }
+      if (kind === "kdj") {
+        var perK = 9, kPrev = NaN, dPrev = NaN, sumK = 0, cntK = 0, stK = Math.max(0, i - w1 - perK + 1);
+        for (var jk = stK; jk <= i; jk++) {
+          if (jk + 1 < perK) continue;
+          var loR = jk - perK + 1, hhR = -Infinity, llR = Infinity;
+          for (var qR = loR; qR <= jk; qR++) { var hq = highs[code][qR], lq = lows[code][qR]; if (isMiss(hq) || isMiss(lq)) return NaN; if (hq > hhR) hhR = hq; if (lq < llR) llR = lq; }
+          if (hhR <= llR) return NaN;
+          var rsvR = (cArr[jk] - llR) / (hhR - llR) * 100;
+          kPrev = isNaN(kPrev) ? rsvR : (rsvR + 2 * kPrev) / 3;
+          dPrev = isNaN(dPrev) ? kPrev : (kPrev + 2 * dPrev) / 3;
+          if (jk >= i - w1 + 1) { sumK += kPrev; cntK++; }
+        }
+        return cntK ? sumK / cntK : NaN;
+      }
+      if (kind === "boll") {
+        if (i + 1 < w1) return NaN;
+        var segB = cArr.slice(i - w1 + 1, i + 1);
+        for (var qb = 0; qb < segB.length; qb++) if (isMiss(segB[qb])) return NaN;
+        var muB = 0; for (var qb2 = 0; qb2 < segB.length; qb2++) muB += segB[qb2]; muB /= segB.length;
+        var sdB = 0; for (var qb3 = 0; qb3 < segB.length; qb3++) sdB += (segB[qb3] - muB) * (segB[qb3] - muB); sdB = Math.sqrt(sdB / segB.length);
+        var upB = muB + 2 * sdB, dnB = muB - 2 * sdB;
+        if (upB <= dnB) return NaN;
+        return (cArr[i] - dnB) / (upB - dnB);
+      }
+      if (kind === "atr") {
+        if (i + 1 < w1) return NaN;
+        var trs = [];
+        for (var jt = i - w1 + 1; jt <= i; jt++) {
+          var hT = highs[code][jt], lT = lows[code][jt], cT = cArr[jt], pcT = jt > 0 ? cArr[jt - 1] : NaN;
+          if (isMiss(hT) || isMiss(lT) || isMiss(cT) || isMiss(pcT)) return NaN;
+          var trT = hT - lT;
+          var a1T = Math.abs(hT - pcT), a2T = Math.abs(lT - pcT);
+          if (a1T > trT) trT = a1T; if (a2T > trT) trT = a2T;
+          trs.push(trT);
+        }
+        var sumT = 0; for (var qT = 0; qT < trs.length; qT++) sumT += trs[qT];
+        if (!(cArr[i] > 0)) return NaN;
+        return sumT / trs.length / cArr[i];
       }
       return NaN;
     }
@@ -2841,7 +2933,7 @@ window.WufuExpr = (function () {
     amount:    { label: "成交额",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "N日平均成交额（万元）", cat: "price" },
     volume:    { label: "成交量",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "N日平均成交量（万手）", cat: "price" },
     rsrs:      { label: "RSRS",        wMin: 5,   wMax: 120, wStep: 5,  def: 20,  nwin: 1, title: "N日RSRS：N日最高价对最低价OLS回归斜率", cat: "tech" },
-    c_vs_ma:   { label: "收盘vs均线",  wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "后复权收盘价相对近N日均线的涨幅", cat: "tech" },
+    c_vs_ma:   { label: "乖离率",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 1, title: "后复权收盘价相对近N日均线的涨幅（BIAS）", cat: "tech" },
     c_vs_ma_lag: { label: "收盘vs前均线", wMin: 1,  wMax: 120, wStep: 1, def: 5,  nwin: 2,
                    wMin2: 5, wMax2: 250, wStep2: 5, def2: 20,
                    winTitles: ["平移N日（回看N日前）", "M日均线窗口"], cat: "tech" },
@@ -2863,6 +2955,10 @@ window.WufuExpr = (function () {
     amplitude: { label: "日内振幅",    wMin: 5,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "(最高-最低)/最低", cat: "tech" },
     position:  { label: "日内位置",    wMin: 5,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "(收盘-最低)/(最高-最低)", cat: "tech" },
     rsi:       { label: "RSI",         wMin: 5,   wMax: 60,  wStep: 1,  def: 14,  nwin: 1, title: "14日相对强弱指标 RSI=100×均涨/(均涨+均跌)", cat: "tech" },
+    macd:      { label: "MACD",        wMin: 5,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "N日MACD柱均值（DIF-DEA，参数12/26/9）", cat: "tech" },
+    kdj:       { label: "KDJ",         wMin: 5,   wMax: 120, wStep: 1,  def: 9,   nwin: 1, title: "N日KDJ的K值均值（RSV 9日/3/3）", cat: "tech" },
+    boll:      { label: "布林线",       wMin: 5,   wMax: 120, wStep: 5,  def: 20,  nwin: 1, title: "布林带 %B：收盘价在N日2σ带内位置（0~1）", cat: "tech" },
+    atr:       { label: "ATR",         wMin: 5,   wMax: 120, wStep: 5,  def: 20,  nwin: 1, title: "N日ATR÷收盘价（真实波幅相对值）", cat: "tech" },
     turnover:  { label: "换手率",      wMin: 1,   wMax: 120, wStep: 1,  def: 20,  nwin: 1, title: "N日平均换手率（%）——流动性/关注度，数据来自原始CHANGEHANDRATE", cat: "price" },
     vol_ratio: { label: "放量比",      wMin: 5,   wMax: 250, wStep: 5,  def: 20,  nwin: 2,
                  wMin2: 5, wMax2: 250, wStep2: 5, def2: 60,
@@ -2875,7 +2971,7 @@ window.WufuExpr = (function () {
   var KIND_CAT = {
     all: null,
     price: ["close", "open", "high", "low", "amount", "volume", "turnover", "roc", "nav_roc", "premium"],
-    tech: ["slope_r2", "wslope_r2", "vol", "risk_adj", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "r2", "vol_ratio"],
+    tech: ["slope_r2", "wslope_r2", "vol", "risk_adj", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "amplitude", "position", "rsi", "r2", "vol_ratio", "macd", "kdj", "boll", "atr"],
     custom: ["custom"]
   };
   function fillMfKind(cat) {
@@ -2906,7 +3002,7 @@ window.WufuExpr = (function () {
     { k: "amount", label: "成交额", mean: "N日平均成交额（流动性）", formula: "Σ amount[t-N+1..t] ÷ N（万元）" },
     { k: "volume", label: "成交量", mean: "N日平均成交量", formula: "Σ volume[t-N+1..t] ÷ N（万手）" },
     { k: "rsrs", label: "RSRS", mean: "N日最高价对最低价 OLS 回归斜率（阻力支撑相对强弱）", formula: "OLS(highs ~ lows)：斜率 = Cov(h,l)/Var(h)" },
-    { k: "c_vs_ma", label: "收盘vs均线", mean: "后复权收盘价相对近N日均线的偏离", formula: "close[t] ÷ MA_N[t] - 1" },
+    { k: "c_vs_ma", label: "乖离率", mean: "后复权收盘价相对近N日均线的偏离（BIAS）", formula: "close[t] ÷ MA_N[t] - 1" },
     { k: "c_vs_ma_lag", label: "收盘vs前均线", mean: "后复权收盘价相对 N 日前 M 日均线的偏离", formula: "close[t] ÷ MA_M[t-N] - 1" },
     { k: "ma_vs_ma", label: "均线vs均线", mean: "近N日均线相对近M日均线", formula: "MA_N[t] ÷ MA_M[t] - 1" },
     { k: "ma_vs_ma_lag", label: "均线vs前均线", mean: "近N日均线相对 M 日前 O 日均线", formula: "MA_N[t] ÷ MA_O[t-M] - 1" },
@@ -2919,6 +3015,10 @@ window.WufuExpr = (function () {
     { k: "amplitude", label: "日内振幅", mean: "当日振幅", formula: "(high[t] - low[t]) ÷ low[t]" },
     { k: "position", label: "日内位置", mean: "收盘价在当日高低区间内的位置", formula: "(close[t] - low[t]) ÷ (high[t] - low[t])" },
     { k: "rsi", label: "RSI", mean: "相对强弱指标（Wilder 平滑：首值取前 N 日涨跌幅简单均值，其后 alpha=1/N 递推）", formula: "RSI = 100 × 均涨 ÷ (均涨 + 均跌)" },
+    { k: "macd", label: "MACD", mean: "N日MACD柱均值（DIF=EMA12-EMA26，DEA=EMA9(DIF)，柱=DIF-DEA）", formula: "DIF - DEA；DIF = EMA12[close] - EMA26[close]" },
+    { k: "kdj", label: "KDJ", mean: "N日KDJ的K值均值（RSV=(C-LLV9)/(HHV9-LLV9)×100；K=SMA(RSV,3)；D=SMA(K,3)）", formula: "RSV = (close - LLV9[low]) ÷ (HHV9[high] - LLV9[low]) × 100" },
+    { k: "boll", label: "布林线", mean: "布林带 %B：收盘价在N日2σ带内位置（0~1，1=触及上轨）", formula: "%B = (close - 下轨) ÷ (上轨 - 下轨)；上/下轨 = MA_N ± 2σ" },
+    { k: "atr", label: "ATR", mean: "N日ATR÷收盘价（真实波幅相对值；TR=max(H-L, |H-PC|, |L-PC|)）", formula: "ATR = Σ TR[t-N+1..t] ÷ N；取值 = ATR ÷ close[t]" },
     { k: "turnover", label: "换手率", mean: "N日平均换手率（%）", formula: "Σ turnover[t-N+1..t] ÷ N（%）" },
     { k: "vol_ratio", label: "放量比", mean: "近N日均量 ÷ M日前M日均量（量能放大程度）", formula: "(Σ vol[t-N+1..t] ÷ N) ÷ (Σ vol[t-N-M+1..t-N] ÷ M)" },
     { k: "nav_roc", label: "净值", mean: "单位净值 N 日涨幅（NAV动量，基于基金官方公布净值，不受二级市场价格波动干扰）", formula: "nav[t] / nav[t-N] - 1" },
@@ -3465,9 +3565,47 @@ function openFormulaModal(opts) {
   $("fmTitle").textContent = opts.title || "自定义公式编辑器";
   var inp = $("fmInput");
   inp.value = opts.initial || "";
+  // 组合页精简模式：仅净值/净值涨幅/收益波动率/乖离率四个快捷插入，隐藏函数区
+  if (opts.quick) {
+    $("fmFuncsWrap").style.display = "none";
+    fmFillQuick();
+  } else {
+    $("fmFuncsWrap").style.display = "";
+    fmFillFields();
+  }
   $("formulaModal").style.display = "flex";
   fmRefresh();
   inp.focus();
+}
+// 字段区按分类渲染（行情/技术/基金）
+function fmFillFields() {
+  var fb = $("fmFields");
+  fb.innerHTML = "";
+  [["price", "行情"], ["tech", "技术"], ["fund", "基金"]].forEach(function (cg) {
+    var hd = document.createElement("div");
+    hd.style.cssText = "font-size:11px;color:#7C8DA1;margin:6px 0 3px";
+    hd.textContent = cg[1] + "字段";
+    fb.appendChild(hd);
+    window.WufuExpr.FIELDS.filter(function (f) { return f.cat === cg[0]; }).forEach(function (f) {
+      var b = document.createElement("button"); b.type = "button";
+      b.textContent = f.cn; b.title = f.help;
+      b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
+      b.addEventListener("click", function () { $("fmHelp").textContent = f.cn + "：" + f.help; fmInsertAt(f.cn); });
+      fb.appendChild(b);
+    });
+  });
+}
+// 组合页精简字段：四个因子快捷插入
+function fmFillQuick() {
+  var fb = $("fmFields");
+  fb.innerHTML = "";
+  [["净值", "后复权收盘价"], ["净值涨幅", "ROC(后复权收盘价,20)"], ["收益波动率", "VOL(后复权收盘价,20)"], ["乖离率", "后复权收盘价/MA(后复权收盘价,20)-1"]].forEach(function (it) {
+    var b = document.createElement("button"); b.type = "button";
+    b.textContent = it[0]; b.title = "插入：" + it[1];
+    b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
+    b.addEventListener("click", function () { $("fmHelp").textContent = it[0] + "：" + it[1]; fmInsertAt(it[1]); });
+    fb.appendChild(b);
+  });
 }
 function fmRefresh() {
   var r = fmValidate($("fmInput").value);
@@ -3504,14 +3642,7 @@ function fmInsertFunc(fnCn, nArgs) {
   fmRefresh();
 }
 (function initFmModal() {
-  var fb = $("fmFields");
-  window.WufuExpr.FIELDS.forEach(function (f) {
-    var b = document.createElement("button"); b.type = "button";
-    b.textContent = f.cn; b.title = f.help;
-    b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
-    b.addEventListener("click", function () { $("fmHelp").textContent = f.cn + "：" + f.help; fmInsertAt(f.cn); });
-    fb.appendChild(b);
-  });
+  fmFillFields();
   var fc = $("fmFuncs");
   window.WufuExpr.FUNCS.forEach(function (fn) {
     var b = document.createElement("button"); b.type = "button";
@@ -6128,7 +6259,7 @@ function showStrategyDetail(name) {
         ed.title = "编辑公式";
         ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; crRenderAll(); } });
+          openFormulaModal({ initial: f.expr, title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = ne; crRenderAll(); } });
         });
         op.appendChild(ed);
       }
@@ -6197,7 +6328,7 @@ function showStrategyDetail(name) {
         ed.title = "编辑公式";
         ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; crRenderAll(); } });
+          openFormulaModal({ initial: f.expr, title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = ne; crRenderAll(); } });
         });
         op.appendChild(ed);
       }
@@ -6231,7 +6362,7 @@ function showStrategyDetail(name) {
       ab.addEventListener("click", function () {
         var kind = $("crAddKind").value, usage = $("crAddUsage").value;
         if (kind === "expr") {
-          openFormulaModal({ title: "自定义公式因子（作用于策略净值，字段用「后复权收盘价」即净值）", initial: "", onSave: function (src) {
+          openFormulaModal({ title: "自定义公式因子（作用于策略净值，字段用「后复权收盘价」即净值）", initial: "", quick: true, onSave: function (src) {
             var f = { kind: "expr", name: "公式因子" + (crFactors.length + 1), expr: src, weight: 0.1, usage: usage };
             if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
             crFactors.push(f);
@@ -7534,6 +7665,19 @@ function showStrategyDetail(name) {
     return list;
   }
   function isMiss(v) { return v === null || v === undefined || (typeof v === "number" && (isNaN(v) || v < 0)); }
+  // 指数移动平均（跳过上市前缺值，从首个有效值起算）
+  function techEMA(arr, n) {
+    var k = 2 / (n + 1), out = [], start = -1, j0;
+    for (j0 = 0; j0 < arr.length; j0++) if (!isMiss(arr[j0])) { start = j0; break; }
+    if (start < 0) return null;
+    var e0 = arr[start]; out[start] = e0;
+    for (j0 = start + 1; j0 < arr.length; j0++) {
+      var v = arr[j0];
+      if (isMiss(v)) return null;
+      e0 = v * k + e0 * (1 - k); out[j0] = e0;
+    }
+    return out;
+  }
 
   // ---- 动量得分（与 js_engine 同构）----
   function momentumMetrics(closes, w, ann) {
@@ -7655,6 +7799,54 @@ function showStrategyDetail(name) {
       var vol = sd * Math.sqrt(ann);
       if (kind === "vol") return vol;
       return vol > 0 ? (seg3[seg3.length - 1] / seg3[0] - 1) / vol : 0;
+    }
+    // ---- 技术因子：MACD / KDJ / 布林线 / ATR（与主引擎 factorValue 同构；仅用现有 close/high/low）----
+    if (kind === "macd") {
+      var difA2 = techEMA(cArr, 12); if (!difA2) return NaN;
+      var deaA2 = techEMA(difA2, 9); if (!deaA2) return NaN;
+      if (i >= difA2.length || difA2[i] === undefined || deaA2[i] === undefined) return NaN;
+      var loM2 = Math.max(0, i - w1 + 1), sumM2 = 0;
+      for (var jm2 = loM2; jm2 <= i; jm2++) { var hm2 = difA2[jm2] - deaA2[jm2]; if (hm2 === undefined || isNaN(hm2)) return NaN; sumM2 += hm2; }
+      return sumM2 / (i - loM2 + 1);
+    }
+    if (kind === "kdj") {
+      var hArr = seq.highs, lArr = seq.lows, perK2 = 9, kPrev2 = NaN, dPrev2 = NaN, sumK2 = 0, cntK2 = 0, stK2 = Math.max(0, i - w1 - perK2 + 1);
+      for (var jk2 = stK2; jk2 <= i; jk2++) {
+        if (jk2 + 1 < perK2) continue;
+        var loR2 = jk2 - perK2 + 1, hhR2 = -Infinity, llR2 = Infinity;
+        for (var qR2 = loR2; qR2 <= jk2; qR2++) { var hq2 = hArr[code][qR2], lq2 = lArr[code][qR2]; if (isMiss(hq2) || isMiss(lq2)) return NaN; if (hq2 > hhR2) hhR2 = hq2; if (lq2 < llR2) llR2 = lq2; }
+        if (hhR2 <= llR2) return NaN;
+        var rsvR2 = (cArr[jk2] - llR2) / (hhR2 - llR2) * 100;
+        kPrev2 = isNaN(kPrev2) ? rsvR2 : (rsvR2 + 2 * kPrev2) / 3;
+        dPrev2 = isNaN(dPrev2) ? kPrev2 : (kPrev2 + 2 * dPrev2) / 3;
+        if (jk2 >= i - w1 + 1) { sumK2 += kPrev2; cntK2++; }
+      }
+      return cntK2 ? sumK2 / cntK2 : NaN;
+    }
+    if (kind === "boll") {
+      if (i + 1 < w1) return NaN;
+      var segB2 = cArr.slice(i - w1 + 1, i + 1);
+      for (var qb4 = 0; qb4 < segB2.length; qb4++) if (isMiss(segB2[qb4])) return NaN;
+      var muB2 = 0; for (var qb5 = 0; qb5 < segB2.length; qb5++) muB2 += segB2[qb5]; muB2 /= segB2.length;
+      var sdB2 = 0; for (var qb6 = 0; qb6 < segB2.length; qb6++) sdB2 += (segB2[qb6] - muB2) * (segB2[qb6] - muB2); sdB2 = Math.sqrt(sdB2 / segB2.length);
+      var upB2 = muB2 + 2 * sdB2, dnB2 = muB2 - 2 * sdB2;
+      if (upB2 <= dnB2) return NaN;
+      return (cArr[i] - dnB2) / (upB2 - dnB2);
+    }
+    if (kind === "atr") {
+      if (i + 1 < w1) return NaN;
+      var hArr2 = seq.highs, lArr2 = seq.lows, trs2 = [];
+      for (var jt2 = i - w1 + 1; jt2 <= i; jt2++) {
+        var hT2 = hArr2[code][jt2], lT2 = lArr2[code][jt2], cT2 = cArr[jt2], pcT2 = jt2 > 0 ? cArr[jt2 - 1] : NaN;
+        if (isMiss(hT2) || isMiss(lT2) || isMiss(cT2) || isMiss(pcT2)) return NaN;
+        var trT2 = hT2 - lT2;
+        var a1T2 = Math.abs(hT2 - pcT2), a2T2 = Math.abs(lT2 - pcT2);
+        if (a1T2 > trT2) trT2 = a1T2; if (a2T2 > trT2) trT2 = a2T2;
+        trs2.push(trT2);
+      }
+      var sumT2 = 0; for (var qT2 = 0; qT2 < trs2.length; qT2++) sumT2 += trs2[qT2];
+      if (!(cArr[i] > 0)) return NaN;
+      return sumT2 / trs2.length / cArr[i];
     }
     var amts = seq.amts, vols = seq.vols, turnovers = seq.turnovers;
     if (kind === "amount") return sumAt(amts[code], i, w1) / w1;
@@ -7900,7 +8092,7 @@ function showStrategyDetail(name) {
   }
 
   function renderFactorBox() {
-    var kinds = window.IC_KINDS_KINDS || ["roc", "slope_r2", "wslope_r2", "vol", "risk_adj", "r2", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "close", "open", "high", "low", "amplitude", "position", "rsi", "amount", "volume", "turnover", "vol_ratio", "nav_roc", "premium"];
+    var kinds = window.IC_KINDS_KINDS || ["roc", "slope_r2", "wslope_r2", "vol", "risk_adj", "r2", "rsrs", "c_vs_ma", "c_vs_ma_lag", "ma_vs_ma", "ma_vs_ma_lag", "ma", "ma_lag", "close", "open", "high", "low", "amplitude", "position", "rsi", "amount", "volume", "turnover", "vol_ratio", "nav_roc", "premium", "macd", "kdj", "boll", "atr"];
     window.IC_KINDS_KINDS = kinds;
     var fbox = document.getElementById("icFactors");
     fbox.innerHTML = "";
