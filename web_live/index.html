@@ -271,11 +271,9 @@ footer b{color:#9FB0C3}
             </select>
             <button type="button" id="mfAddBtn" style="margin-left:2px">添加</button>
           </div>
-          <div class="row" id="cfNameRow" style="display:none;align-items:center;margin-top:6px;gap:6px">
-            <input id="cfName" type="text" placeholder="自定义因子名，如：动量增强"
-                   style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #3E4E63;border-radius:4px">
-          </div>
           <div id="cfEditor" style="display:none;margin-top:6px;padding:8px;border:1px dashed #3E4E63;border-radius:6px">
+            <input id="cfName" type="text" placeholder="自定义因子名，如：动量增强"
+                   style="width:100%;box-sizing:border-box;font-size:12px;padding:3px 4px;border:1px solid #3E4E63;border-radius:4px;margin-bottom:4px">
             <div style="font-size:12px;color:#7C8DA1;margin-bottom:4px">用公式组合现有因子（最少2个成分）：成分间用 + − × ÷ 连接，每项 系数×因子值；确认后按下拉选择放入排名或筛选。</div>
             <select id="cfUsage" style="font-size:12px;margin-bottom:4px;width:120px;padding:2px;border:1px solid #3E4E63;border-radius:4px">
               <option value="filter">放入筛选条件</option>
@@ -297,6 +295,8 @@ footer b{color:#9FB0C3}
             <b id="fmTitle" style="font-size:14px;color:#F1F5F9">自定义公式编辑器</b>
             <button id="fmClose" style="font-size:16px;background:none;border:none;color:#9FB0C3;cursor:pointer">×</button>
           </div>
+          <input id="fmName" type="text" placeholder="自定义因子名（可选），如：动量增强"
+                 style="width:100%;box-sizing:border-box;font-size:13px;padding:5px 6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;margin-bottom:6px">
           <textarea id="fmInput" rows="2" wrap="soft" placeholder="如 MA(后复权收盘价,10)>1" style="font-size:13px;padding:6px;border:1px solid #3E4E63;border-radius:4px;background:#0F1822;color:#F1F5F9;width:100%;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5;min-height:44px"></textarea>
           <div id="fmStatus" style="font-size:11px;margin:4px 0;color:#4ADE80;min-height:14px"></div>
           <div style="display:flex;gap:8px;flex:1;min-height:180px;overflow:hidden">
@@ -3206,8 +3206,9 @@ function renderMfLib() {
       } else {
         edBtn.title = "编辑公式：" + (f.name || "");
         edBtn.addEventListener("click", function () {
-          openFormulaModal({ title: "编辑公式因子：" + (f.name || ""), initial: f.expr || "", onSave: function (src) {
-            f.expr = src;
+          openFormulaModal({ title: "编辑公式因子：" + (f.name || ""), initial: f.expr || "", name: f.name || "", onSave: function (src) {
+            var nm = ($("fmName").value || "").trim();
+            f.expr = src; if (nm) f.name = nm;
             renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
           }});
         });
@@ -3227,13 +3228,12 @@ function renderMfLib() {
 $("mfAddBtn").addEventListener("click", function () {
   var kind = $("mfAddKind").value, usage = $("mfAddUsage").value;
   if (kind === "custom") {
-    var nm = ($("cfName").value || "").trim();
-    openFormulaModal({ title: "自定义公式因子", initial: "", onSave: function (src) {
+    openFormulaModal({ title: "自定义公式因子", initial: "", name: "", onSave: function (src) {
+      var nm = ($("fmName").value || "").trim();
       var name = nm || ("公式因子" + (factors.length + 1));
       var f = { kind: "expr", name: name, expr: src, weight: 0.10, usage: usage };
       if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
       factors.push(f);
-      $("cfName").value = "";
       renderMfLib(); renderMfList(); renderFltList(); scheduleRun();
     }});
     return;
@@ -3247,8 +3247,6 @@ $("mfAddBtn").addEventListener("click", function () {
 if ($("mfCat")) {
   $("mfCat").addEventListener("change", function () {
     fillMfKind(this.value);
-    var nr = $("cfNameRow");
-    if (nr) nr.style.display = (this.value === "custom") ? "flex" : "none";
   });
   fillMfKind($("mfCat").value);
 }
@@ -3343,7 +3341,7 @@ function renderMfList() {
       ed.title = "编辑公式";
       ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
       ed.addEventListener("click", function () {
-        openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; renderMfList(); renderFltList(); scheduleRun(); } });
+        openFormulaModal({ initial: f.expr, title: "编辑因子公式", name: f.name || "", onSave: function (ne) { var nm = ($("fmName").value || "").trim(); f.expr = ne; if (nm) f.name = nm; renderMfList(); renderFltList(); scheduleRun(); } });
       });
       op.appendChild(ed);
     }
@@ -3462,7 +3460,7 @@ function renderFltList() {
       ed.title = "编辑公式";
       ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
       ed.addEventListener("click", function () {
-        openFormulaModal({ initial: f.expr, title: "编辑因子公式", onSave: function (ne) { f.expr = ne; renderMfList(); renderFltList(); scheduleRun(); } });
+        openFormulaModal({ initial: f.expr, title: "编辑因子公式", name: f.name || "", onSave: function (ne) { var nm = ($("fmName").value || "").trim(); f.expr = ne; if (nm) f.name = nm; renderMfList(); renderFltList(); scheduleRun(); } });
       });
       op.appendChild(ed);
     }
@@ -3609,6 +3607,8 @@ function openFormulaModal(opts) {
   if (fmEl && fmEl.parentElement && fmEl.parentElement !== document.body) document.body.appendChild(fmEl);
   FM_CB = opts.onSave || null;
   $("fmTitle").textContent = opts.title || "自定义公式编辑器";
+  var nmEl = $("fmName");
+  if (nmEl) { nmEl.value = opts.name || ""; nmEl.style.display = (opts.showName === false) ? "none" : "block"; }
   var inp = $("fmInput");
   inp.value = opts.initial || "";
   // 组合页精简模式：字段区仅净值/净值涨幅/收益波动率/乖离率四个因子快捷，函数区保留
@@ -4108,7 +4108,7 @@ function buildChips() {
         ed.title = "编辑公式";
         ed.style.cssText = "flex:0 0 auto;font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: c.expr, title: "编辑公式", onSave: function (newExpr) { c.expr = newExpr; renderAllCond(); scheduleRun(); } });
+          openFormulaModal({ initial: c.expr, title: "编辑公式", showName: false, onSave: function (newExpr) { c.expr = newExpr; renderAllCond(); scheduleRun(); } });
         });
       }
       var del = document.createElement("button");
@@ -4186,7 +4186,7 @@ function buildChips() {
         arr.push({ type: "factor", kind: kSel.value, window: +wIn.value || 20,
                    op: opSel.value, threshold: Math.max(-1000, Math.min(1000, +thIn.value || 0)) / 100 });
       } else if (t === "expr") {
-        openFormulaModal({ title: "自定义公式条件（含比较符）", initial: "", onSave: function (src) {
+        openFormulaModal({ title: "自定义公式条件（含比较符）", initial: "", showName: false, onSave: function (src) {
           arr.push({ type: "expr", expr: src });
           renderAllCond(); scheduleRun();
         }});
@@ -6316,7 +6316,7 @@ function showStrategyDetail(name) {
         ed.title = "编辑公式";
         ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: crDisplayExpr(f.expr), title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = crTranslateExpr(ne); crRenderAll(); } });
+          openFormulaModal({ initial: crDisplayExpr(f.expr), title: "编辑因子公式", quick: true, name: f.name || "", onSave: function (ne) { var nm = ($("fmName").value || "").trim(); f.expr = crTranslateExpr(ne); if (nm) f.name = nm; crRenderAll(); } });
         });
         op.appendChild(ed);
       }
@@ -6385,7 +6385,7 @@ function showStrategyDetail(name) {
         ed.title = "编辑公式";
         ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: crDisplayExpr(f.expr), title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = crTranslateExpr(ne); crRenderAll(); } });
+          openFormulaModal({ initial: crDisplayExpr(f.expr), title: "编辑因子公式", quick: true, name: f.name || "", onSave: function (ne) { var nm = ($("fmName").value || "").trim(); f.expr = crTranslateExpr(ne); if (nm) f.name = nm; crRenderAll(); } });
         });
         op.appendChild(ed);
       }
@@ -6419,8 +6419,9 @@ function showStrategyDetail(name) {
       ab.addEventListener("click", function () {
         var kind = $("crAddKind").value, usage = $("crAddUsage").value;
         if (kind === "expr") {
-          openFormulaModal({ title: "自定义公式因子（作用于策略净值，字段名直接用「净值」）", initial: "", quick: true, onSave: function (src) {
-            var f = { kind: "expr", name: "公式因子" + (crFactors.length + 1), expr: crTranslateExpr(src), weight: 0.1, usage: usage };
+          openFormulaModal({ title: "自定义公式因子", initial: "", quick: true, onSave: function (src) {
+            var nm = ($("fmName").value || "").trim();
+            var f = { kind: "expr", name: nm || ("公式因子" + (crFactors.length + 1)), expr: crTranslateExpr(src), weight: 0.1, usage: usage };
             if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
             crFactors.push(f);
             crRenderAll();
