@@ -310,7 +310,7 @@ footer b{color:#9FB0C3}
             </div>
             <div style="flex:1.2;overflow:auto;border:1px solid #243244;border-radius:4px;padding:4px">
               <div style="font-size:11px;color:#7C8DA1;margin-bottom:3px">说明</div>
-              <div id="fmHelp" style="font-size:11px;color:#9FB0C3;line-height:1.55;word-break:break-all">点击左侧字段或函数插入；支持中文名称，可与英文混用。运算 + - * / ( )，比较 > >= < <= == !=，逻辑 &amp;&amp; || !。</div>
+              <div id="fmHelp" style="font-size:11px;color:#9FB0C3;line-height:1.55;word-break:break-all">点击左侧字段或函数插入；支持中文名称，可与英文混用。因子函数可省略 X：如乖离率(20) 即净值相对 20 日均线的乖离。运算 + - * / ( )，比较 > >= < <= == !=，逻辑 &amp;&amp; || !。</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
@@ -996,7 +996,8 @@ window.WufuExpr = (function () {
     '引用':'ref','差分':'delta','均线':'ma','指数移动平均':'ema','平滑均线':'sma','加权均线':'wma',
     '动态均线':'dma','求和':'sum','乘积':'product','最大值':'max','最小值':'min','标准差':'std',
     '绝对值':'abs','变动率':'roc','对数':'log',
-    '涨幅动量':'roc','净值涨幅':'nav_roc','收益波动率':'vol','乖离率':'c_vs_ma','N日均线':'ma',
+    '净值':'close','净值涨幅':'nav_roc','乖离率':'bias','收益波动率':'vol',
+    '涨幅动量':'roc','N日均线':'ma',
     'MACD':'macd','KDJ':'kdj','布林线':'boll','ATR':'atr','斜率动量':'slope_r2','加权斜率动量':'wslope_r2',
     '拟合优度R²':'r2','风险调整动量':'risk_adj','振幅':'amplitude','日内位置':'position','RSI':'rsi','放量比':'vol_ratio'
   };
@@ -1085,7 +1086,7 @@ window.WufuExpr = (function () {
     { id: 'roc', cn: '涨幅动量', cat: 'tech', help: 'N 日涨幅（默认20日）' },
     { id: 'nav_roc', cn: '净值涨幅', cat: 'tech', help: '单位净值 N 日涨幅（默认20日）' },
     { id: 'vol', cn: '收益波动率', cat: 'tech', help: 'N 日收益波动率（默认20日）' },
-    { id: 'c_vs_ma', cn: '乖离率', cat: 'tech', help: '收盘价相对 N 日均线（默认20日，BIAS）' },
+    { id: 'bias', cn: '乖离率', cat: 'tech', help: '收盘价相对 N 日均线（默认20日，BIAS）' },
     { id: 'ma', cn: 'N日均线', cat: 'tech', help: 'N 日均线值（默认20日）' },
     { id: 'macd', cn: 'MACD', cat: 'tech', help: 'MACD 柱（DIF-DEA，参数12/26/9）' },
     { id: 'kdj', cn: 'KDJ', cat: 'tech', help: 'KDJ 的 K 值（RSV 9/3/3）' },
@@ -1114,8 +1115,10 @@ window.WufuExpr = (function () {
     { name: 'MIN', cn: 'MIN', help: 'N 日最小值', args: 2 },
     { name: 'STD', cn: 'STD', help: 'N 日总体标准差', args: 2 },
     { name: 'ABS', cn: 'ABS', help: '绝对值', args: 1 },
-    { name: 'ROC', cn: 'ROC', help: 'X/N日前X - 1（N日涨幅）', args: 2 },
-    { name: 'VOL', cn: 'VOL', help: 'N 日收益波动率（ROC(X,1) 的 N 日标准差）', args: 2 },
+    { name: 'ROC', cn: 'ROC', help: 'N 日涨幅：ROC(X,N)，省略 X 时作用于净值（如 ROC(20)）', args: 2 },
+    { name: 'VOL', cn: 'VOL', help: 'N 日收益波动率：VOL(X,N)，省略 X 时作用于净值（如 收益波动率(20)）', args: 2 },
+    { name: 'NAV_ROC', cn: '净值涨幅', help: 'N 日净值涨幅：净值涨幅(N) 作用于策略净值', args: 2 },
+    { name: 'BIAS', cn: '乖离率', help: '乖离率：乖离率(N) 为净值相对 N 日均线（如 乖离率(20)）', args: 2 },
     { name: '涨幅', cn: '涨幅', help: 'X 当日涨幅（ROC(X,1)）', args: 1 },
     { name: 'LOG', cn: 'LOG', help: '自然对数 ln(X)', args: 1 }
   ];
@@ -1420,7 +1423,7 @@ window.WufuExpr = (function () {
     // 自定义公式：白名单字段(10)+函数(16)求值，AST 缓存，无 eval
     // 公式可引用的因子字段：id → 默认窗口（求值时调用 factorValue，与因子面板同口径）
     var EXPR_FACTOR_FIELDS = {
-      roc: 20, nav_roc: 20, vol: 20, c_vs_ma: 20, ma: 20, ma_lag: 20,
+      roc: 20, nav_roc: 20, vol: 20, bias: 20, ma: 20, ma_lag: 20,
       macd: 20, kdj: 9, boll: 20, atr: 20,
       slope_r2: 25, wslope_r2: 25, r2: 25, risk_adj: 60,
       amplitude: 20, position: 20, rsi: 14, vol_ratio: 20, rsrs: 20
@@ -1454,9 +1457,12 @@ window.WufuExpr = (function () {
       return window.WufuExpr.evalNum(ast, ctx);
     }
     function exprCallAt(fn, args, code, i, ctx) {
-      function argNum(k) { return window.WufuExpr.evalNum(args[k], ctx); }
+      function argNum(k) { return (k < args.length) ? window.WufuExpr.evalNum(args[k], ctx) : NaN; }
       function win(argAst, N) { var lo = i - N + 1; if (lo < 0) return null; var out = []; for (var j = lo; j <= i; j++) { var v = exprEvalAt(argAst, code, j); if (isNaN(v)) return null; out.push(v); } return out; }
-      var N, s;
+      // 单参数语义：因子函数 乖离率(20) 等省略 X 时作用于「后复权收盘价」，参数即窗口 N
+      function winClose(N) { var lo = i - N + 1; if (lo < 0) return null; var out = []; for (var j = lo; j <= i; j++) { var v = exprFieldAt('close', code, j); if (isNaN(v)) return null; out.push(v); } return out; }
+      function closeAt(j) { return exprFieldAt('close', code, j); }
+      var N, s, a, b;
       switch (fn) {
         case 'ref': N = argNum(1); if (i - N < 0) return NaN; return exprEvalAt(args[0], code, i - N);
         case 'delta': N = argNum(1); { var a = exprEvalAt(args[0], code, i); var b = (i - N >= 0) ? exprEvalAt(args[0], code, i - N) : NaN; return a - b; }
@@ -1471,8 +1477,22 @@ window.WufuExpr = (function () {
         case 'min': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; return Math.min.apply(null, s);
         case 'std': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var mu = 0; for (var q = 0; q < s.length; q++) mu += s[q]; mu /= s.length; var vv = 0; for (var q = 0; q < s.length; q++) vv += (s[q] - mu) * (s[q] - mu); return Math.sqrt(vv / s.length); }
         case 'abs': return Math.abs(argNum(0));
-        case 'roc': N = argNum(1) || 10; if (i - N < 0) return NaN; { var a = exprEvalAt(args[0], code, i), b = exprEvalAt(args[0], code, i - N); return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1; }
-        case 'vol': N = argNum(1) || 20; s = win(args[0], N); if (!s) return NaN; { var rr = []; for (var q = 1; q < s.length; q++) { if (s[q - 1] === 0) return NaN; rr.push(s[q] / s[q - 1] - 1); } if (rr.length < 2) return NaN; var mu = 0; for (var q = 0; q < rr.length; q++) mu += rr[q]; mu /= rr.length; var vv = 0; for (var q = 0; q < rr.length; q++) vv += (rr[q] - mu) * (rr[q] - mu); return Math.sqrt(vv / rr.length); }
+        case 'roc':
+          if (args.length >= 2) { N = argNum(1) || 10; a = exprEvalAt(args[0], code, i); b = exprEvalAt(args[0], code, i - N); }
+          else { N = argNum(0) || 10; a = closeAt(i); b = closeAt(i - N); }
+          if (i - N < 0) return NaN; return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1;
+        case 'vol':
+          if (args.length >= 2) { N = argNum(1) || 20; s = win(args[0], N); }
+          else { N = argNum(0) || 20; s = winClose(N); }
+          if (!s) return NaN; { var rr = []; for (var q = 1; q < s.length; q++) { if (s[q - 1] === 0) return NaN; rr.push(s[q] / s[q - 1] - 1); } if (rr.length < 2) return NaN; var mu = 0; for (var q = 0; q < rr.length; q++) mu += rr[q]; mu /= rr.length; var vv = 0; for (var q = 0; q < rr.length; q++) vv += (rr[q] - mu) * (rr[q] - mu); return Math.sqrt(vv / rr.length); }
+        case 'nav_roc':
+          if (args.length >= 2) { N = argNum(1) || 20; a = exprEvalAt(args[0], code, i); b = exprEvalAt(args[0], code, i - N); }
+          else { N = argNum(0) || 20; a = closeAt(i); b = closeAt(i - N); }
+          if (i - N < 0) return NaN; return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1;
+        case 'bias':
+          if (args.length >= 2) { N = argNum(1) || 20; s = win(args[0], N); }
+          else { N = argNum(0) || 20; s = winClose(N); }
+          if (!s) return NaN; { var mu = 0; for (var q = 0; q < s.length; q++) mu += s[q]; mu /= s.length; return mu === 0 ? NaN : s[s.length - 1] / mu - 1; }
         case '涨幅': { var a = exprEvalAt(args[0], code, i), b = (i > 0) ? exprEvalAt(args[0], code, i - 1) : NaN; return (isNaN(a) || isNaN(b) || b === 0) ? NaN : a / b - 1; }
         case 'log': { var x = argNum(0); return x <= 0 ? NaN : Math.log(x); }
       }
@@ -1623,6 +1643,7 @@ window.WufuExpr = (function () {
     }
     function factorValue(kind, code, i, f, annf) {
       var w1 = f.window || 20, w2 = f.window2 || 0, w3 = f.window3 || 0;
+      if (kind === "bias") kind = "c_vs_ma"; // 公式字段/函数名 bias 与引擎 kind c_vs_ma 同口径
       var cArr = closes[code];
       if (kind === "expr") {
         // 果仁式公式因子：AST 缓存，白名单字段+函数求值
@@ -3565,12 +3586,10 @@ function openFormulaModal(opts) {
   $("fmTitle").textContent = opts.title || "自定义公式编辑器";
   var inp = $("fmInput");
   inp.value = opts.initial || "";
-  // 组合页精简模式：仅净值/净值涨幅/收益波动率/乖离率四个快捷插入，隐藏函数区
+  // 组合页精简模式：字段区仅净值/净值涨幅/收益波动率/乖离率四个因子快捷，函数区保留
   if (opts.quick) {
-    $("fmFuncsWrap").style.display = "none";
     fmFillQuick();
   } else {
-    $("fmFuncsWrap").style.display = "";
     fmFillFields();
   }
   $("formulaModal").style.display = "flex";
@@ -3595,17 +3614,25 @@ function fmFillFields() {
     });
   });
 }
-// 组合页精简字段：四个因子快捷插入
+// 组合页精简字段：四个因子快捷（因子函数式：乖离率(20) 等，保存时翻译为引擎口径）
 function fmFillQuick() {
   var fb = $("fmFields");
   fb.innerHTML = "";
-  [["净值", "后复权收盘价"], ["净值涨幅", "ROC(后复权收盘价,20)"], ["收益波动率", "VOL(后复权收盘价,20)"], ["乖离率", "后复权收盘价/MA(后复权收盘价,20)-1"]].forEach(function (it) {
+  [["净值", "净值"], ["净值涨幅", "净值涨幅(20)"], ["收益波动率", "收益波动率(20)"], ["乖离率", "乖离率(20)"]].forEach(function (it) {
     var b = document.createElement("button"); b.type = "button";
     b.textContent = it[0]; b.title = "插入：" + it[1];
     b.style.cssText = "display:block;width:100%;text-align:left;font-size:11.5px;padding:3px 5px;margin:2px 0;background:#202E3F;border:1px solid #3E4E63;border-radius:4px;color:#D8E2EF;cursor:pointer";
     b.addEventListener("click", function () { $("fmHelp").textContent = it[0] + "：" + it[1]; fmInsertAt(it[1]); });
     fb.appendChild(b);
   });
+}
+// 组合页公式翻译：保存时"净值"→引擎字段"后复权收盘价"（策略净值序列口径）
+function crTranslateExpr(src) {
+  return src.replace(/净值涨幅/g, "@NVR@").replace(/净值/g, "后复权收盘价").replace(/@NVR@/g, "净值涨幅");
+}
+// 组合页公式回显：引擎字段"后复权收盘价"→"净值"
+function crDisplayExpr(src) {
+  return src.replace(/后复权收盘价/g, "净值");
 }
 function fmRefresh() {
   var r = fmValidate($("fmInput").value);
@@ -6165,7 +6192,7 @@ function showStrategyDetail(name) {
     return (ki && ki.label) ? ki.label : (CR_FAC_NAMES[f.kind] || f.kind);
   }
   function crFacWinTitle(f) {
-    if (f.kind === "expr") return (f.name || "公式") + " = " + (f.expr || "");
+    if (f.kind === "expr") return (f.name || "公式") + " = " + (crDisplayExpr(f.expr) || "");
     var ki = (KIND_INFO && KIND_INFO[f.kind]) || (KIND_INFO && KIND_INFO.roc);
     return (ki && ki.title) ? ki.title : f.kind;
   }
@@ -6259,7 +6286,7 @@ function showStrategyDetail(name) {
         ed.title = "编辑公式";
         ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: f.expr, title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = ne; crRenderAll(); } });
+          openFormulaModal({ initial: crDisplayExpr(f.expr), title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = crTranslateExpr(ne); crRenderAll(); } });
         });
         op.appendChild(ed);
       }
@@ -6328,7 +6355,7 @@ function showStrategyDetail(name) {
         ed.title = "编辑公式";
         ed.style.cssText = "font-size:12px;cursor:pointer;background:none;border:none;color:#7C8DA1;padding:0 2px";
         ed.addEventListener("click", function () {
-          openFormulaModal({ initial: f.expr, title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = ne; crRenderAll(); } });
+          openFormulaModal({ initial: crDisplayExpr(f.expr), title: "编辑因子公式", quick: true, onSave: function (ne) { f.expr = crTranslateExpr(ne); crRenderAll(); } });
         });
         op.appendChild(ed);
       }
@@ -6362,8 +6389,8 @@ function showStrategyDetail(name) {
       ab.addEventListener("click", function () {
         var kind = $("crAddKind").value, usage = $("crAddUsage").value;
         if (kind === "expr") {
-          openFormulaModal({ title: "自定义公式因子（作用于策略净值，字段用「后复权收盘价」即净值）", initial: "", quick: true, onSave: function (src) {
-            var f = { kind: "expr", name: "公式因子" + (crFactors.length + 1), expr: src, weight: 0.1, usage: usage };
+          openFormulaModal({ title: "自定义公式因子（作用于策略净值，字段名直接用「净值」）", initial: "", quick: true, onSave: function (src) {
+            var f = { kind: "expr", name: "公式因子" + (crFactors.length + 1), expr: crTranslateExpr(src), weight: 0.1, usage: usage };
             if (usage === "filter") { f.op = "gte"; f.threshold = 0.0; }
             crFactors.push(f);
             crRenderAll();
