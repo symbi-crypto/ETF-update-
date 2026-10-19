@@ -1185,7 +1185,7 @@ window.WufuExpr = (function () {
 
   // ---------- 工具 ----------
   function isMiss(v) { return v === null || v === undefined || (typeof v === "number" && (isNaN(v) || v < 0)); }
-  // 指数移动平均（跳过上市前缺值，从首个有效值起算）
+  // 指数移动平均（跳过上市前缺值，从首个有效值起算；[FIXED M3] 中途缺失日沿用前值继续递推，避免停牌/缺口后整段失效）
   function techEMA(arr, n) {
     var k = 2 / (n + 1), out = [], start = -1, j0;
     for (j0 = 0; j0 < arr.length; j0++) if (!isMiss(arr[j0])) { start = j0; break; }
@@ -1193,7 +1193,7 @@ window.WufuExpr = (function () {
     var e0 = arr[start]; out[start] = e0;
     for (j0 = start + 1; j0 < arr.length; j0++) {
       var v = arr[j0];
-      if (isMiss(v)) return null;
+      if (isMiss(v)) { out[j0] = e0; continue; }
       e0 = v * k + e0 * (1 - k); out[j0] = e0;
     }
     return out;
@@ -1468,7 +1468,7 @@ window.WufuExpr = (function () {
     }
     function exprFieldAt(id, code, i) {
       if (EXPR_FACTOR_FIELDS[id]) {
-        var fv = factorValue(id, code, i, { window: EXPR_FACTOR_FIELDS[id] }, null);
+        var fv = factorValue(id, code, i, { window: EXPR_FACTOR_FIELDS[id] }, params.annualize_factor || 252);
         return isNaN(fv) ? NaN : fv;
       }
       var s = exprSeriesArr(id, code);
@@ -1518,7 +1518,7 @@ window.WufuExpr = (function () {
           else if (fn === 'vol_ratio' || fn === 'c_vs_ma_lag' || fn === 'ma_lag' || fn === 'ma_vs_ma' || fn === 'ma_vs_ma_lag') opt.window2 = (fn === 'ma_vs_ma_lag') ? 5 : 20;
           if (!isNaN(w3) && w3 > 0) opt.window3 = w3;
           else if (fn === 'ma_vs_ma_lag') opt.window3 = 20;
-          return factorValue(fn, code, i, opt, null);
+          return factorValue(fn, code, i, opt, params.annualize_factor || 252);
         }
       }
       return NaN;
@@ -1633,6 +1633,7 @@ window.WufuExpr = (function () {
     var pending = null;               // [wNew(array), costPct]
     var lastSell = {};                // 卖出冷却：code -> 最近卖出决策日索引
     var posMeta = {};                 // 持仓状态：code -> {buy_i, buy_px, hi}（卖出/不卖条件用）
+    var dropFloorCnt = 0;             // [FIXED M6] 因综合得分≤score_floor 被剔除的标的·次数累计（供结果区提示）
     var nav = 1, cumCost = 0, regime = "normal", mmWeakRun = 0, mmNormalRun = 0;
     var navSeries = new Array(n), ddSeries = new Array(n), expSeries = new Array(n);
     var holdSeries = new Array(n), regSeries = new Array(n), dailyRet = new Array(n);
@@ -1910,6 +1911,7 @@ window.WufuExpr = (function () {
       if (kd === "c_vs_ma_lag" || kd === "ma_lag") return w1 + w2;
       if (kd === "ma_vs_ma") return Math.max(w1, w2);
       if (kd === "ma_vs_ma_lag") return Math.max(w1, w2 + w3);
+      if (kd === "vol_ratio") return w1 + (w2 || 20);   // [FIXED L2] 放量比需要近 w1 + 前 w2 天数据，预热校验按实际需求
       return w1;
     }
     var icSnapshots = [];   // 每个调仓决策日的综合得分截面 + 单因子原始值（供组合IC/单因子IC分析）
@@ -1989,7 +1991,7 @@ window.WufuExpr = (function () {
         if (stdMode !== "none") {
           if (Math.abs(score) < 1e-12) score = 0;   // 浮点噪声归零（与 Python 同构；none 模式保留原始尺度不归零）
           // 修复：候选仅 1 个时无横向可比（robust 标准化得分为 0），不得按 score_floor 过滤为全程空仓
-          if (keys.length > 1 && !(score > scoreFloor)) continue;
+          if (keys.length > 1 && !(score > scoreFloor)) { dropFloorCnt++; continue; }   // [FIXED M6] 低分剔除计数
         }
         if (params.mm_weak_ma && regime === "weak") {
           var mv2 = rollingMA(closes[code], i, params.mm_window || 20);
@@ -2073,9 +2075,11 @@ window.WufuExpr = (function () {
           wOld = wNew;
           pending = null;
           executed = true;
-          if (tradeRecords.length && tradeRecords[tradeRecords.length - 1].exec_date === cal[i]) {
+          if (executed && tradeRecords.length) {
+            var trL = tradeRecords[tradeRecords.length - 1];
             var blkL = Object.keys(blocked).map(function (bc) { return { code: bc, side: blocked[bc] }; });
-            if (blkL.length) tradeRecords[tradeRecords.length - 1].blocked = blkL;
+            if (trL.exec_date !== cal[i]) { trL.exec_date = cal[i]; trL.deferred = true; }   // [FIXED L1] 顺延执行时调仓记录改为实际成交日
+            if (blkL.length) trL.blocked = blkL;
           }
         }
       }
@@ -2420,16 +2424,16 @@ window.WufuExpr = (function () {
             }
           }
 
-          // 持仓状态更新（决策日预置/更新 hi：继续持有并入执行日高点；新买入预置执行日高点初值；buy_i/buy_px 由执行段在真实成交日落定）
+          // 持仓状态更新（决策日预置/更新 hi：[FIXED H1] 只取 i 日及以前数据——继续持有并入决策日当日高点（收盘后已知）；新买入以执行日开盘价（次日成交价）为初值，不含盘中高点；执行日及之后的高点由后续决策日自然累积）
           holding.forEach(function (hc) {
-            var hn = (highs[hc] && !isMiss(highs[hc][i + 1])) ? highs[hc][i + 1] : closes[hc][i];
-            if (isNaN(hn) || !(hn > 0)) hn = closes[hc][i];
+            var hday = (highs[hc] && !isMiss(highs[hc][i])) ? highs[hc][i] : closes[hc][i];
+            if (isNaN(hday) || !(hday > 0)) hday = closes[hc][i];
             if (posMeta[hc]) {
-              posMeta[hc].hi = Math.max(posMeta[hc].hi !== undefined ? posMeta[hc].hi : hn, hn);
+              posMeta[hc].hi = Math.max(posMeta[hc].hi !== undefined ? posMeta[hc].hi : hday, hday);
             } else {
               var hp0 = (opens[hc] && !isMiss(opens[hc][i + 1])) ? opens[hc][i + 1] : closes[hc][i];
-              if (isNaN(hp0) || !(hp0 > 0)) hp0 = hn;
-              posMeta[hc] = { hi: Math.max(hn, hp0) };
+              if (isNaN(hp0) || !(hp0 > 0)) hp0 = closes[hc][i];
+              posMeta[hc] = { hi: hp0 };
             }
           });
           Object.keys(posMeta).forEach(function (pc) {
@@ -2544,7 +2548,8 @@ window.WufuExpr = (function () {
     var benchV = benchNav.slice(startPos, endPos + 1), ewV = ewNav.slice(startPos, endPos + 1);
     var dailyR = dailyRet.slice(startPos, endPos + 1), benchD = benchDaily.slice(startPos, endPos + 1);
     var holdV = holdSeries.slice(startPos, endPos + 1), regV = regSeries.slice(startPos, endPos + 1), expV = expSeries.slice(startPos, endPos + 1);
-    var benchDD = benchV.map(function (v, idx) { return v / benchV.slice(0, idx + 1).reduce(function (a, b) { return b > a ? b : a; }, -Infinity) - 1; });
+    var benchDD = new Array(benchV.length), bPeak = -Infinity;   // [FIXED L4] 基准回撤线性扫描替代 O(n²)
+    for (var bI = 0; bI < benchV.length; bI++) { if (benchV[bI] > bPeak) bPeak = benchV[bI]; benchDD[bI] = bPeak > 0 ? benchV[bI] / bPeak - 1 : 0; }
 
     // ---- 指标 ----
     var totalReturn = navV[navV.length - 1] / navV[0] - 1;
@@ -2592,7 +2597,8 @@ window.WufuExpr = (function () {
     function benchMetrics(bnav, bret) {
       var tr = bnav[bnav.length - 1] / bnav[0] - 1;
       var cg = Math.pow(bnav[bnav.length - 1] / bnav[0], ann / nDays) - 1;
-      var bdd = Math.min.apply(null, bnav.map(function (v, idx) { return v / bnav.slice(0, idx + 1).reduce(function (a, b) { return b > a ? b : a; }, -Infinity) - 1; }));
+      var bdd = 0, bPk = -Infinity;   // [FIXED L4] 基准最大回撤线性扫描
+      for (var bJ = 0; bJ < bnav.length; bJ++) { if (bnav[bJ] > bPk) bPk = bnav[bJ]; var bDd = bPk > 0 ? bnav[bJ] / bPk - 1 : 0; if (bDd < bdd) bdd = bDd; }
       var br = bret.slice(1);
       var m = br.reduce(function (a, b) { return a + b; }, 0) / br.length;
       var sse = br.reduce(function (a, b) { var d = b - m; return a + d * d; }, 0);
@@ -2630,6 +2636,7 @@ window.WufuExpr = (function () {
       holdings: holdV, regime: regV, exposure: expV,
       final_hold: finalHold,   // 末态持仓权重 {code: weight}（轮动/再平衡详情「当前持仓」数据源）
       trades: tradeRecords, tx: txRecords, pool: codes,
+      drop_floor_cnt: dropFloorCnt,   // [FIXED M6] 低分剔除提示计数
       ic_snapshots: icSnapshots, ic_snapshots_full: icSnapshotsFull,
       metrics: {
         total_return: totalReturn, cagr: cagr, max_dd: maxDD,
@@ -2811,9 +2818,9 @@ window.WufuExpr = (function () {
     var el = $("wSum");
     if (!el) return;
     if (!n) { el.textContent = ""; return; }
-    // 两行结构：第一行「 | 权重合计 X%」（nowrap），余量/超限提示放第二行（整行 nowrap，不折词；权重合计=100% 时无第二行）
+    // 两行结构：第一行「 | 权重合计 X%」（nowrap），余量/超限提示放第二行（整行 nowrap，不折词；权重合计=100% 时无第二行；[FIXED M2] 提示与引擎归一化口径一致）
     el.innerHTML = "<span style='white-space:nowrap'> | 权重合计 " + (Math.round(s * 100) / 100) + "%</span>" +
-      (Math.abs(s - 100) > 0.01 ? "<br><span style='white-space:nowrap;color:#9FB0C3'>" + (s < 100 ? "（余 " + (100 - s).toFixed(1) + "% 现金→货币ETF）" : "（超 100%，请调整）") + "</span>" : "");
+      (Math.abs(s - 100) > 0.01 ? "<br><span style='white-space:nowrap;color:#9FB0C3'>" + (s < 100 ? "（余量按比例归一化至满仓，不保留现金）" : "（超 100%，请调整）") + "</span>" : "");
   }
   function applyModeUI() {
     // 视图拆分后：轮动/再平衡/定投面板已物理分离，此处仅处理共享块内按视图切换的显隐
@@ -4790,7 +4797,7 @@ function buildChips() {
   // XIRR：对现金流序列(日期 ms, 带符号金额)用二分法求年化 r，使 NPV=0
   function xirr(cfs, dts) {
     if (!cfs || cfs.length < 2) return null;
-    var t0 = dts[0], MSPY = 365.25 * 86400000;
+    var t0 = dts[0], MSPY = 365 * 86400000;   // [FIXED P1-6] 年化基准按 365 天（行业惯例）
     function npv(r) {
       var s = 0, i;
       for (i = 0; i < cfs.length; i++) {
@@ -4931,7 +4938,7 @@ function buildChips() {
     }
     var lumpRet = T > 0 ? (lumpEnd - T) / T : 0;
     var lumpXirr = null;
-    var yrs = (ts(cal[endI]) - ts(cal[firstBuyIdx])) / (365.25 * 86400000);
+    var yrs = (ts(cal[endI]) - ts(cal[firstBuyIdx])) / (365 * 86400000);   // [FIXED P1-6] 365 天年化基准
     if (yrs > 0 && T > 0 && lumpEnd > 0) lumpXirr = Math.pow(lumpEnd / T, 1 / yrs) - 1;
 
     // 最大回撤（收益率口径）：以「每元累计投入的成长倍数」V(t)=市值_t/累计投入_t=1+r(t) 为净值序列，
@@ -5194,6 +5201,7 @@ function buildChips() {
       { t: "盈亏比", v: isFinite(m.profit_factor) ? m.profit_factor.toFixed(2) : "∞", s: "总盈/总亏", cls: "" },
       { t: "调仓次数", v: String(m.n_trades), s: "含 " + (m.n_trades - r.trades.filter(function (t) { return t.to.length === 0; }).length) + " 次持仓", cls: "" },
       { t: "卖出条件触发", v: (m.sell_cond_times || 0) + " 次", s: "排名区间内因卖出条件卖出", cls: (m.sell_cond_times || 0) > 0 ? "up" : "" },
+      { t: "低分剔除", v: (r.drop_floor_cnt || 0) + " 次", s: "综合得分≤阈值被剔除标的·累计", cls: (r.drop_floor_cnt || 0) > 0 ? "" : "" },
       { t: "累计成本", v: (m.cum_cost / 10000).toFixed(1) + "万", s: "100万本金口径", cls: "" }
     ];
     var html = "";
@@ -6525,7 +6533,7 @@ function showStrategyDetail(name) {
         resList.forEach(function (r) { r.nav = r.nav.slice(keepFrom); r.calendar = calTrim; });
         rotRes.nav = rotRes.nav.slice(keepFrom);
       }
-      renderComboResult(names, resList, { combo: rotRes.nav }, null, "rot", rotRes);
+      renderComboResult(names, resList, { combo: rotRes.nav, rf: (p2 && p2.risk_free_rate !== undefined) ? p2.risk_free_rate : 0.02 }, null, "rot", rotRes);
       showNotice("因子轮动回测完成：最近调仓持仓 " + ((rotRes.trades && rotRes.trades.length) ? rotRes.trades[rotRes.trades.length - 1].to.join("、") : "空仓"));
     });
   }
@@ -6571,34 +6579,40 @@ function showStrategyDetail(name) {
       });
       // P1-6 组合再平衡扣成本：取各策略中较高的单边成本作为组合换仓成本
       var comboCost = 0;
-      paramsList.forEach(function (pp) { var cc = (+pp.commission_rate || 0) + (+pp.slippage_rate || 0); if (cc > comboCost) comboCost = cc; });
-      var comboRes = buildCombo(resList, w, intervalDays, comboCost);
+      var comboRf = 0.02;   // [FIXED P0-1] 组合夏普无风险利率：沿用各策略 risk_free_rate（首个非缺省值），与主引擎口径一致
+      paramsList.forEach(function (pp) {
+        var cc = (+pp.commission_rate || 0) + (+pp.slippage_rate || 0); if (cc > comboCost) comboCost = cc;
+        if (comboRf === 0.02 && pp.risk_free_rate !== undefined) comboRf = pp.risk_free_rate;
+      });
+      var comboRes = buildCombo(resList, w, intervalDays, comboCost, comboRf);
       renderComboResult(names, resList, comboRes, w);
       showNotice("组合回测完成");
     });
   }
-  function buildCombo(resList, w, intervalDays, costPerSide) {
+  function buildCombo(resList, w, intervalDays, costPerSide, rf) {
     var L = resList[0].nav.length;
     var navs = resList.map(function (r) { return r.nav; });
     var ww = w.slice();
     var combo = new Array(L); combo[0] = 1;
     var cps = costPerSide || 0;
+    var lastRebT = 0;   // [FIXED P0-3] 再平衡日改为"距上次再平衡满 intervalDays 交易日"判定，与统一日历索引/日期对齐，不再受 t 绝对位置与日历起点影响
     for (var t = 1; t < L; t++) {
       var ri = navs.map(function (nav) { var p0 = nav[t - 1]; return (p0 > 0) ? (nav[t] / p0 - 1) : 0; });
       var cr = 0; for (var k = 0; k < navs.length; k++) cr += ww[k] * ri[k];
       var crNet = cr;
-      if (intervalDays > 0 && (t % intervalDays === 0) && cps > 0) {
+      var isReb = intervalDays > 0 && (t - lastRebT) >= intervalDays;
+      if (isReb && cps > 0) {
         var turn = 0; for (var kk = 0; kk < navs.length; kk++) turn += Math.abs(ww[kk] - w[kk]);
         crNet = (1 + cr) * (1 - turn * cps) - 1;   // P1-6：再平衡当日按换手扣减交易成本
       }
       combo[t] = combo[t - 1] * (1 + crNet);
       var denom = 1 + cr;
       if (denom > 0) { ww = ww.map(function (x, k) { return x * (1 + ri[k]) / denom; }); }
-      if (intervalDays > 0 && (t % intervalDays === 0)) ww = w.slice();
+      if (isReb) { ww = w.slice(); lastRebT = t; }
     }
-    return { combo: combo };
+    return { combo: combo, rf: rf };
   }
-  function calcMetricsFromNav(nav) {
+  function calcMetricsFromNav(nav, rf) {
     var L = nav.length;
     var total = nav[L - 1] / nav[0] - 1;
     var years = (L - 1) / 252;
@@ -6609,7 +6623,8 @@ function showStrategyDetail(name) {
     var mean = s / (L - 1), vr = 0;
     for (var j = 1; j < L; j++) { var d = nav[j] / nav[j - 1] - 1 - mean; vr += d * d; }
     var sd = Math.sqrt(vr / (L - 1)) * Math.sqrt(252);
-    var sharpe = (sd > 0) ? (mean * 252 - 0.02) / sd : 0;
+    var riskF = (rf !== undefined && rf !== null) ? rf : 0.02;   // [FIXED P0-1] 组合夏普与主引擎统一读取无风险利率
+    var sharpe = (sd > 0) ? (mean * 252 - riskF) / sd : 0;
     return { total: total, cagr: cagr, mdd: mdd, sharpe: sharpe };
   }
   function pearsonArr(a, b) {
@@ -6624,7 +6639,7 @@ function showStrategyDetail(name) {
     $("comboResult").style.display = "";
     var cal = resList[0].calendar;
     var combo = comboRes.combo;
-    var met = calcMetricsFromNav(combo);
+    var met = calcMetricsFromNav(combo, comboRes.rf);
     var kpi = $("comboKpis"); kpi.innerHTML = "";
     var kpiData = [["组合累计收益", _pct(met.total)], ["组合年化", _pct(met.cagr)], ["最大回撤", _pct(met.mdd)], ["组合夏普", met.sharpe.toFixed(2)]];
     kpiData.forEach(function (kv) {
@@ -7723,7 +7738,7 @@ function showStrategyDetail(name) {
     return list;
   }
   function isMiss(v) { return v === null || v === undefined || (typeof v === "number" && (isNaN(v) || v < 0)); }
-  // 指数移动平均（跳过上市前缺值，从首个有效值起算）
+  // 指数移动平均（跳过上市前缺值，从首个有效值起算；[FIXED M3] 中途缺失日沿用前值继续递推，避免停牌/缺口后整段失效）
   function techEMA(arr, n) {
     var k = 2 / (n + 1), out = [], start = -1, j0;
     for (j0 = 0; j0 < arr.length; j0++) if (!isMiss(arr[j0])) { start = j0; break; }
@@ -7731,7 +7746,7 @@ function showStrategyDetail(name) {
     var e0 = arr[start]; out[start] = e0;
     for (j0 = start + 1; j0 < arr.length; j0++) {
       var v = arr[j0];
-      if (isMiss(v)) return null;
+      if (isMiss(v)) { out[j0] = e0; continue; }
       e0 = v * k + e0 * (1 - k); out[j0] = e0;
     }
     return out;
