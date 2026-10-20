@@ -166,6 +166,11 @@ footer b{color:#9FB0C3}
 #corrResult table.trades td.low:first-child{color:#34D399}
 #corrResult table.trades td.c{text-align:right;font-variant-numeric:tabular-nums}
 @media (max-width:640px){ html,body{max-width:100%;overflow-x:hidden} }
+
+    .stats-tabs{display:flex;gap:6px;margin:6px 0 10px;border-bottom:1px solid #3E4E63;flex-wrap:wrap}
+    .sttab{padding:6px 16px;font-size:12.5px;color:#9FB0C3;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;background:transparent;user-select:none}
+    .sttab.active{color:#F1F5F9;background:#1C2A3A;border-color:#3E4E63}
+    .sttab:hover{color:#D8E2EF}
 </style>
 </head>
 <body>
@@ -736,9 +741,17 @@ footer b{color:#9FB0C3}
       </div>
       <div class="card"><h2>净值曲线 <span class="n">策略 / 沪深300 / 等权池（选中标的）</span></h2><div class="chart" id="cNav"></div></div>
       <div class="card"><h2>回撤 <span class="n">策略与基准的最大回撤路径</span></h2><div class="chart short" id="cDD"></div></div>
-      <div class="card"><h2>年度收益 <span class="n">策略 vs 沪深300</span></h2><div class="chart short" id="cYear"></div></div>
+      <div class="card" id="stStatsCard"><h2>统计 <span class="n">按年度 / 按品种 / 回撤</span></h2>
+        <div class="stats-tabs">
+          <span class="sttab active" data-t="year" onclick="switchStatsTab('year',this)">按年度统计</span>
+          <span class="sttab" data-t="sym" onclick="switchStatsTab('sym',this)">按品种统计</span>
+          <span class="sttab" data-t="dd" onclick="switchStatsTab('dd',this)">回撤统计</span>
+        </div>
+        <div class="stpane" id="stStats-year"><div class="tblwrap" style="max-height:300px"><table class="trades" id="stYearly"><thead></thead><tbody></tbody></table></div></div>
+        <div class="stpane" id="stStats-sym" style="display:none"><div class="tblwrap" style="max-height:300px"><table class="trades" id="symTable"><thead></thead><tbody></tbody></table></div></div>
+        <div class="stpane" id="stStats-dd" style="display:none"><div class="tblwrap" style="max-height:300px"><table class="trades" id="ddTable"><thead></thead><tbody></tbody></table></div></div>
+      </div>
       <div class="card"><h2>月度收益热力图 <span class="n">绿色为正、红色为负（%）</span></h2><div class="chart short" id="cMonth"></div></div>
-      <div class="card"><h2>按品种统计 <span class="n">各品种持仓周期：收益贡献/次数/胜率/平均单次盈亏/盈亏比/平均持仓天数（执行日开盘价、决策日净值口径）</span></h2><div class="tblwrap"><table class="trades" id="symTable"><thead></thead><tbody></tbody></table></div></div>
       <div class="card"><h2>调仓记录 <span class="n" id="tradeCount"></span><span class="n">（卖出/买入金额按策略管理区填写的投资额口径；买入份额按执行日未复权开盘价）</span></h2><div class="tblwrap"><table class="trades" id="tradeTable"><thead></thead><tbody></tbody></table></div></div>
     </div>
     <footer>策略口径：多因子动量（涨幅/斜率动量/收益波动率/风险调整动量，逐因子截面z-score加权），筛选条件（R²阈值/涨幅/收益波动率等）由筛选面板配置、走弱期MA迟滞、海外池轮动、成本=佣金+滑点。<br><b>本系统仅用于策略研究与参数探索，历史回测不代表未来收益，不构成投资建议。</b></footer>
@@ -785,8 +798,15 @@ footer b{color:#9FB0C3}
         <div id="attrNote" style="font-size:11.5px;color:#9FB0C3;margin-top:6px;line-height:1.7"></div>
       </div>
       <div class="card" style="border:none;padding:0"><h2>收益曲线 <span class="n">策略 vs 沪深300</span></h2><div class="chart" id="stChart"></div></div>
-      <div class="card" style="border:none;padding:0;margin-top:14px"><h2>按年度收益 <span class="n">策略 / 沪深300 / 超额</span></h2>
-        <div class="tblwrap" style="max-height:300px"><table class="syear" id="stYearly"></table></div>
+      <div class="card" id="stStatsCard2" style="border:none;padding:0;margin-top:14px"><h2>统计 <span class="n">按年度 / 按品种 / 回撤</span></h2>
+        <div class="stats-tabs">
+          <span class="sttab active" data-t="year" onclick="switchStatsTab('year',this)">按年度统计</span>
+          <span class="sttab" data-t="sym" onclick="switchStatsTab('sym',this)">按品种统计</span>
+          <span class="sttab" data-t="dd" onclick="switchStatsTab('dd',this)">回撤统计</span>
+        </div>
+        <div class="stpane" id="stStats2-year"><div class="tblwrap" style="max-height:300px"><table class="trades" id="stYearly2"><thead></thead><tbody></tbody></table></div></div>
+        <div class="stpane" id="stStats2-sym" style="display:none"><div class="tblwrap" style="max-height:300px"><table class="trades" id="symTable2"><thead></thead><tbody></tbody></table></div></div>
+        <div class="stpane" id="stStats2-dd" style="display:none"><div class="tblwrap" style="max-height:300px"><table class="trades" id="ddTable2"><thead></thead><tbody></tbody></table></div></div>
       </div>
       <div class="card" style="border:none;padding:0;margin-top:14px"><h2>月度收益热力图 <span class="n">绿色为正、红色为负（%）</span></h2><div id="stMonthly"></div></div>
     </div>
@@ -4813,6 +4833,7 @@ function buildChips() {
         renderMonth(res);
         renderTrades(res, getParams());
         renderSymStats(res, getParams());
+        renderDDStats(res);
         renderCompositeIC(res, getParams(), D);
       } catch (e2) {
         // 部分结果区容器在特定环境/视口缺失时，仅提示，不抛全局脚本异常中断整页
@@ -5336,23 +5357,25 @@ function buildChips() {
   }
 
   function renderYear(r) {
+    // [统计tab] 按年度统计：与"我的策略"详情同款表格（年份/策略/沪深300/超额）
+    var el = $("stYearly");
+    if (!el) return;
     var m = r.metrics;
     var labels = [];
     Object.keys(m.annual).forEach(function (y) { if (labels.indexOf(y) < 0) labels.push(y); });
     Object.keys(m.bench_annual).forEach(function (y) { if (labels.indexOf(y) < 0) labels.push(y); });
     labels.sort();
-    var s = labels.map(function (y) { return +(m.annual[y] * 100).toFixed(1); });
-    var b = labels.map(function (y) { return +(m.bench_annual[y] * 100).toFixed(1); });
-    initChart("cYear").setOption({
-      tooltip: baseChart().tooltip,
-      legend: { data: ["策略", "沪深300"], top: 4, textStyle: { fontSize: 12 } },
-      grid: { left: 56, right: 20, top: 34, bottom: 44, containLabel: true },
-      xAxis: { type: "category", data: labels, axisLabel: { fontSize: 10, interval: 0, rotate: 30, margin: 8 } },
-      yAxis: { type: "value", axisLabel: { fontSize: 11, formatter: function (v) { return v + "%"; } } },
-      series: [
-        { name: "策略", type: "bar", barWidth: 16, itemStyle: { color: COLOR.str, borderRadius: [3, 3, 0, 0] }, label: { show: true, position: "top", fontSize: 10, formatter: function (p) { return p.value + "%"; } }, data: s },
-        { name: "沪深300", type: "bar", barWidth: 16, itemStyle: { color: COLOR.bench, borderRadius: [3, 3, 0, 0] }, label: { show: true, position: "top", fontSize: 10, formatter: function (p) { return p.value + "%"; } }, data: b }
-      ]
+    el.querySelector("thead").innerHTML = "<tr><th>年份</th><th>策略</th><th>沪深300</th><th>超额</th></tr>";
+    var tb = el.querySelector("tbody"); tb.innerHTML = "";
+    if (!labels.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#7C8DA1">该策略无年度基准数据</td></tr>'; return; }
+    labels.forEach(function (y) {
+      var a = m.annual[y], b = m.bench_annual[y];
+      if (a == null) a = 0; if (b == null) b = 0;
+      var e = a - b;
+      var td = function (v) { return '<td class="' + (v < 0 ? "down" : "up") + '">' + (v * 100).toFixed(2) + "%</td>"; };
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + y + "</td>" + td(a) + td(b) + td(e);
+      tb.appendChild(tr);
     });
   }
 
@@ -5436,8 +5459,8 @@ function buildChips() {
   }
 
   // ---------- 按品种统计表 ----------
-  function renderSymStats(r, params) {
-    var el = $("symTable");
+  function renderSymStats(r, params, elId) {
+    var el = $(elId || "symTable");
     if (!el) return;
     var names = {};
     POOL.forEach(function (p) { names[p.code] = p.name; });
@@ -5493,6 +5516,53 @@ function buildChips() {
     tr2.innerHTML = cell("合计", null, true);
     tb.appendChild(tr2);
   }
+
+  // ---------- 回撤统计表：回撤最大的前五段（非重叠，drawdown 负值序列分段） ----------
+  function renderDDStats(r, elId) {
+    var el = $(elId || "ddTable");
+    if (!el) return;
+    var dd = r.drawdown || [], cal = r.calendar || r.dates || [];
+    function fmtD(i) { return (cal[i] != null ? cal[i] : "—"); }
+    var segs = [], i = 0, n = dd.length;
+    while (i < n) {
+      if (!(dd[i] < -1e-12)) { i++; continue; }
+      var s = i, depth = dd[i], trough = i;
+      while (i < n && dd[i] < -1e-12) { if (dd[i] < depth) { depth = dd[i]; trough = i; } i++; }
+      var rec = i; while (rec < n && dd[rec] < -1e-12) rec++;
+      segs.push({ depth: depth, start: s, trough: trough, end: i - 1, recover: rec < n ? rec : -1 });
+    }
+    segs.sort(function (a, b) { return a.depth - b.depth; });
+    var top = segs.slice(0, 5);
+    el.querySelector("thead").innerHTML = "<tr><th style='text-align:left'>排名</th><th>回撤幅度</th><th>开始日期</th><th>谷值日期</th><th>恢复日期</th><th>持续天数</th></tr>";
+    var tb = el.querySelector("tbody"); tb.innerHTML = "";
+    if (!top.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9FB0C3;padding:12px">本次回测无回撤段。</td></tr>'; return; }
+    top.forEach(function (g, idx) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td style='text-align:left'>" + (idx + 1) + "</td>" +
+        '<td class="' + (g.depth < 0 ? "down" : "") + '">' + (g.depth * 100).toFixed(2) + "%</td>" +
+        "<td>" + fmtD(g.start) + "</td>" +
+        "<td>" + fmtD(g.trough) + "</td>" +
+        "<td>" + (g.recover >= 0 ? fmtD(g.recover) : "未恢复") + "</td>" +
+        "<td>" + (g.trough - g.start) + " 天</td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- 统计 tab 切换（year/sym/dd） ----------
+  function switchStatsTab(t, el) {
+    var card = el ? el.closest(".card") : null;
+    if (!card) return;
+    var tabs = card.querySelectorAll(".sttab");
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].className = "sttab" + (tabs[i].getAttribute("data-t") === t ? " active" : "");
+    }
+    var panes = card.querySelectorAll(".stpane");
+    for (var i2 = 0; i2 < panes.length; i2++) {
+      panes[i2].style.display = (panes[i2].id.indexOf("-" + t) >= 0) ? "" : "none";
+    }
+  }
+  // [统计tab] 暴露到 window 供 HTML onclick 调用（主脚本在 IIFE 闭包内）
+  if (typeof window !== "undefined") window.switchStatsTab = switchStatsTab;
 
   // ---------- resize ----------
   var rsTimer = null;
@@ -5872,7 +5942,7 @@ function showStrategyDetail(name) {
     });
     // 按年度收益表
     var yrs = mt.annual ? Object.keys(mt.annual).sort() : [];
-    var yb = $("stYearly"); yb.innerHTML = '<tr><th>年份</th><th>策略</th><th>沪深300</th><th>超额</th></tr>';
+    var yb = $("stYearly2"); yb.innerHTML = '<tr><th>年份</th><th>策略</th><th>沪深300</th><th>超额</th></tr>';
     if (!yrs.length) { yb.innerHTML += '<tr><td colspan="4" style="color:#7C8DA1">该策略无年度基准数据</td></tr>'; }
     yrs.forEach(function (y) {
       var a = mt.annual[y], b = (mt.bench_annual || {})[y] || 0;
@@ -5885,6 +5955,8 @@ function showStrategyDetail(name) {
     var mon = mt.monthly || {};
     var monYrs = {};
     if (Object.keys(mon).length === 0) { $("stMonthly").innerHTML = '<div style="font-size:12px;color:#7C8DA1;padding:6px 0">该策略无月度收益数据</div>'; }
+    // [统计tab] 按品种统计 + 回撤统计（与回测页同款）
+    try { renderSymStats(res, m[name], "symTable2"); renderDDStats(res, "ddTable2"); } catch (e3) {}
     Object.keys(mon).forEach(function (k) {
       var y = k.slice(0, 4), mIdx = +k.slice(5, 7);
       if (!monYrs[y]) monYrs[y] = {};
